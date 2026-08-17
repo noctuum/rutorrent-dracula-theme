@@ -1054,9 +1054,9 @@ panel-label[selected]::part(size) {
    mousedown until the button comes back up. Both rules match upstream's
    specificity and win on order.
 
-   Same 768px floor upstream puts its own hover and cursor rules behind: below
-   it DnD.start() refuses to drag at all, and VDivider stays in the flow, so an
-   unscoped rule would light a handle that cannot move. */
+   Behind the same 768px floor as upstream's own hover and cursor rules, because
+   below it `#HDivider` is hidden by resizeLeft (`webui.js:2246`) and hover is a
+   pointer state a touch screen never enters. */
 @media (min-width: 768px) {
   div#HDivider, div#VDivider {
     transition: background-color 0.15s ease;
@@ -1069,6 +1069,65 @@ panel-label[selected]::part(size) {
   div#HDivider:active, div#VDivider:active {
     background-color: var(--dracula-pink);
   }
+}
+
+/* A drag that starts here must move the divider, not scroll the page behind it.
+   Unscoped: `touch-action` costs a mouse nothing, and the pointer handlers in
+   init.js are bound whatever the viewport. */
+div#HDivider,
+div#VDivider {
+  touch-action: none;
+}
+
+/* draculaTouchDividers makes both dividers work under a finger — upstream binds
+   the drag to mouse events alone (`objects.js:36-37`, `objects.js:50`) and
+   `DnD.start` refuses to run at all below 768px (`objects.js:41-43`). What the
+   finger needs is something to aim at: 5px is a hairline, and at rest the
+   dividers are invisible by design, so on a touch screen they get a grip and the
+   width to hold it.
+
+   `pointer: coarse` rather than a viewport size — the question is what is
+   pointing at the screen, not how wide it is. A touch laptop gets the grip and
+   can also drag it. */
+@media (pointer: coarse) {
+  div#HDivider,
+  div#VDivider {
+    flex: 0 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--dracula-bg-darker);
+  }
+
+  div#HDivider::after,
+  div#VDivider::after {
+    content: "";
+    border-radius: 2px;
+    background-color: var(--dracula-comment);
+  }
+
+  div#VDivider::after {
+    width: 36px;
+    height: 3px;
+  }
+
+  div#HDivider::after {
+    width: 3px;
+    height: 36px;
+  }
+}
+
+/* A tap on the V divider swaps between the list and the detail panel; the class
+   is set from draculaTogglePanelFull. The list is hidden rather than sized to
+   zero because upstream writes a `flex-basis` onto it on every resize
+   (`webui.js:2276`), and a zero height here would be overwritten on the next
+   refresh. */
+body.dracula-panel-full #list-table {
+  display: none;
+}
+
+body.dracula-panel-full #tdetails {
+  flex: 1 1 auto;
 }
 
 /* === Cover & Messages === */
@@ -2073,6 +2132,71 @@ body.compact .tabbar li.nav-item a.nav-link {
 }
 #StatusBar #st_fd { margin-left: 0; }
 #StatusBar #st_fd .stval { min-width: 0; }
+
+/* The bar asks for more width than a phone has in either orientation, and
+   upstream's `overflow-x: auto` on it turns the remainder into a 32px scrolling
+   strip rather than dropping anything: 662px of content at 390px wide, and
+   1029px at 844px, where two more cells appear at upstream's `md` line.
+   Measured shares: connections 204px, the disk and CPU meters 102px each, the
+   two speeds 102px each, the rTorrent version 219px.
+
+   The cells that only report collapse to their icon, which brings 390px down to
+   340 and 844px down to 721. A tap opens what they were holding: each already
+   carries a full reading in `title`, written by draculaConnectionsTooltip and
+   its four siblings, and a title is a hover state no touch screen ever enters.
+   draculaStatusCellPopovers binds the tap.
+
+   The speeds keep their numbers. They are what the bar is watched for, and they
+   are the two cells a tap already owns — it opens the throttle menu.
+
+   991.98px is upstream's own `lg` line, where it stops showing the labels beside
+   these same values (`index.html:267-289`). */
+@media (max-width: 991.98px) {
+  #meter-disk-holder,
+  #meter-cpu-holder {
+    display: none;
+  }
+
+  /* `!important`: upstream shows these three through jQuery's `.show()`
+     (`webui.js:2162`), which writes `display: block` as an inline style, and it
+     rewrites them on every refresh. An inline declaration outranks any rule
+     here that does not say this. */
+  #st_fd > .stval {
+    display: none !important;
+  }
+
+  /* The collapse leaves the bar 400px wide against 390px of screen, and the last
+     10 of those are cheaper to take from the gaps than from a reading. The two
+     meter panes keep their own padding, set by their plugins on an id. */
+  .status-cell {
+    padding-inline: 4px;
+  }
+}
+
+/* Below theDialogManager's 2000 floor (`objects.js:92`): a dialog is modal over
+   the whole page and has no business behind a reading from the bar.
+
+   Fixed rather than absolute because the bar is the last row of a flex column
+   and scrolls its own overflow — a child positioned inside it cannot rise above
+   it. init.js sets `left` and `bottom` from the cell it belongs to.
+
+   `pre-line` because the text arrives as the newline-separated string the
+   tooltips already build; splitting it into elements here would mean writing the
+   same reading twice. */
+#dracula-status-popover {
+  position: fixed;
+  z-index: 1900;
+  max-width: 80vw;
+  padding: 6px 10px;
+  border: 1px solid var(--dracula-current);
+  border-radius: 4px;
+  background-color: var(--dracula-bg-darker);
+  color: var(--dracula-fg);
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-line;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 45%);
+}
 
 /* === Preload (disabled — no images) === */
 
