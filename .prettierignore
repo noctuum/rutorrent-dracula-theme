@@ -1,0 +1,21 @@
+# The shipped theme is formatted by hand and stays that way.
+#
+# Prettier's CSS output is correct but loses two things this theme relies on:
+# rules written on one line as an aligned table — 123 of them, the status bar's
+# flex order map among others — and the palette's uppercase hex, which the
+# Dracula spec fixes in that form. A `/* prettier-ignore */` marker covers one
+# node only; CSS has no range markers, so keeping the current shape would cost
+# 123 markers and still lose the column alignment of trailing comments.
+#
+# init.js is excluded for the same reason: tab indentation and braces on their
+# own line are house style, and prettier rewrites both, touching 3650 lines of
+# 2610.
+Dracula/
+
+# Generated or vendored.
+node_modules/
+package-lock.json
+template/
+tmp/
+screenshots/
+docs/plans/
