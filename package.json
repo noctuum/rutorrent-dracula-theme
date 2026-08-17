@@ -1,0 +1,23 @@
+{
+  "name": "rutorrent-dracula-theme",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Development tooling for the Dracula theme for ruTorrent. Nothing here ships — the theme is the Dracula/ folder, copied into ruTorrent as it is.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "lint:css": "stylelint \"Dracula/**/*.css\"",
+    "lint:js": "eslint .",
+    "lint": "npm run lint:css && npm run lint:js",
+    "check": "npm run lint && npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.1",
+    "globals": "^17.10.0",
+    "prettier": "^3.9.6",
+    "stylelint": "^17.14.1",
+    "stylelint-config-recommended": "^18.0.0",
+    "stylelint-declaration-strict-value": "^1.11.1"
+  }
+}

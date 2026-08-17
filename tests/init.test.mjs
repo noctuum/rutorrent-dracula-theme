@@ -1,0 +1,214 @@
+// Unit tests for the pure functions in Dracula/init.js.
+//
+// The shipped file cannot be a module: ruTorrent reads it off disk and splices
+// it into a PHP response (`plugins/theme/init.php:22`), so an `export` would be
+// a syntax error in the page. Top-level `function` declarations do become
+// properties of the global object, which is the trick here — node:vm evaluates
+// the real file in a sandbox and the functions are read back off it. Nothing in
+// Dracula/ changes to make this work.
+//
+// Zero dependencies: node:test, node:assert and node:vm are all stdlib. Run
+// with `node --test` from the repo root.
+//
+// Only the pure functions are tested. The DOM-wrapping ones are left alone
+// deliberately: their interesting failures are wrap ordering against other
+// plugins and position in the cascade, and a mock reproduces neither.
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import vm from "node:vm";
+
+const SRC = join(
+	dirname(fileURLToPath(import.meta.url)),
+	"..",
+	"Dracula",
+	"init.js",
+);
+
+// The ruTorrent and browser surface init.js touches while it is being
+// evaluated. When the theme reaches for a new global at module scope this
+// throws and a line has to be added here — the price of testing the shipped
+// file unmodified.
+function loadTheme() {
+	const noop = () => {};
+	const sandbox = {
+		plugin: { allDone: noop },
+		thePlugins: { get: () => ({}) },
+		theWebUI: { settings: {}, getStatusIcon: () => ["", ""], version: "5.3.7" },
+		dStatus: { started: 1, paused: 2, checking: 4, hashing: 8, error: 16 },
+		dxSTable: { prototype: { create: noop, renameColumnById: noop } },
+		RGBackground: function () {},
+		rGraph: undefined,
+		ALIGN_LEFT: 0,
+		$: undefined,
+		console: { warn: noop, log: noop },
+		document: {
+			documentElement: {},
+			addEventListener: noop,
+			querySelectorAll: () => [],
+			getElementById: () => null,
+			createElement: () => ({
+				style: {},
+				appendChild: noop,
+				setAttribute: noop,
+			}),
+			head: { appendChild: noop },
+		},
+		setTimeout: noop,
+		clearTimeout: noop,
+		MutationObserver: function () {
+			return { observe: noop, disconnect: noop };
+		},
+		getComputedStyle: () => ({ getPropertyValue: () => "" }),
+		Image: function () {},
+		matchMedia: () => ({
+			addEventListener: noop,
+			addListener: noop,
+			matches: false,
+		}),
+	};
+	sandbox.window = sandbox;
+	vm.createContext(sandbox);
+	vm.runInContext(readFileSync(SRC, "utf8"), sandbox, { filename: SRC });
+	return sandbox;
+}
+
+const theme = loadTheme();
+
+// Evaluating the file at all is a smoke test: a syntax error or a module-scope
+// crash fails the run here rather than on every page the theme is installed
+// on.
+test("init.js evaluates against a stub ruTorrent and exposes its helpers", () => {
+	for (const fn of [
+		"draculaRatioLimit",
+		"draculaMinorError",
+		"draculaErrorIcon",
+		"draculaStoppedTorrent",
+		"draculaHasSavedWidth",
+		"draculaIconKind",
+		"draculaVisualScale",
+	])
+		assert.equal(typeof theme[fn], "function", `${fn} is missing`);
+});
+
+test("the theme version is a plain semver string", () => {
+	assert.match(theme.DRACULA_VERSION, /^\d+\.\d+\.\d+$/);
+	assert.ok(
+		Array.isArray(theme.DRACULA_RUTORRENT) && theme.DRACULA_RUTORRENT.length,
+	);
+});
+
+// The budget is by area, so a small canvas is allowed to be dense: a flat
+// ceiling of 4 leaves the 100x20 status-bar meter five times too small.
+test("draculaRatioLimit: a small meter gets all the density it asks for", () => {
+	assert.ok(theme.draculaRatioLimit(100, 20) > 10);
+});
+
+test("draculaRatioLimit: never below 1, never past the 8192 side limit", () => {
+	assert.equal(theme.draculaRatioLimit(20000, 20000), 1);
+	assert.equal(theme.draculaRatioLimit(4096, 1), 2);
+	assert.ok(theme.draculaRatioLimit(0, 0) >= 1);
+});
+
+test("draculaRatioLimit: stays inside the 8,000,000 pixel budget", () => {
+	for (const [w, h] of [
+		[100, 20],
+		[800, 300],
+		[1920, 400],
+		[4000, 2000],
+	]) {
+		const r = theme.draculaRatioLimit(w, h);
+		assert.ok(w * r * h * r <= 8000001, `${w}x${h} @ ${r}`);
+	}
+});
+
+// An allowlist on purpose: an unfamiliar phrasing must land in the loud bucket,
+// never the quiet one.
+test("draculaMinorError: announce noise and a tracker takedown are minor", () => {
+	assert.equal(
+		theme.draculaMinorError({ msg: "Tracker: [network error: ETIMEDOUT]" }),
+		true,
+	);
+	assert.equal(
+		theme.draculaMinorError({
+			msg: "Tracker: [No DHT nodes available for peer search.]",
+		}),
+		true,
+	);
+	// chkstate arrives from rTorrent as a string; the plugin compares loosely,
+	// and so must this.
+	assert.equal(theme.draculaMinorError({ chkstate: "4" }), true);
+	assert.equal(theme.draculaMinorError({ chkstate: 4 }), true);
+});
+
+test("draculaMinorError: a real data error is never quiet", () => {
+	// rTorrent's exact wording when the file is deleted under a torrent.
+	assert.equal(
+		theme.draculaMinorError({
+			msg: "Download registered as completed, but hash check returned unfinished chunks.",
+		}),
+		false,
+	);
+	assert.equal(theme.draculaMinorError({ msg: "" }), false);
+	assert.equal(theme.draculaMinorError({}), false);
+	// "Tracker" has to be the start of the message, not merely present in it.
+	assert.equal(
+		theme.draculaMinorError({ msg: "Files missing. Tracker: fine" }),
+		false,
+	);
+	// A chkstate that is not 4 says nothing about severity.
+	assert.equal(theme.draculaMinorError({ chkstate: "7" }), false);
+});
+
+test("draculaErrorIcon: matches the three upstream error classes and nothing else", () => {
+	assert.equal(theme.draculaErrorIcon("Status_Error"), true);
+	assert.equal(theme.draculaErrorIcon("Status_Error_Up"), true);
+	assert.equal(theme.draculaErrorIcon("Status_Error_Down"), true);
+	assert.equal(theme.draculaErrorIcon("Status_Warning"), false);
+	assert.equal(theme.draculaErrorIcon("Status_Stopped"), false);
+	assert.equal(theme.draculaErrorIcon(""), false);
+});
+
+test("draculaStoppedTorrent: only started, checking or hashing count as running", () => {
+	assert.equal(theme.draculaStoppedTorrent({ state: 0 }), true);
+	// The paused bit alone does not mean running: upstream reaches
+	// Status_Paused only when started is set too.
+	assert.equal(theme.draculaStoppedTorrent({ state: 2 }), true);
+	assert.equal(theme.draculaStoppedTorrent({ state: 16 }), true); // error alone
+	assert.equal(theme.draculaStoppedTorrent({ state: 1 }), false);
+	assert.equal(theme.draculaStoppedTorrent({ state: 3 }), false); // started|paused
+	assert.equal(theme.draculaStoppedTorrent({ state: 4 }), false);
+	assert.equal(theme.draculaStoppedTorrent({ state: 8 }), false);
+	assert.equal(theme.draculaStoppedTorrent({ state: 19 }), false); // the alpine case
+});
+
+test("draculaHasSavedWidth: a saved width over 4 outranks a theme default", () => {
+	assert.equal(theme.draculaHasSavedWidth([10, 20], 1), true);
+	assert.equal(theme.draculaHasSavedWidth([10, 3], 1), false);
+	assert.equal(theme.draculaHasSavedWidth(null, 0), false);
+	assert.equal(theme.draculaHasSavedWidth([10], 5), false);
+});
+
+test("draculaIconKind: only tracklabels URLs classify, and by their parameter", () => {
+	assert.equal(
+		theme.draculaIconKind("plugins/tracklabels/action.php?label=x"),
+		"label",
+	);
+	assert.equal(
+		theme.draculaIconKind("plugins/tracklabels/action.php?tracker=y"),
+		"tracker",
+	);
+	assert.equal(
+		theme.draculaIconKind("plugins/tracklabels/action.php?other=z"),
+		null,
+	);
+	assert.equal(theme.draculaIconKind("some/other/url?label=x"), null);
+	assert.equal(theme.draculaIconKind(""), null);
+	assert.equal(theme.draculaIconKind(null), null);
+});
+
+test("draculaVisualScale: falls back to 1 when the viewport reports nothing", () => {
+	assert.equal(theme.draculaVisualScale(), 1);
+});
