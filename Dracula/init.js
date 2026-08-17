@@ -2505,6 +2505,10 @@ var DRACULA_SHORT_VIEWPORT = 500;
 // never hold still; 6px is the slop this costs.
 var DRACULA_TAP_SLOP = 6;
 
+// True between pointerdown and release on a divider. The floor below is dropped
+// while it is set, so a drag reaches both ends of the range.
+var draculaDividerDragging = false;
+
 function draculaShortViewport()
 {
 	return window.innerHeight <= DRACULA_SHORT_VIEWPORT;
@@ -2516,9 +2520,14 @@ function draculaShortViewport()
    floor claims all of it, the cap trims 5px back, and `#tdetails` is laid out
    0px tall with its tab row off screen — the panel is present, sized to nothing.
 
-   The floor is right on a desktop, so it is dropped for the duration of the call
-   rather than changed: the setting is restored immediately and never saved, and
-   the arithmetic stays upstream's. */
+   The same floor pins a drag. In portrait a phone is 600-700px tall, so the floor
+   applies in full and the divider moves down freely while refusing to rise above
+   300px from the top. A handle that answers in one direction only is worse than
+   one that does not move.
+
+   The floor is right for the layout a desktop opens with, so it is dropped for
+   the duration of the call rather than changed: the setting is restored
+   immediately and never saved, and the arithmetic stays upstream's. */
 function draculaLowerListFloor()
 {
 	if(!window.theWebUI || typeof theWebUI.resizeTop !== "function")
@@ -2526,7 +2535,7 @@ function draculaLowerListFloor()
 	var resizeTop = theWebUI.resizeTop;
 	theWebUI.resizeTop = function(w, h)
 	{
-		if(!draculaShortViewport() || !theWebUI.settings)
+		if((!draculaShortViewport() && !draculaDividerDragging) || !theWebUI.settings)
 			return resizeTop.call(this, w, h);
 		var floor = theWebUI.settings["webui.list_table_min_height"];
 		theWebUI.settings["webui.list_table_min_height"] = 0;
@@ -2580,9 +2589,14 @@ function draculaDragDivider(el, onMove, onSettle, onTap)
 		if(e.pointerType === "mouse")
 			return;
 		dragging = true;
+		draculaDividerDragging = true;
 		travelled = 0;
 		startX = e.clientX;
 		startY = e.clientY;
+		// A finger covers the handle it is holding, so the state has to be
+		// readable at the edges of the contact: the grip goes Pink for as long as
+		// the press lasts, the colour :active already gives it under a mouse.
+		el.classList.add("dracula-divider-held");
 		el.setPointerCapture(e.pointerId);
 		e.preventDefault();
 	});
@@ -2602,6 +2616,8 @@ function draculaDragDivider(el, onMove, onSettle, onTap)
 		if(!dragging)
 			return;
 		dragging = false;
+		draculaDividerDragging = false;
+		el.classList.remove("dracula-divider-held");
 		if(el.hasPointerCapture(e.pointerId))
 			el.releasePointerCapture(e.pointerId);
 		if(travelled > DRACULA_TAP_SLOP)
@@ -2629,6 +2645,50 @@ function draculaKeepDetailsToggleSafe()
 	};
 }
 
+/* Where the drag puts the boundary, in list height, with both ends held short of
+   swallowing the handle.
+
+   Bottom end: the panel keeps a strip as tall as the divider itself. Without it
+   the panel closes to nothing, the grip lands directly on the status bar and
+   reads as part of it — a handle nobody can find is a handle that does not exist.
+   The strip is the handle's own height because that is the smallest gap in which
+   it still reads as the edge of a block.
+
+   Top end: 1px rather than 0, because resizeTop opens with `if(!w && !h) return`
+   (`webui.js:2264`) and a zero height reads there as "no value given", which pins
+   the divider instead of letting the panel take the area. */
+function draculaListHeightFor(clientY, list)
+{
+	var wanted = clientY - list.getBoundingClientRect().top;
+	var main = document.getElementById("main-info");
+	var divider = document.getElementById("VDivider");
+	if(!main || !divider)
+		return Math.max(1, wanted);
+
+	var handle = divider.getBoundingClientRect().height;
+	var room = main.getBoundingClientRect().height - handle * 2;
+	return Math.max(1, Math.min(wanted, room));
+}
+
+/* One end of the range or the other: one of the two panes is down to a sliver.
+
+   Upstream saves the split on every release (`content.js:44`), so without this a
+   single drag to an end becomes the layout the interface opens with from then on
+   — the panel gone, and nothing but the handle to say it ever existed. Covering
+   one pane is a way of looking at the other, not a new default; the stored split
+   is left at the last position that shows both. */
+function draculaSplitAtAnEnd()
+{
+	var list = document.getElementById("list-table");
+	var divider = document.getElementById("VDivider");
+	var panel = document.getElementById("tdetails");
+	if(!list || !divider || !panel)
+		return false;
+	var handle = divider.getBoundingClientRect().height;
+	return list.getBoundingClientRect().height <= handle * 2 ||
+		panel.getBoundingClientRect().height <= handle * 2;
+}
+
 function draculaTouchDividers()
 {
 	if(!window.theWebUI)
@@ -2652,9 +2712,13 @@ function draculaTouchDividers()
 			document.body.classList.remove("dracula-panel-full");
 			var list = document.getElementById("list-table");
 			if(list)
-				theWebUI.resizeTop(null, e.clientY - list.getBoundingClientRect().top);
+				theWebUI.resizeTop(null, draculaListHeightFor(e.clientY, list));
 		},
-		function(){ theWebUI.setVSplitter(); },
+		function()
+		{
+			if(!draculaSplitAtAnEnd())
+				theWebUI.setVSplitter();
+		},
 		draculaTogglePanelFull);
 }
 

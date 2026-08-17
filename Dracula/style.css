@@ -1115,6 +1115,25 @@ div#VDivider {
     width: 3px;
     height: 36px;
   }
+
+  /* Held: Pink, the colour :active gives these two under a mouse. The class is
+     set from the pointer handlers rather than relying on :active, which a touch
+     screen does not hold through a drag, and the grip is what changes because a
+     finger is sitting on the strip around it.
+
+     Grown to 48px so the change is visible past the edge of the contact. */
+  div#HDivider.dracula-divider-held::after,
+  div#VDivider.dracula-divider-held::after {
+    background-color: var(--dracula-pink);
+  }
+
+  div#VDivider.dracula-divider-held::after {
+    width: 48px;
+  }
+
+  div#HDivider.dracula-divider-held::after {
+    height: 48px;
+  }
 }
 
 /* A tap on the V divider swaps between the list and the detail panel; the class
