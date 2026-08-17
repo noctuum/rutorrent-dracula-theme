@@ -1,0 +1,2079 @@
+/* Dracula Theme for ruTorrent — main styles
+ * Version 0.1.0 · built against ruTorrent 5.3
+ * https://draculatheme.com
+ *
+ * Color Palette: Dracula Classic
+ * Icons: Phosphor Icons Duotone (MIT) - https://phosphoricons.com
+ */
+
+/* === Dracula Palette === */
+
+:root {
+  /* Read back by init.js to catch a stale sheet. ruTorrent serves every sheet
+     under a `?v=<its own version>` URL (`js/plugins.js:3`), so a theme update
+     changes no character of the URL and a browser may keep yesterday's CSS;
+     init.js cannot go stale the same way, being inlined into the PHP response
+     (`plugins/theme/init.php:22`). Each sheet stamps separately, so a set of
+     files from two different releases is caught too. */
+  --dracula-version:    "0.1.0";
+
+  --dracula-bg:         #282A36;
+  --dracula-fg:         #F8F8F2;
+  --dracula-current:    #44475A;
+  --dracula-selection:  #44475A;
+  --dracula-comment:    #6272A4;
+  --dracula-red:        #FF5555;
+  --dracula-orange:     #FFB86C;
+  --dracula-yellow:     #F1FA8C;
+  --dracula-green:      #50FA7B;
+  --dracula-cyan:       #8BE9FD;
+  --dracula-purple:     #BD93F9;
+  --dracula-pink:       #FF79C6;
+
+  /* Derived colors */
+  --dracula-bg-darker:  #21222C;
+  --dracula-bg-lighter: #343746;
+
+  /* Monospace stack, shared by the plugin consoles, the chunk map and the
+     URL textarea so they do not drift apart */
+  --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font", ui-monospace, monospace;
+
+  /* === Phosphor Duotone Icons === */
+
+  /* Toolbar icons */
+  /* https://phosphoricons.com/?q=plus-circle */
+  --icon-add: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%2350FA7B'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm48-88a8,8,0,0,1-8,8H136v32a8,8,0,0,1-16,0V136H88a8,8,0,0,1,0-16h32V88a8,8,0,0,1,16,0v32h32A8,8,0,0,1,176,128Z' fill='%2350FA7B'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=file-plus */
+  --icon-create: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-40-64a8,8,0,0,1-8,8H136v16a8,8,0,0,1-16,0V160H104a8,8,0,0,1,0-16h16V128a8,8,0,0,1,16,0v16h16A8,8,0,0,1,160,152Z' fill='%23BD93F9'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=x-circle */
+  --icon-remove: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%23FF5555'/%3E%3Cpath d='M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z' fill='%23FF5555'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=play-circle */
+  --icon-start: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,32a96,96,0,1,0,96,96A96,96,0,0,0,128,32ZM108,168V88l64,40Z' opacity='0.2' fill='%2350FA7B'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm48.24-94.78-64-40A8,8,0,0,0,100,88v80a8,8,0,0,0,12.24,6.78l64-40a8,8,0,0,0,0-13.56ZM116,153.57V102.43L156.91,128Z' fill='%2350FA7B'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=pause-circle */
+  --icon-pause: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%23FFB86C'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM112,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z' fill='%23FFB86C'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=stop-circle */
+  /* Circle rather than the bare `stop` square: at 28px every other glyph in
+     the row carries a ring, and a square alone reads as a gap in the rhythm. */
+  --icon-stop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%23FF5555'/%3E%3Cpath d='M232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM160,88H96a8,8,0,0,0-8,8v64a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V96A8,8,0,0,0,160,88Zm-8,64H104V104h48Z' fill='%23FF5555'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=arrow-fat-up */
+  --icon-move-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,120H176v88a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V120H32l96-96Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M229.66,114.34l-96-96a8,8,0,0,0-11.32,0l-96,96A8,8,0,0,0,32,128H72v80a16,16,0,0,0,16,16h80a16,16,0,0,0,16-16V128h40a8,8,0,0,0,5.66-13.66ZM176,112a8,8,0,0,0-8,8v88H88V120a8,8,0,0,0-8-8H51.31L128,35.31,204.69,112Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=arrow-fat-down */
+  --icon-move-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,136l-96,96L32,136H80V48a8,8,0,0,1,8-8h80a8,8,0,0,1,8,8v88Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M231.39,132.94A8,8,0,0,0,224,128H184V48a16,16,0,0,0-16-16H88A16,16,0,0,0,72,48v80H32a8,8,0,0,0-5.66,13.66l96,96a8,8,0,0,0,11.32,0l96-96A8,8,0,0,0,231.39,132.94ZM128,220.69,51.31,144H80a8,8,0,0,0,8-8V48h80v88a8,8,0,0,0,8,8h28.69Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=magnifying-glass */
+  --icon-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M192,112a80,80,0,1,1-80-80A80,80,0,0,1,192,112Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M229.66,218.34,179.6,168.28a88.21,88.21,0,1,0-11.32,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=rss */
+  --icon-rss: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216,200H56V40A160,160,0,0,1,216,200Z' opacity='0.2' fill='%23FFB86C'/%3E%3Cpath d='M106.91,149.09A71.53,71.53,0,0,1,128,200a8,8,0,0,1-16,0,56,56,0,0,0-56-56,8,8,0,0,1,0-16A71.53,71.53,0,0,1,106.91,149.09ZM56,80a8,8,0,0,0,0,16A104,104,0,0,1,160,200a8,8,0,0,0,16,0A120,120,0,0,0,56,80Zm118.79,1.21A166.89,166.89,0,0,0,56,32a8,8,0,0,0,0,16A151,151,0,0,1,163.48,92.52,151,151,0,0,1,208,200a8,8,0,0,0,16,0A166.9,166.9,0,0,0,174.79,81.21ZM60,184a12,12,0,1,0,12,12A12,12,0,0,0,60,184Z' fill='%23FFB86C'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=gear */
+  --icon-settings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M207.86,123.18l16.78-21a99.14,99.14,0,0,0-10.07-24.29l-26.7-3a81,81,0,0,0-6.81-6.81l-3-26.71a99.43,99.43,0,0,0-24.3-10l-21,16.77a81.59,81.59,0,0,0-9.64,0l-21-16.78A99.14,99.14,0,0,0,77.91,41.43l-3,26.7a81,81,0,0,0-6.81,6.81l-26.71,3a99.43,99.43,0,0,0-10,24.3l16.77,21a81.59,81.59,0,0,0,0,9.64l-16.78,21a99.14,99.14,0,0,0,10.07,24.29l26.7,3a81,81,0,0,0,6.81,6.81l3,26.71a99.43,99.43,0,0,0,24.3,10l21-16.77a81.59,81.59,0,0,0,9.64,0l21,16.78a99.14,99.14,0,0,0,24.29-10.07l3-26.7a81,81,0,0,0,6.81-6.81l26.71-3a99.43,99.43,0,0,0,10-24.3l-16.77-21A81.59,81.59,0,0,0,207.86,123.18ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8.06,8.06,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8.06,8.06,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=question */
+  --icon-help: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=puzzle-piece */
+  --icon-plugins: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M204,168a28,28,0,0,0,12-2.69V208a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V165.31a28,28,0,1,1,0-50.62V72a8,8,0,0,1,8-8h46.69a28,28,0,1,1,50.61,0H208a8,8,0,0,1,8,8v42.69A28,28,0,1,0,204,168Z' opacity='0.2' fill='%23FFB86C'/%3E%3Cpath d='M220.27,158.54a8,8,0,0,0-7.7-.46,20,20,0,1,1,0-36.16A8,8,0,0,0,224,114.69V72a16,16,0,0,0-16-16H171.78a35.36,35.36,0,0,0,.22-4,36.15,36.15,0,0,0-11.36-26.25,36,36,0,0,0-60.55,23.63,36.56,36.56,0,0,0,.14,6.62H64A16,16,0,0,0,48,72v32.22a35.36,35.36,0,0,0-4-.22,36.12,36.12,0,0,0-26.24,11.36,35.7,35.7,0,0,0-9.69,27,36.08,36.08,0,0,0,33.31,33.6,36.56,36.56,0,0,0,6.62-.14V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V165.31A8,8,0,0,0,220.27,158.54ZM208,208H64V165.31a8,8,0,0,0-11.43-7.23,20,20,0,1,1,0-36.16A8,8,0,0,0,64,114.69V72h46.69a8,8,0,0,0,7.23-11.43,20,20,0,1,1,36.16,0A8,8,0,0,0,161.31,72H208v32.23a35.68,35.68,0,0,0-6.62-.14A36,36,0,0,0,204,176a35.36,35.36,0,0,0,4-.22Z' fill='%23FFB86C'/%3E%3C/svg%3E");
+
+  /* Mobile navbar toggler, the one glyph here that is not Phosphor: it sits
+     beside the sidebar button, which carries Bootstrap's own bi-three-dots at
+     currentColor, and a duotone circle next to a 2px stroke at 16px reads as
+     two icon sets in one bar. Bootstrap's hamburger with the stroke moved onto
+     the palette — upstream draws it in rgba(33,37,41,0.75), which composites to
+     #313848 on the button: 2.49:1, under the 3:1 a UI graphic needs.
+
+     Two variants, the pair .dlg-close also keeps, because a data-URI cannot
+     follow currentColor the way a neighbouring inline SVG does. The button goes
+     purple on hover with the text dropped to the background colour, so the
+     glyph makes the same trip: 4.41:1 on the comment-coloured button, 5.81:1 on
+     the purple one. */
+  --icon-hamburger-fg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23F8F8F2' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+  --icon-hamburger-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23282A36' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+
+  /* Category panel icons */
+  /* https://phosphoricons.com/?q=caret-down */
+  --icon-caret-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 256 256'%3E%3Cpath d='M208,96l-80,80L48,96Z' opacity='0.2' fill='%23F8F8F2'/%3E%3Cpath d='M215.39,92.94A8,8,0,0,0,208,88H48a8,8,0,0,0-5.66,13.66l80,80a8,8,0,0,0,11.32,0l80-80A8,8,0,0,0,215.39,92.94ZM128,164.69,67.31,104H188.69Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+
+  /* Dialog icons */
+  /* Dialog close: the same Phosphor x-circle the error status uses — one
+     shape, one definition. Plain crosses read as debris next to the
+     circular icons everywhere else in the theme. */
+  --icon-close-red: var(--icon-status-error);
+  --icon-close-fg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%23F8F8F2'/%3E%3Cpath d='M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* Cyan, the hue the download indicators use — these dialogs pull an existing
+     torrent file in from a feed or a search hit */
+  /* https://phosphoricons.com/?q=file-arrow-down */
+  --icon-file-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z' opacity='0.2' fill='%238BE9FD'/%3E%3Cpath d='M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-42.34-61.66a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L120,164.69V120a8,8,0,0,1,16,0v44.69l10.34-10.35A8,8,0,0,1,157.66,154.34Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=magnet-straight */
+  --icon-magnet: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M104,56V96H48V56a8,8,0,0,1,8-8H96A8,8,0,0,1,104,56Zm96-8H160a8,8,0,0,0-8,8V96h56V56A8,8,0,0,0,200,48Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M200,40H160a16,16,0,0,0-16,16v88a16,16,0,0,1-32,0V56A16,16,0,0,0,96,40H56A16,16,0,0,0,40,56v88a88,88,0,0,0,88,88h.67c48.15-.36,87.33-40.29,87.33-89V56A16,16,0,0,0,200,40Zm0,16V88H160V56ZM96,56V88H56V56Zm32.55,160A72,72,0,0,1,56,144V104H96v40a32,32,0,0,0,64,0V104h40v39C200,183,168,215.71,128.55,216Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=user-plus */
+  --icon-user-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M168,100a60,60,0,1,1-60-60A60,60,0,0,1,168,100Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M256,136a8,8,0,0,1-8,8H232v16a8,8,0,0,1-16,0V144H200a8,8,0,0,1,0-16h16V112a8,8,0,0,1,16,0v16h16A8,8,0,0,1,256,136Zm-57.87,58.85a8,8,0,0,1-12.26,10.3C165.75,181.19,138.09,168,108,168s-57.75,13.19-77.87,37.15a8,8,0,0,1-12.25-10.3c14.94-17.78,33.52-30.41,54.17-37.17a68,68,0,1,1,71.9,0C164.6,164.44,183.18,177.07,198.13,194.85ZM108,152a52,52,0,1,0-52-52A52.06,52.06,0,0,0,108,152Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=info */
+  --icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* Purple, the accent the sidebar gives a category — this dialog assigns one */
+  /* https://phosphoricons.com/?q=tag */
+  --icon-tag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M237.66,153,153,237.66a8,8,0,0,1-11.31,0L42.34,138.34A8,8,0,0,1,40,132.69V40h92.69a8,8,0,0,1,5.65,2.34l99.32,99.32A8,8,0,0,1,237.66,153Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=terminal-window */
+  --icon-console: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,56V200a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V56a8,8,0,0,1,8-8H216A8,8,0,0,1,224,56Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M128,128a8,8,0,0,1-3,6.25l-40,32a8,8,0,1,1-10-12.5L107.19,128,75,102.25a8,8,0,1,1,10-12.5l40,32A8,8,0,0,1,128,128Zm48,24H136a8,8,0,0,0,0,16h40a8,8,0,0,0,0-16Zm56-96V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56ZM216,200V56H40V200H216Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* The confirmation dialog's warning is the same Phosphor warning-circle the
+     incomplete torrent status already carries — one shape, one definition. */
+  --icon-warning: var(--icon-status-incompleted);
+
+  /* Panel label status icons. Only the ones the sidebar alone uses live here;
+     the five it shares with the torrent list (down, completed, paused, error,
+     rss) are defined once, further down. */
+  /* The sidebar's Stopped row: a square reads as stopped where a pause glyph
+     reads as "will continue". Orange, unlike --icon-status-stopped-quiet
+     further down, which is the same square in Comment for the torrent list — a
+     filter is a control and stays loud, a stopped row is a state and recedes. */
+  /* https://phosphoricons.com/?q=stop-circle (Orange) */
+  --icon-status-stopped: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,32a96,96,0,1,0,96,96A96,96,0,0,0,128,32Zm32,128H96V96h64Z' opacity='0.2' fill='%23FFB86C'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM160,88H96a8,8,0,0,0-8,8v64a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V96A8,8,0,0,0,160,88Zm-8,64H104V104h48Z' fill='%23FFB86C'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=circle (Comment — inactive/stopped) */
+  --icon-status-inactive: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=caret-circle-up-down (Purple — active) */
+  --icon-status-active: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM165.66,98.34a8,8,0,0,1-11.32,11.32L128,83.31l-26.34,26.35A8,8,0,0,1,90.34,98.34l32-32a8,8,0,0,1,11.32,0Zm0,48a8,8,0,0,1,0,11.32l-32,32a8,8,0,0,1-11.32,0l-32-32a8,8,0,0,1,11.32-11.32L128,172.69l26.34-26.35A8,8,0,0,1,165.66,146.34Z' fill='%23BD93F9'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=radio-button (Purple — all) */
+  --icon-status-all: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M176,128a48,48,0,1,1-48-48A48,48,0,0,1,176,128Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm0-144a56,56,0,1,0,56,56A56.06,56.06,0,0,0,128,72Zm0,96a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z' fill='%23BD93F9'/%3E%3C/svg%3E");
+
+  /* File/directory icons */
+  /* https://phosphoricons.com/?q=file */
+  --icon-file: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M208,88H152V32Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=folder */
+  --icon-dir: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,80H32V56a8,8,0,0,1,8-8H92.69a8,8,0,0,1,5.65,2.34Z' opacity='0.2' fill='%23FFB86C'/%3E%3Cpath d='M216,72H131.31L104,44.69A15.86,15.86,0,0,0,92.69,40H40A16,16,0,0,0,24,56V200.62A15.4,15.4,0,0,0,39.38,216H216.89A15.13,15.13,0,0,0,232,200.89V88A16,16,0,0,0,216,72ZM92.69,56l16,16H40V56ZM216,200H40V88H216Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=folder */
+  --icon-share: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,80H32V56a8,8,0,0,1,8-8H92.69a8,8,0,0,1,5.65,2.34Z' opacity='0.2' fill='%2350FA7B'/%3E%3Cpath d='M216,72H131.31L104,44.69A15.86,15.86,0,0,0,92.69,40H40A16,16,0,0,0,24,56V200.62A15.4,15.4,0,0,0,39.38,216H216.89A15.13,15.13,0,0,0,232,200.89V88A16,16,0,0,0,216,72ZM92.69,56l16,16H40V56ZM216,200H40V88H216Z' fill='%23F8F8F2'/%3E%3C/svg%3E");
+
+  /* Status bar icons */
+  /* https://phosphoricons.com/?q=arrow-circle-up */
+  --icon-upload-speed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%2350FA7B'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm37.66-101.66a8,8,0,0,1-11.32,11.32L136,107.31V168a8,8,0,0,1-16,0V107.31l-18.34,18.35a8,8,0,0,1-11.32-11.32l32-32a8,8,0,0,1,11.32,0Z' fill='%2350FA7B'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=arrow-circle-down */
+  --icon-download-speed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%238BE9FD'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm37.66-85.66a8,8,0,0,1,0,11.32l-32,32a8,8,0,0,1-11.32,0l-32-32a8,8,0,0,1,11.32-11.32L120,148.69V88a8,8,0,0,1,16,0v60.69l18.34-18.35A8,8,0,0,1,165.66,130.34Z' fill='%238BE9FD'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=plugs-connected */
+  --icon-plugs-connected: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M185,127,127,185a24,24,0,0,1-33.94,0L71,162.91A24,24,0,0,1,71,129L129,71a24,24,0,0,1,33.94,0L185,93.09A24,24,0,0,1,185,127Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M237.66,18.34a8,8,0,0,0-11.32,0l-52.4,52.41-5.37-5.38a32.05,32.05,0,0,0-45.26,0L100,88.69l-6.34-6.35A8,8,0,0,0,82.34,93.66L88.69,100,65.37,123.31a32,32,0,0,0,0,45.26l5.38,5.37-52.41,52.4a8,8,0,0,0,11.32,11.32l52.4-52.41,5.37,5.38a32.06,32.06,0,0,0,45.26,0L156,167.31l6.34,6.35a8,8,0,0,0,11.32-11.32L167.31,156l23.32-23.31a32,32,0,0,0,0-45.26l-5.38-5.37,52.41-52.4A8,8,0,0,0,237.66,18.34Zm-116.29,161a16,16,0,0,1-22.62,0L76.69,157.25a16,16,0,0,1,0-22.62L100,111.31,144.69,156Zm57.94-57.94h0L156,144.69,111.31,100l23.32-23.31a16,16,0,0,1,22.62,0l22.06,22a16,16,0,0,1,0,22.63ZM88.57,35A8,8,0,0,1,103.43,29l8,20A8,8,0,0,1,96.57,55ZM24.57,93A8,8,0,0,1,35,88.57l20,8A8,8,0,0,1,49,111.43l-20-8A8,8,0,0,1,24.57,93ZM231.43,163a8,8,0,0,1-10.4,4.46l-20-8A8,8,0,1,1,207,144.57l20,8A8,8,0,0,1,231.43,163Zm-64,58.06A8,8,0,0,1,152.57,227l-8-20A8,8,0,0,1,159.43,201Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=pulse */
+  --icon-pulse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M96,40l33.52,88H56Zm104,88H129.52L160,208Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M240,128a8,8,0,0,1-8,8H204.94l-37.78,75.58A8,8,0,0,1,160,216h-.4a8,8,0,0,1-7.08-5.14L95.35,60.76,63.28,131.31A8,8,0,0,1,56,136H24a8,8,0,0,1,0-16H50.85L88.72,36.69a8,8,0,0,1,14.76.46l57.51,151,31.85-63.71A8,8,0,0,1,200,120h32A8,8,0,0,1,240,128Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=list */
+  --icon-list: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216,64V192H40V64Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=clock */
+  --icon-clock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=hard-drives */
+  --icon-disk: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216,152v48a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152a8,8,0,0,1,8-8H208A8,8,0,0,1,216,152ZM208,48H48a8,8,0,0,0-8,8v48a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V56A8,8,0,0,0,208,48Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M208,136H48a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V152A16,16,0,0,0,208,136Zm0,64H48V152H208v48Zm0-160H48A16,16,0,0,0,32,56v48a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V56A16,16,0,0,0,208,40Zm0,64H48V56H208v48ZM192,80a12,12,0,1,1-12-12A12,12,0,0,1,192,80Zm0,96a12,12,0,1,1-12-12A12,12,0,0,1,192,176Z' fill='%23BD93F9'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=cpu */
+  --icon-cpu: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M200,48H56a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8V56A8,8,0,0,0,200,48ZM152,152H104V104h48Z' opacity='0.2' fill='%238BE9FD'/%3E%3Cpath d='M152,96H104a8,8,0,0,0-8,8v48a8,8,0,0,0,8,8h48a8,8,0,0,0,8-8V104A8,8,0,0,0,152,96Zm-8,48H112V112h32Zm88,0H216V112h16a8,8,0,0,0,0-16H216V56a16,16,0,0,0-16-16H160V24a8,8,0,0,0-16,0V40H112V24a8,8,0,0,0-16,0V40H56A16,16,0,0,0,40,56V96H24a8,8,0,0,0,0,16H40v32H24a8,8,0,0,0,0,16H40v40a16,16,0,0,0,16,16H96v16a8,8,0,0,0,16,0V216h32v16a8,8,0,0,0,16,0V216h40a16,16,0,0,0,16-16V160h16a8,8,0,0,0,0-16Zm-32,56H56V56H200v95.87s0,.09,0,.13,0,.09,0,.13V200Z' fill='%238BE9FD'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=speedometer */
+  --icon-speedometer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M232,152a103.93,103.93,0,0,1-5.9,34.63,8,8,0,0,1-7.57,5.37H37.46a8.05,8.05,0,0,1-7.57-5.41A104.06,104.06,0,0,1,24,151.19C24.44,94,71.73,47.49,129,48A104,104,0,0,1,232,152Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M114.34,154.34l96-96a8,8,0,0,1,11.32,11.32l-96,96a8,8,0,0,1-11.32-11.32ZM128,88a63.9,63.9,0,0,1,20.44,3.33,8,8,0,1,0,5.11-15.16A80,80,0,0,0,48.49,160.88,8,8,0,0,0,56.43,168c.29,0,.59,0,.89-.05a8,8,0,0,0,7.07-8.83A64.92,64.92,0,0,1,64,152,64.07,64.07,0,0,1,128,88Zm99.74,13a8,8,0,0,0-14.24,7.3,96.27,96.27,0,0,1,5,75.71l-181.1-.07A96.24,96.24,0,0,1,128,56h.88a95,95,0,0,1,42.82,10.5A8,8,0,1,0,179,52.27,110.8,110.8,0,0,0,129,40h-1A112.05,112.05,0,0,0,22.35,189.25,16.07,16.07,0,0,0,37.46,200H218.53a16,16,0,0,0,15.11-10.71,112.35,112.35,0,0,0-5.9-88.3Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=sigma */
+  --icon-sigma: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M192,48V208H64l64-80L64,48Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M184,72V56H80.65l53.6,67a8,8,0,0,1,0,10l-53.6,67H184V184a8,8,0,0,1,16,0v24a8,8,0,0,1-8,8H64a8,8,0,0,1-6.25-13l60-75-60-75A8,8,0,0,1,64,40H192a8,8,0,0,1,8,8V72a8,8,0,0,1-16,0Z' fill='%236272A4'/%3E%3C/svg%3E");
+
+  /* Torrent status icons (stable.css). Five — down, completed, paused, error
+     and rss — are shared with the sidebar's panel labels, which is why the
+     block above does not repeat them.
+
+     Six are the same picture as a control further up, down to the byte: a
+     status is drawn with the glyph of the action that produces it. Each points
+     at the earlier definition rather than carrying a copy, so the name still
+     says what the icon is for while the artwork exists once. Point a name at a
+     real url() again the day the two are meant to diverge. */
+  /* https://phosphoricons.com/?q=arrow-circle-down (Cyan) */
+  --icon-status-down: var(--icon-download-speed);
+  /* https://phosphoricons.com/?q=arrow-circle-up */
+  --icon-status-up: var(--icon-upload-speed);
+  /* https://phosphoricons.com/?q=warning-circle */
+  --icon-status-incompleted: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%23FFB86C'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z' fill='%23FFB86C'/%3E%3C/svg%3E");
+  /* The two rows that are not problems: something stopped, something paused.
+     They keep their shapes and lose the orange, so that in this column colour
+     carries severity and nothing else — green is healthy, Comment is at rest,
+     orange wants attention, red is broken.
+
+     Artwork duplicated rather than pointed at the originals, on purpose:
+     --icon-status-stopped is the sidebar's Stopped filter and --icon-pause the
+     toolbar's Pause button, and both stay orange where they are. A control and
+     a state are allowed to diverge — see the note above. */
+  /* https://phosphoricons.com/?q=stop-circle (Comment) */
+  --icon-status-stopped-quiet: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,32a96,96,0,1,0,96,96A96,96,0,0,0,128,32Zm32,128H96V96h64Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM160,88H96a8,8,0,0,0-8,8v64a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V96A8,8,0,0,0,160,88Zm-8,64H104V104h48Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=pause-circle (Comment) */
+  --icon-status-paused-quiet: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM112,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=x-circle (Red) */
+  --icon-status-error: var(--icon-remove);
+  /* https://phosphoricons.com/?q=check-circle (Green) */
+  --icon-status-completed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%2350FA7B'/%3E%3Cpath d='M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z' fill='%2350FA7B'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=clock */
+  --icon-status-queued: var(--icon-clock);
+  /* https://phosphoricons.com/?q=arrows-down-up (custom) */
+  --icon-status-up-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M176,48V208H80V48Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M117.66,170.34a8,8,0,0,1,0,11.32l-32,32a8,8,0,0,1-11.32,0l-32-32a8,8,0,0,1,11.32-11.32L72,188.69V48a8,8,0,0,1,16,0V188.69l18.34-18.35A8,8,0,0,1,117.66,170.34Zm96-96-32-32a8,8,0,0,0-11.32,0l-32,32a8,8,0,0,0,11.32,11.32L168,67.31V208a8,8,0,0,0,16,0V67.31l18.34,18.35a8,8,0,0,0,11.32-11.32Z' fill='%23BD93F9'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=spinner (custom) */
+  --icon-status-checking: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%23F1FA8C'/%3E%3Cpath d='M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z' fill='%23F1FA8C'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=rss (Orange) */
+  --icon-status-rss: var(--icon-rss);
+  /* A feed switched off: rss/init.js swaps the icon name when
+     rssLabels[id].enabled === 0. Same glyph in Comment instead of Orange — the
+     feed is still listed, it just has nothing to say. */
+  --icon-status-rss-dis: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216,200H56V40A160,160,0,0,1,216,200Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M106.91,149.09A71.53,71.53,0,0,1,128,200a8,8,0,0,1-16,0,56,56,0,0,0-56-56,8,8,0,0,1,0-16A71.53,71.53,0,0,1,106.91,149.09ZM56,80a8,8,0,0,0,0,16A104,104,0,0,1,160,200a8,8,0,0,0,16,0A120,120,0,0,0,56,80Zm118.79,1.21A166.89,166.89,0,0,0,56,32a8,8,0,0,0,0,16A151,151,0,0,1,163.48,92.52,151,151,0,0,1,208,200a8,8,0,0,0,16,0A166.9,166.9,0,0,0,174.79,81.21ZM60,184a12,12,0,1,0,12,12A12,12,0,0,0,60,184Z' fill='%236272A4'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=folder (Orange) — a group of feeds */
+  --icon-status-rss-group: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216,88V200a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V56a8,8,0,0,1,8-8H93.33a8,8,0,0,1,4.8,1.6l27.74,20.8a8,8,0,0,0,4.8,1.6H208A8,8,0,0,1,216,88Z' opacity='0.2' fill='%23FFB86C'/%3E%3Cpath d='M216,72H131.31L104,44.69A15.86,15.86,0,0,0,92.69,40H40A16,16,0,0,0,24,56V200.62A15.4,15.4,0,0,0,39.38,216H216.89A15.13,15.13,0,0,0,232,200.89V88A16,16,0,0,0,216,72ZM92.69,56l16,16H40V56ZM216,200H40V88H216Z' fill='%23FFB86C'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=magnifying-glass (Purple) — the sidebar's
+     saved searches. --icon-search is the same glyph in Comment for the toolbar,
+     where a muted control is wanted; a list row needs the row colour. */
+  --icon-status-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M192,112a80,80,0,1,1-80-80A80,80,0,0,1,192,112Z' opacity='0.2' fill='%23BD93F9'/%3E%3Cpath d='M229.66,218.34,179.6,168.28a88.21,88.21,0,1,0-11.32,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z' fill='%23BD93F9'/%3E%3C/svg%3E");
+
+  /* Port status icons (plugins.css) */
+  /* https://phosphoricons.com/?q=circle */
+  --icon-port-open: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 256 256'%3E%3Ccircle cx='128' cy='128' r='96' fill='%2350FA7B' opacity='0.2'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z' fill='%2350FA7B'/%3E%3C/svg%3E");
+  /* https://phosphoricons.com/?q=prohibit */
+  --icon-port-closed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 256 256'%3E%3Ccircle cx='128' cy='128' r='96' fill='%23FF5555' opacity='0.2'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z' fill='%23FF5555'/%3E%3C/svg%3E");
+  /* Port status is still being checked — muted, so it does not read as a verdict */
+  --icon-port-unknown: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 256 256'%3E%3Ccircle cx='128' cy='128' r='96' fill='%236272A4' opacity='0.2'/%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z' fill='%236272A4'/%3E%3C/svg%3E");
+
+  /* The tracker list falls back to this when a tracker has no domain to fetch
+     a favicon for — in practice the dht:// row. */
+  /* https://phosphoricons.com/?q=share-network */
+  --icon-peer-network: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M208,200a32,32,0,1,1-32-32A32,32,0,0,1,208,200ZM176,88a32,32,0,1,0-32-32A32,32,0,0,0,176,88Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z' fill='%236272A4'/%3E%3C/svg%3E");
+
+  /* https://phosphoricons.com/?q=prohibit-inset */
+  --icon-no-label: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z' opacity='0.2' fill='%236272A4'/%3E%3Cpath d='M165.66,154.34a8,8,0,0,1-11.32,11.32l-64-64a8,8,0,0,1,11.32-11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z' fill='%236272A4'/%3E%3C/svg%3E");
+}
+
+/* === Global: kill all sharp corners === */
+
+*, *::before, *::after {
+  border-radius: 4px;
+}
+
+/* === Typography === */
+
+/* Inter, bundled rather than linked. A CDN would tell a third party the IP of
+   everyone who opens their own torrent client, and would leave the typography
+   broken on the LAN-only and VPN-only setups this software usually runs on.
+   The files are in fonts/, under the SIL Open Font License in fonts/OFL.txt —
+   Inter reserves no font name, so the subsets may keep it.
+
+   Seven files rather than one, and not base64 inside this sheet: unicode-range
+   only earns its keep when the subsets are separately fetchable, so a browser
+   downloads just the ranges the page uses. Latin alone is 48KB, Latin plus
+   Cyrillic 67KB, against 219KB for the whole set — and base64 adds a third
+   again and does not compress, woff2 being compressed already.
+
+   One file per range covers every weight: these are variable fonts with a wght
+   axis, which is why the ranges below say `100 900` rather than a number. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-cyrillic-ext.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-greek.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-greek-ext.woff2") format("woff2");
+  unicode-range: U+1F00-1FFF;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-vietnamese.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+
+
+/* JetBrains Mono for the consoles, the chunk map and the URL field, bundled on
+   the same terms as Inter — fonts/OFL-JetBrainsMono.txt, no Reserved Font Name.
+   All six ranges together are 66KB, a third of what Inter costs, and the same
+   unicode-range rule applies: only what a page uses is fetched.
+
+   "JetBrainsMono Nerd Font" stays in the --font-mono stack because Nerd Font
+   builds register under their own family name and never under "JetBrains
+   Mono" — a locally installed copy answers to that name alone, and only to it,
+   if the bundled file ever fails. */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-cyrillic-ext.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-greek.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-vietnamese.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+
+/* === Base === */
+
+html, body {
+  background-color: var(--dracula-bg);
+  color: var(--dracula-fg);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+}
+
+/* Upstream sets the face in one rule — `html, body, input, select, button,
+   textarea` at 11px Tahoma — so the controls need the same treatment as the
+   body or every field sits at 11px Tahoma beside a 14px label. font-family and
+   font-size only: font-weight is set deliberately elsewhere. */
+input, select, textarea, button, optgroup, option {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* The graph legend is drawn by flot, which writes `font-size: smaller` into an
+   inline style on the legend table — 11.67px against the 14px around it. An
+   inline style can only be beaten by !important. The colour swatch beside each
+   series name is boxed in a hardcoded #ccc the same way. */
+.legend table {
+  font-size: 12px !important;
+}
+
+.legendColorBox > div {
+  border-color: var(--dracula-current) !important;
+}
+
+/* Upstream asks for `monospace` at 0.9em here, and a bare `monospace` also
+   trips Chrome's separate default size for the generic family. */
+#addtorrenturl textarea#url {
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+a { color: var(--dracula-cyan); }
+a:hover { color: var(--dracula-pink); }
+
+/* === Scrollbars === */
+
+/* The standard properties are the only ones Firefox reads, and Chrome prefers
+   them over ::-webkit-scrollbar wherever they are set, so this one rule paints
+   the same bar in both. Both inherit, so the root covers every scroller. Width
+   is left at the default `auto`, which is what makes the bar wider than the
+   10px the webkit rules below ask for. */
+html { scrollbar-color: var(--dracula-comment) var(--dracula-bg-darker); }
+
+/* Fallback for WebKit browsers without standard support. Chrome ignores every
+   rule here because of the scrollbar-color above; do not tune it by eye in
+   Chrome, nothing you change will show. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--dracula-bg-darker); }
+::-webkit-scrollbar-thumb { background: var(--dracula-comment); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--dracula-purple); }
+::-webkit-scrollbar-corner { background: var(--dracula-bg-darker); }
+
+/* === CSS Custom Properties (ruTorrent) === */
+
+/* A second :root, on purpose. The block at the top of the file is the Dracula
+   palette itself; this one is the mapping layer, taking upstream's variable
+   names and giving them values from that palette. Nothing
+   is shadowed either way, since no property is declared in both — the hazard a
+   duplicate selector usually signals, and checked separately by
+   declaration-block-no-duplicate-custom-properties. */
+/* stylelint-disable-next-line no-duplicate-selectors */
+:root {
+  --text-color: var(--dracula-fg);
+  --text-header-color: var(--dracula-fg);
+  --menu-color: var(--dracula-fg);
+  --menu-background-color: var(--dracula-bg-darker);
+  --menu-border-color: var(--dracula-current);
+  --menu-disabled-color: var(--dracula-comment);
+  --menu-disabled-background-color: var(--dracula-bg);
+  --menu-highlight-color: var(--dracula-bg);
+  --menu-highlight-background-color: var(--dracula-purple);
+  --menu-active-color: var(--dracula-green);
+  /* Both marks a menu item can carry ship as baked-in GIFs, and both are off
+     palette: the submenu arrow's entire colour table is `000000`, 1.33:1 on the
+     menu background, and the "current item" tick decodes to `#008C14`, 3.58:1.
+
+     These hold shape only. The ink is applied further down, where the marks are
+     painted as masks rather than as pictures. The arrow is the caret the
+     sidebar already draws, turned a quarter turn by the rule that uses it — one
+     shape, one definition, as `--icon-close-red` also does. The tick is
+     Phosphor's `check` drawn as its centreline stroke rather than as an
+     outline, at bold weight: these render at 0.75rem, where an outlined check
+     thins to a 0.75px hairline. */
+  --menu-item-active-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='24' d='M224,72,96,200,40,144'/%3E%3C/svg%3E");
+  --menu-item-exp-icon: var(--icon-caret-down);
+  --menu-connect-line-color: var(--dracula-current);
+  --menu-connect-line-style: none;
+  --container-bg-color: var(--dracula-bg);
+  --container-border-color: var(--dracula-current);
+  --btn-bg-color: var(--dracula-comment);
+  --header-bg-color: var(--dracula-bg);
+  --header-border-color: var(--dracula-current);
+  --footer-height: 32px;
+  --footer-bg-color: var(--dracula-bg-darker);
+  --footer-bg-image: none;
+  --footer-border-color: var(--dracula-current);
+  --dialog-bg-color: var(--dracula-bg);
+  --dialog-border-color: var(--dracula-comment);
+  --navbar-height: 48px;
+  --navbar-bg-color: var(--dracula-bg-darker);
+  --navbar-bg-image: none;
+  --navbar-border-color: transparent;
+  --navbar-item-bg-color: transparent;
+  --navbar-item-border-color: transparent;
+  /* A round orb web, to sit with the round icons either side of it: eight
+     spokes and three rings, the rings' corners landing on the spokes so the
+     whole thing meshes. Everything is inscribed in a circle of radius 108, so
+     the shape sweeps no wider than itself when it turns and needs no extra room
+     in the bar. Upstream's default for this variable is a GIF. */
+  --loading-indicator-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cg fill='none' stroke='%236272A4' stroke-width='11' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M128 20V236M20 128H236M51.6 51.6L204.4 204.4M204.4 51.6L51.6 204.4'/%3E%3Cpath d='M128 92L153.5 102.5L164 128L153.5 153.5L128 164L102.5 153.5L92 128L102.5 102.5Z'/%3E%3Cpath d='M128 56L178.9 77.1L200 128L178.9 178.9L128 200L77.1 178.9L56 128L77.1 77.1Z'/%3E%3Cpath d='M128 20L204.4 51.6L236 128L204.4 204.4L128 236L51.6 204.4L20 128L51.6 51.6Z'/%3E%3C/g%3E%3C/svg%3E");
+
+  --loading-indicator-side-length: 32px;
+}
+
+/* === Loading Indicator: Three Dots === */
+
+@keyframes dracula-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+span#loadimg {
+  background: var(--dracula-pink) !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+  position: relative;
+  animation: dracula-bounce 1.2s ease-in-out 0.2s infinite;
+  font-size: 0 !important;
+}
+
+span#loadimg::before,
+span#loadimg::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50% !important;
+}
+
+span#loadimg::before {
+  left: -18px;
+  background: var(--dracula-purple);
+  animation: dracula-bounce 1.2s ease-in-out 0s infinite;
+}
+
+span#loadimg::after {
+  left: 18px;
+  background: var(--dracula-cyan);
+  animation: dracula-bounce 1.2s ease-in-out 0.4s infinite;
+}
+
+/* Hides the "Loading..." caption so only the three dots above it show. Matched
+   on the element rather than on `[uilang]`, which ruTorrent strips once it has
+   localised the text. Hiding the caption from the parent instead is not an
+   option — see the #msg rule further down. */
+div#msg > span:not(#loadimg) {
+  display: none !important;
+}
+
+/* === Loading Indicator: The Web === */
+
+/* Two loaders, two jobs. The three dots above live inside `#cover` and exist
+   only while the page boots; this one lives in the toolbar and reports every
+   request the UI makes afterwards.
+
+   Motion is the whole signal: a web standing still means the UI is idle, a web
+   turning means it is waiting on the server. So the web is a permanent part of
+   the bar rather than a glyph that appears and disappears.
+
+   One full turn and then a rest, repeating, not a continuous spin. The
+   keyframes hold at 360 degrees for the last third of the cycle, and because
+   360 is where the glyph started, that hold is also where the animation can be
+   taken away without anything moving — draculaWatchLoadingIndicator in init.js
+   waits for exactly that moment, which is what stops the web snapping back
+   mid-turn when a request finishes.
+
+   Known limit, accepted: an eight-spoke web lands on an identical silhouette
+   every 45 degrees, so the eye reads a still picture even while the transform
+   runs. Round is the requirement — this glyph sits between round icons — so the
+   easing carries the legibility instead: a pendulum that creeps away, sweeps
+   through the middle and settles. A linear turn at this size reads as a
+   flicker, if it reads at all. */
+
+@keyframes dracula-web-spin {
+  0%   { transform: rotate(0deg); }
+  64%  { transform: rotate(360deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#ind {
+  /* Upstream hides this element with an inline `visibility`, which only
+     !important outranks. The web is permanent, so it is beaten here. */
+  visibility: visible !important;
+  /* A little smaller than its box, to match the 28px glyphs either side. */
+  background-size: 28px;
+}
+
+/* The class is put on and taken off by init.js, which follows the inline
+   `visibility` upstream already writes. Not driven from CSS alone: an animation
+   stops the instant its rule stops matching, so a request finishing mid-turn
+   would snap the web back to zero. */
+#ind.dracula-loading {
+  animation: dracula-web-spin 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* === Category Panel (sidebar) === */
+
+category-panel {
+  --open-background-image: var(--icon-caret-down);
+  --heading-background-color: var(--dracula-bg-darker);
+  --heading-border-color: var(--dracula-current);
+  font-size: 14px;
+}
+
+/* 22px between the two 1px borders and 3px of padding each side is the theme's
+   30px row. */
+category-panel::part(heading) {
+  height: 22px;
+  line-height: 22px;
+  padding: 3px;
+  font-weight: bold;
+  color: var(--dracula-purple);
+}
+
+/* Compact takes the heading to 26px: 1px each side of the 22px line, between
+   the two 1px borders. Upstream zeroes the padding here
+   (`css/stable.css:203`), which would leave it at 24 and out of step with
+   everything else in compact. */
+body.compact category-panel::part(heading) {
+  padding-block: 1px;
+}
+
+category-list {
+  background-color: var(--dracula-bg);
+  border: none;
+}
+
+/* === Buttons === */
+
+/* Interaction colours, used by every control in the theme:
+ *
+ *   hover     Current Line on an icon or a row, Purple on a filled button
+ *   pressed   Pink, always — the one state that never means anything else
+ *   selected  Purple — the current tab, the current settings page, the
+ *             selected torrent. A lasting state, not a transient one.
+ *   focus     a 2px Purple outline, inset, on :focus-visible only
+ *
+ * Purple therefore reads as "this is the one" and pink as "you are pressing
+ * it right now". Anywhere those two are swapped or missing is a bug. */
+
+/* The selected surface, defined once for every list in the product — the
+   torrent table, the directory picker, anything else that gains one. Purple at
+   full strength runs as a solid bright band the width of the screen; mixed back
+   into the page it still reads as selected without glaring. Dark text goes on
+   it: this is as far as the mix can go before the two stop working together,
+   and the next step down would need light text instead. */
+/* Third :root, kept here rather than joined to either of the others because the
+   paragraph above is the whole justification for the number in it. */
+/* stylelint-disable-next-line no-duplicate-selectors */
+:root {
+  --selection-bg-color: color-mix(in srgb, var(--dracula-purple) 70%, var(--dracula-bg));
+}
+
+/* Upstream groups these as `button, input[type="button"], input[type="submit"],
+   .Button`. A bare `button` is only 0,0,1, so the `.Button` half of that rule
+   keeps the border and text colour unless the whole list is matched here — a
+   #B0B0B0 outline on the plugin dialogs' buttons otherwise. */
+
+/* Horizontal padding is a floor, not a look. Upstream gives 82 of the product's
+   83 buttons a fixed width — 80px from this same rule, plus 30px for the "..."
+   picker, 50px in rss, 57px in extratio, 130px for Recent trackers — so the
+   padding is never seen as air. It eats the content box, and under border-box
+   padding wider than the declared width floors that box at 0 and grows the used
+   width to padding + border, after which the label starts at the content-box
+   edge and overflows right; `text-align: center` cannot save it, because the
+   line box it centres in *is* the content box. 10px is upstream's own value,
+   the one its 80px was sized for; 18px overflows the 30px picker.
+
+   `min-width: fit-content` is the invariant that keeps this from coming back: a
+   button is never narrower than its own label. It covers the few labels too long
+   for their box ("Save Log", "Recent trackers...", extratio's "Delete") and any
+   fixed width a future plugin invents, because min-width beats width no matter
+   which selector set it — no per-plugin list to maintain. It cannot widen a
+   button that has no text, so Bootstrap's .btn-close stays 21px. */
+button, input[type="button"], input[type="submit"], .Button {
+  color: var(--dracula-fg);
+  background-color: var(--dracula-comment);
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 6px 10px;
+  min-width: fit-content;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+button:not([disabled]):hover,
+input[type="button"]:not([disabled]):hover,
+input[type="submit"]:not([disabled]):hover,
+.Button:not([disabled]):hover {
+  background-color: var(--dracula-purple);
+  color: var(--dracula-bg);
+  filter: none;
+}
+
+/* :active on its own, not :hover:active. A button reached by Tab and fired with
+   Space is active without ever being hovered, and upstream's
+   `button:not(:disabled):active { background-color: #FAFAFA }` then paints it
+   near-white under #F8F8F2 text — ~1.02:1 for as long as the key is held. Equal
+   specificity to upstream's rule, so order settles it. */
+button:not([disabled]):active,
+input[type="button"]:not([disabled]):active,
+input[type="submit"]:not([disabled]):active,
+.Button:not([disabled]):active {
+  background-color: var(--dracula-pink);
+  color: var(--dracula-bg);
+  filter: none;
+}
+
+/* === Focus === */
+
+/* One ring, one mechanism, everywhere. Left alone, focus arrives in four
+   different guises: Bootstrap's blue rgba(13,110,253,.25) on .nav-link,
+   .form-select and .form-check-input; the browser's own white outline wherever
+   nothing is styled; .navbar-toggler drawing its ring from currentColor, so it
+   changes hue with the button underneath; and nothing at all on the toolbar
+   buttons.
+
+   An outline rather than a box-shadow, for two reasons. A shadow is clipped by
+   any ancestor with overflow: hidden — the torrent list sits inside three of
+   them — so a catch-all built on shadows can silently leave an element with no
+   focus state at all once the browser's own ring has been removed. And an
+   outline is what the browser itself uses, so replacing it is like for like.
+   Chrome follows border-radius with it. */
+
+/* :focus-visible fires for keyboard and other non-pointer focus but not for a
+   plain click, so clicking a control stays quiet. The long selector list is
+   not redundancy: the bare `:focus-visible` is a single pseudo-class and loses
+   to every component rule below it, each of which is at least two classes. */
+:focus-visible,
+.nav-link:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible,
+.navbar-toggler:focus-visible,
+.list-group-item-action:focus-visible,
+.btn-close:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--dracula-purple);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+
+/* Bootstrap hangs its rings off plain `:focus`, which matches on click as well
+   and would otherwise paint over the rule above. Cleared here so the only
+   thing that ever shows is the outline. */
+.nav-link:focus,
+.form-select:focus,
+.form-check-input:focus,
+.navbar-toggler:focus,
+.btn-close:focus {
+  box-shadow: none;
+}
+
+/* === Form Elements === */
+
+/* Upstream tags only some inputs with .Textbox, and in 5.3.7 most carry no
+   class at all. Unmatched, those fall through to Chrome's own dark-mode control
+   colours — #3B3B3B on a #B0B0B0 border — across roughly 260 controls in the
+   dialogs. Match on the input type instead of on the class. */
+input:is([type="text"], [type="number"], [type="password"], [type="search"],
+         [type="url"], [type="email"], [type="tel"], [type="date"], [type="time"]),
+textarea,
+select {
+  background-color: var(--dracula-bg-darker);
+  color: var(--dracula-fg);
+  border: 1px solid var(--dracula-current);
+  border-radius: 4px;
+  padding: 1px 4px;
+  transition: border-color 0.15s ease;
+}
+
+/* The purple border marks a focused field however it was reached, including by
+   click. `outline: none` here is what suppresses the browser's own ring; the
+   focus section above puts the theme's ring back for the keyboard, and this
+   rule is one step more specific than the catch-all, so it has to say so
+   itself rather than leave the field with no ring at all. */
+input:is([type="text"], [type="number"], [type="password"], [type="search"],
+         [type="url"], [type="email"], [type="tel"], [type="date"], [type="time"]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--dracula-purple);
+  outline: none;
+}
+
+input:is([type="text"], [type="number"], [type="password"], [type="search"],
+         [type="url"], [type="email"], [type="tel"], [type="date"], [type="time"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--dracula-purple);
+  outline-offset: -2px;
+}
+
+/* The file picker renders as a native control: a bordered box holding a button
+   the theme's button rule cannot reach without the pseudo-element. */
+input[type="file"] {
+  color: var(--dracula-fg);
+  background-color: var(--dracula-bg-darker);
+  border: 1px solid var(--dracula-current);
+  border-radius: 4px;
+  padding: 3px;
+}
+
+input[type="file"]::file-selector-button {
+  color: var(--dracula-fg);
+  background-color: var(--dracula-comment);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  margin-right: 8px;
+  padding: 3px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+input[type="file"]:not([disabled])::file-selector-button:hover {
+  background-color: var(--dracula-purple);
+  color: var(--dracula-bg);
+}
+
+/* === Checkboxes === */
+
+input[type="checkbox"] {
+  accent-color: var(--dracula-purple);
+}
+
+/* === Dialog Close Button === */
+
+/* 20px to match the header icon on the opposite side. !important is needed
+   throughout: upstream sizes this via `a.dlg-close:link`, which outranks a
+   plain class selector. The 14px box it ships also doubles as the hit area,
+   so growing the icon makes the target easier to hit too. */
+.dlg-close {
+  width: 20px !important;
+  height: 20px !important;
+  background: var(--icon-close-red) no-repeat center center !important;
+  background-size: 20px !important;
+}
+
+.dlg-close:hover {
+  background-image: var(--icon-close-fg);
+}
+
+/* The sidebar's close button under 768px is Bootstrap's `.btn-close`, and three
+   things stack up against it: Bootstrap draws the X with `fill='%23000'`;
+   ruTorrent boxes it in `.offcanvas-header .btn-close { background-color:
+   var(--btn-bg-color) }`, which this theme fills with comment blue; and the
+   whole button sits at `opacity: 0.5`.
+
+   Given the same x-circle as .dlg-close, at the same 20px, with the box dropped
+   — the glyph carries its own colour, so dimming it only muddies it. The 28px
+   hit area is untouched; only the fill goes. No !important: this matches
+   ruTorrent's own two-class selector and wins on order. */
+.offcanvas-header .btn-close {
+  --bs-btn-close-bg: var(--icon-close-red);
+  --bs-btn-close-opacity: 1;
+  --bs-btn-close-hover-opacity: 1;
+  --bs-btn-close-focus-opacity: 1;
+  /* Bootstrap's default is rgba(13,110,253,.25). Emptied rather than
+     recoloured: the focus section draws this button's ring the same way it
+     draws every other one. */
+  --bs-btn-close-focus-shadow: none;
+  background-color: transparent;
+  background-size: 20px;
+}
+
+/* The theme's own `button:hover` and `:hover:active` are one step more
+   specific than a two-class selector, so without naming those states here the
+   box comes back — purple under the pointer, pink while pressed. */
+.offcanvas-header .btn-close:hover,
+.offcanvas-header .btn-close:hover:active {
+  --bs-btn-close-bg: var(--icon-close-fg);
+  background-color: transparent;
+}
+
+/* === Panel Labels === */
+
+/* Upstream's shadow sheet spaces the parts with a bare `div { margin-right: 0.5em }`,
+   so the gap between an icon and its label is read off the icon's own font size,
+   which the badge rule below changes. Registering the gap as a length makes it
+   absolute where it is declared, on panel-label, so it stays 6.5px whatever the
+   icon's font size becomes — otherwise every row's text, letterless icons
+   included, shifts 1.5px sideways. */
+@property --panel-label-icon-gap {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+panel-label {
+  --panel-label-icon-gap: 0.5em;
+  border-color: transparent;
+  --prefix-color: var(--dracula-fg);
+  --prefix-fontsize: 23px;
+  --badge-color: var(--dracula-cyan);
+  --badge-background-color: var(--dracula-current);
+  --icon-size: 22px;
+  --status-image: none;
+  /* A saved view has no icon of its own — upstream hands the component the first
+     character of the view's name (js/category-list.js:71) and draws it as a disc
+     with the letter inside. These three are its own hooks for restyling that,
+     and they are needed because its fallbacks read
+     `var(--icon-letter-color, --badge-color)` with no var() around the fallback,
+     so they resolve to nothing and the letter lands as inherited white.
+
+     The disc is emptied rather than recoloured. A ring has to be wide enough to
+     hold its letter, and a capital W at a readable size is as wide as the whole
+     22px box: a disc big enough for the letter stands out beside the Phosphor
+     glyphs, which paint 17.88px inside the same box, and a disc that matches
+     them forces the letter down to 11px. With no ring the letter is free to be
+     the size that reads, and there is no second circle in a column of
+     circles. */
+  --icon-letter-color: var(--dracula-purple);
+  --icon-letter-background-color: transparent;
+  --icon-letter-border-color: transparent;
+  /* The 22px icon plus 4px each side is the theme's 30px row. */
+  padding: 4px;
+  height: 22px;
+  transition: all 0.15s ease;
+}
+
+/* Compact keeps the icon and takes 2px each side instead, which is the 26px
+   row. Upstream zeroes the padding outright (`css/stable.css:202`), leaving the
+   label at 22 against a 26px list. */
+body.compact panel-label {
+  padding-block: 2px;
+}
+
+/* Individual sidebar status icons — Phosphor Duotone */
+panel-label[icon="down"]     { --status-image: var(--icon-status-down); }
+panel-label[icon="completed"]{ --status-image: var(--icon-status-completed); }
+/* ruTorrent labels the sidebar's *Stopped* row icon="inactive" and its
+   *Inactive* row icon="paused" — the two attribute names read backwards, so
+   the mapping below is deliberate rather than a mix-up. */
+panel-label[icon="inactive"] { --status-image: var(--icon-status-stopped); }
+panel-label[icon="paused"]   { --status-image: var(--icon-status-inactive); }
+panel-label[icon="error"]    { --status-image: var(--icon-status-error); }
+panel-label[icon="up-down"]  { --status-image: var(--icon-status-active); }
+panel-label[icon="all"]      { --status-image: var(--icon-status-all); }
+panel-label[icon="rss"]      { --status-image: var(--icon-status-rss); }
+/* Three more names upstream draws from its sprite, which this theme blanks —
+   without these rules every saved quick search, every feed group and every
+   switched-off feed paints nothing at all. */
+panel-label[icon="search"]   { --status-image: var(--icon-status-search); }
+panel-label[icon="rss-group"]{ --status-image: var(--icon-status-rss-group); }
+panel-label[icon="rss-dis"]  { --status-image: var(--icon-status-rss-dis); }
+
+/* ruTorrent 5.3.7 added a "/" separator part between count and size. It
+   inherits the foreground color, so it competes with the values it divides. */
+panel-label::part(separator) {
+  color: var(--dracula-comment);
+}
+
+/* Parity: the label's ink is 11 device rows tall, odd, inside a 32px row box,
+   even — 21 rows of space that will not halve, so it sits half a pixel low. The
+   icons centre exactly because theirs is 18, even. No text size fixes it; every
+   one of 12 to 15px measures the same +0.5, and a half-pixel transform is
+   snapped away.
+
+   Up is the half pixel that reads as centred: the empty descender space below a
+   line already makes text feel low. Padding rather than a transform, to keep it
+   a layout offset with no stacking side effects, and on the label alone — the
+   icon, the count pill and the digit inside it all measure dead centre and must
+   not move. */
+panel-label::part(text) {
+  padding-bottom: 1px;
+}
+
+/* Everything here exists for the letter badge; none of it reaches an icon drawn
+   as a background, which is why the rule is unscoped. Those parts are not flex
+   containers, carry no text, and under border-box their padding box is still the
+   full 22px, so their painting area is unchanged — measured, not assumed: the
+   icon column of every panel renders pixel for pixel identically with and
+   without this block.
+
+   box-sizing settles a contradiction in upstream's own sheet, which sizes the
+   badge `width: icon-size - 2px` and then overrides itself with
+   `min-width: icon-size`, giving a 24px border box against every other icon's
+   22px. align-items centres the line box the letter sits on.
+
+   The font size is one pixel under upstream's `icon-size - 5px`, and the pixel
+   is load-bearing: at 16px the ink of a capital rasterises to an even number of
+   rows, 12 at 1x and 24 at 2x, so it centres exactly in the even 22px box. 15px
+   and 17px give odd ink and sit half a pixel off, which is visible on a letter
+   this size. Parity flips with whatever the letter is centred against, so
+   re-derive it before changing either number — and measure by counting ink rows
+   in an unscaled render, or by scaling up nearest neighbour. Font metrics
+   describe layout, not paint, and CSS `zoom` rasterises afresh at the zoomed
+   size, where the parity lands differently. */
+/* The 2px of bottom padding puts the letter on the same baseline as the row's
+   label, which is the right target rather than centring: the label is text and
+   sits by its baseline, so a letter centred in the box ends up a pixel below a
+   label sitting half a pixel high. Capitals for a related reason — a capital and
+   a lowercase letter have different ink heights, so against one shared baseline
+   they cannot both be centred and "movies" would sit lower than "Completed". */
+panel-label::part(icon) {
+  box-sizing: border-box;
+  align-items: center;
+  padding-bottom: 2px;
+  margin-right: var(--panel-label-icon-gap);
+  font-size: calc(var(--icon-size) - 6px);
+  text-transform: uppercase;
+  background-position: center;
+  background-size: contain;
+}
+panel-label[icon="down"]::part(icon)      { transform: translateY(-1px); }
+panel-label[icon="completed"]::part(icon) { transform: translateY(-1px); }
+panel-label[icon="inactive"]::part(icon)  { transform: translateY(-1px); }
+panel-label[icon="paused"]::part(icon)    { transform: translateY(-1px); }
+panel-label[icon="error"]::part(icon)     { transform: translateY(-1px); }
+panel-label[icon="up-down"]::part(icon)   { transform: translateY(-1px); }
+panel-label[icon="all"]::part(icon)       { transform: translateY(0); }
+panel-label[icon="rss"]::part(icon)       { transform: translateY(0); }
+
+panel-label:hover {
+  background-color: color-mix(in srgb, var(--dracula-current) 50%, transparent);
+}
+
+panel-label[selected] {
+  background-color: transparent;
+  color: var(--dracula-fg);
+  border-color: transparent;
+  border-left: 2px solid var(--dracula-purple);
+  border-radius: 0;
+}
+
+/* The selected row's pills cannot be reached through --badge-color: upstream
+   guards the rule that reads it with `:not(:host([selected]))`
+   (css/panel-label.css:55), so a selected row's count and size take the host's
+   own `color` by inheritance instead. Recolouring the host would drag the row's
+   label along with them, so the two parts are addressed directly. */
+panel-label[selected]::part(count),
+panel-label[selected]::part(size) {
+  color: var(--dracula-cyan);
+}
+
+/* === Sidebar === */
+
+#offcanvas-sidepanel {
+  color: var(--dracula-fg);
+}
+
+/* === Pane Splitters === */
+
+/* The two 5px drag handles between sidebar, torrent list and detail panel.
+   Invisible at rest, as upstream intends: the panes already carry their own
+   border, so a permanent bar would only double it.
+
+   :active is what holds the colour through a drag. A fast drag outruns the
+   pointer and :hover drops, but :active belongs to the element that took the
+   mousedown until the button comes back up. Both rules match upstream's
+   specificity and win on order.
+
+   Same 768px floor upstream puts its own hover and cursor rules behind: below
+   it DnD.start() refuses to drag at all, and VDivider stays in the flow, so an
+   unscoped rule would light a handle that cannot move. */
+@media (min-width: 768px) {
+  div#HDivider, div#VDivider {
+    transition: background-color 0.15s ease;
+  }
+
+  div#HDivider:hover, div#VDivider:hover {
+    background-color: var(--dracula-comment);
+  }
+
+  div#HDivider:active, div#VDivider:active {
+    background-color: var(--dracula-pink);
+  }
+}
+
+/* === Cover & Messages === */
+
+div#cover { background: var(--dracula-bg); }
+/* This element is the full-screen loading panel — and also where ruTorrent
+   prints a fatal error: `webui.js:233` calls `catchErrors(false)`, and that
+   branch writes every uncaught JS error here through `theWebUI.msg()`, which
+   does `$("#msg").text(s)`.
+
+   So it must keep a visible font size and colour: blanking it to hide the
+   "Loading..." caption renders those errors at 0x0. The caption is hidden by
+   the rule above instead, on the span, which works because `.text()` replaces
+   every child — while loading there are spans, and once an error lands there is
+   only a text node. */
+div#msg {
+  background: var(--dracula-bg) !important;
+  border: none !important;
+  color: var(--dracula-fg);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 0 24px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+div#sc { border: 1px solid var(--dracula-current); background-color: var(--dracula-bg); border-radius: 4px; }
+div#sc li.se_act div { background-color: var(--dracula-purple); color: var(--dracula-bg); border-radius: 3px; }
+div#lng { background-color: var(--dracula-bg-darker); border: 1px solid var(--dracula-current); border-radius: 4px; }
+
+/* === Selection === */
+
+#sel { border: 1px dotted var(--dracula-purple); }
+
+/* === Navbar / Toolbar === */
+
+.navbar-toggler {
+  background-image: none;
+  border-color: var(--dracula-current);
+
+  /* The overflow-menu toggle shown under 768px draws its glyph through
+     Bootstrap's --bs-navbar-color, and .navbar-toggler is a class selector, so
+     it outranks the element-level rule in the Buttons section and leaves a 65%
+     black icon on the comment-coloured button. Feed Bootstrap its own hook
+     rather than fighting the cascade. */
+  --bs-navbar-color: var(--dracula-fg);
+}
+
+/* ruTorrent never sets data-bs-theme, so Bootstrap's dark variant of this
+   variable never applies and one class is enough to reach it. */
+.navbar-toggler-icon {
+  --bs-navbar-toggler-icon-bg: var(--icon-hamburger-fg);
+}
+
+/* Same guard the theme's own button hover carries, so the glyph turns exactly
+   when the button beneath it turns. :hover:active is covered by implication —
+   the pink pressed state also drops the text to the background colour. */
+.navbar-toggler:not([disabled]):hover .navbar-toggler-icon {
+  --bs-navbar-toggler-icon-bg: var(--icon-hamburger-bg);
+}
+
+/* The most-used controls in the product. Upstream's only hover is
+   `filter: brightness(1.3)`, which does nothing to a transparent background, so
+   every state needs a real filled shape of its own. Full strength at rest: an
+   opacity step is too slight to register on glyphs already muted by it.
+
+   The button is 40px, which clears the 32-40px a pointer target wants on the
+   desktop; upstream's is 31px, a 24px glyph in 3.5px of padding. */
+#t .nav-link {
+  color: var(--dracula-fg);
+  padding: 6px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+#t .nav-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* `background-image: none` is the important half. Upstream's hover is
+   `background: transparent url(../images/tb_bg.gif) …` — a shorthand, so
+   overriding only the colour leaves its pale raster painting on top. */
+#t .nav-link:hover {
+  background-color: var(--dracula-current);
+  background-image: none;
+}
+
+/* Pink for the press — see the interaction-colour note above the buttons.
+
+   The padding is restated, not decoration: upstream's `:active` swaps in
+   `padding: 0.35rem 0.15rem 0.15rem 0.35rem`, the old "button sinks in" trick.
+   Asymmetric padding on a flex row shrinks the pressed button 40px -> 35px,
+   slides its glyph down-right and pushes every button after it along, so the
+   whole bar jumps while the mouse is held. Same specificity as upstream's rule,
+   so order settles it. */
+#t .nav-link:active {
+  padding: 6px;
+  background-color: var(--dracula-pink);
+}
+
+/* Focus gets the hover fill as well as the ring. A ring alone around a button
+   otherwise identical to its neighbours reads as decoration, not position. */
+#t .nav-link:focus-visible {
+  background-color: var(--dracula-current);
+}
+
+div#t div.TB_Separator {
+  background-color: var(--dracula-current);
+  width: 1px;
+  margin: 4px 2px;
+}
+
+/* The magnifier opens a menu of search engines, the same affordance the plugins
+   button beside it marks with a caret, so it gets the same mark.
+
+   Drawn here rather than by adding Bootstrap's `dropdown-toggle` class: that
+   class is also Bootstrap's hook for *operating* a dropdown, and this menu is
+   upstream's own, opened by `theSearchEngines.show()` from an inline onclick.
+   Adding the class would put Bootstrap in charge of a menu it does not own.
+
+   The declarations are Bootstrap's `.dropdown-toggle::after` copied exactly —
+   em-based so it tracks the font, and `border-top` with no colour so it takes
+   currentColor from the link, which is how the plugins caret is coloured too. */
+#mnu_search::after {
+  display: inline-block;
+  margin-left: 0.255em;
+  vertical-align: 0.255em;
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+}
+
+/* The bar in three zones, by `order` alone. No wrappers, no JS, and the markup
+   stays upstream's, which otherwise keeps every item in one flex row and pushes
+   only the search block right with Bootstrap's `ms-md-auto`:
+
+     left    the actions: add, create, remove, start, pause, stop
+     centre  the search, and the loading indicator that rides with it
+     right   RSS, settings, plugins, help — the settings-shaped things
+
+   `:has(+ #mnu_rss)` picks upstream's separator by what it stands in front of
+   rather than by counting `:nth-child`, so it keeps working if anything is ever
+   inserted before it. Both separators travel with the block they introduce;
+   left behind, the first would be a rule floating alone in the gap.
+
+   The search lands 37px right of the bar's true centre, and that is arithmetic
+   rather than an oversight: auto margins split free space equally, so the block
+   is centred between the two zones and the left zone is 79px wider than the
+   right. Exact centring would need the side widths measured in JS on every
+   resize, or absolute positioning that can overlap on a narrow window.
+
+   Everything in this query is scoped to the expanded bar — below 768px the row
+   folds into a column where a three-zone layout means nothing. */
+@media (min-width: 768px) {
+  #top-menu .navbar-nav > #rc {
+    order: 2;
+    /* the left auto margin is already there, from Bootstrap's ms-md-auto */
+    margin-right: auto;
+  }
+
+  #top-menu .navbar-nav > .TB_Separator:has(+ #mnu_rss),
+  #mnu_rss,
+  #mnu_settings,
+  #top-menu .navbar-nav > .TB_Separator:has(+ .btn-group),
+  #top-menu .navbar-nav > .btn-group,
+  #top-menu .navbar-nav > .TB_Separator:has(+ #mnu_help),
+  #mnu_help {
+    order: 3;
+  }
+
+  /* Neither separator upstream ships is in the right place once the bar is in
+     three zones. The first divides nothing: the auto margin above opens some
+     390px between the search group and the settings group, so a hairline four
+     pixels left of RSS reads as debris rather than as structure. The second
+     stands in front of the Plugins dropdown, ending the bar
+     `RSS Settings │ Plugins ▾ Help` — the caret shares a group with Help and
+     reads as though it could open either.
+
+     init.js inserts real `TB_Separator` replacements between Go and the
+     activity indicator, and after the dropdown, so they take the width, colour
+     and inset every separator here already has. */
+  #top-menu .navbar-nav > .TB_Separator:has(+ #mnu_rss),
+  #top-menu .navbar-nav > .TB_Separator:has(+ .btn-group) {
+    display: none;
+  }
+
+  /* Moving a button drags whatever hangs off it. The plugins dropdown is
+     positioned by plain CSS rather than Popper — `position: absolute` with no
+     transform — so it opens from the toggle's left edge and, with that toggle
+     110px from the right of the window, runs 84px off the screen with two of
+     its six entries unreachable. Anchoring it to the right edge is what
+     Bootstrap's own `.dropdown-menu-end` does, and a theme cannot add a class.
+
+     It is the only popup this move can break: the toolbar's other menu is the
+     category `<select>`, which is native, and the browser keeps that on screen
+     itself. */
+  #top-menu .navbar-nav > .btn-group > .dropdown-menu {
+    right: 0;
+    left: auto;
+  }
+
+  /* A wider field is only safe if it can give the space back, and by default it
+     cannot: every flex item starts at `min-width: auto`, a floor of its own
+     min-content size. These two are pure containers whose only job is to hold
+     the row, so releasing them costs nothing — without it the overflow surfaces
+     at the top of the chain, and at a 1100px window the help button hangs 79px
+     past the end of the bar.
+
+     `#rc` is deliberately *not* in this list. Zeroing a flex container's
+     minimum lets its box be squeezed below its own contents; the contents
+     cannot shrink to match, so they spill out and whatever comes next paints on
+     top of them — at 850px, RSS 30px over the go button and the gear over the
+     loading indicator. A container that holds things keeps its floor; only the
+     elastic thing inside it gives way. */
+  #top-menu,
+  #top-menu .navbar-nav {
+    min-width: 0;
+  }
+
+  /* A definite `width` is also a flex item's "specified size suggestion", which
+     feeds the automatic minimum of every box that contains it. That is what
+     makes 460px work here — the search block sizes itself to 692px around it —
+     and also why it cannot survive a narrow window: the whole chain is pinned
+     at that size and nothing can give. So the wide field is claimed only while
+     there is room for it. The bar needs 1177px to hold it (284 left + 692
+     search + 201 right); 1200 is the first round number above that, and it is
+     Bootstrap's own xl breakpoint. */
+  #query {
+    width: 460px;
+  }
+
+  /* Below that the field stops being the fixed thing and becomes the elastic
+     one. Two changes together, and neither works alone: `flex-basis` instead of
+     `width` so the field is no longer a definite size pinning its ancestors,
+     and an explicit `min-width` so it can actually yield — without one its
+     automatic minimum is its own 220px of content. Only then is it safe to
+     release the search block's floor.
+
+     Measured at 775px, the last pixel before the toggler takes over: with the
+     floor, the field yields to 50px, the block equals its own content and
+     nothing overlaps; without it, the field stays 220px, the block is crushed
+     and seven pairs of controls collide. */
+  @media (max-width: 1199.98px) {
+    #top-menu .navbar-nav > #rc {
+      min-width: 0;
+    }
+
+    #query {
+      width: auto;
+      flex-basis: 220px;
+      /* 24px, not 40px: the caret on the magnifier costs 11px, and at 775px —
+         the last window before the toggler takes over — there is nothing else
+         to take it from. The field is the designated yielder, so its floor is
+         what moves. */
+      min-width: 24px;
+    }
+  }
+}
+
+/* Below 768px the bar folds into a column behind the toggler, where upstream's
+   source order is the right one and a vertical hairline between two stacked
+   items means nothing. Its own top-level block, not a branch of the one above:
+   a max-width query nested inside that min-width one closes it early and
+   silently carries every rule after it, the field's 460px included, into the
+   mobile branch.
+
+   One selector for both of init.js's separators — the attribute is what marks
+   them as the theme's. */
+@media (max-width: 767.98px) {
+  #top-menu .TB_Separator[data-dracula-separator] {
+    display: none;
+  }
+}
+
+/* The search source badge, filled from init.js. 16px is the native size of the
+   engine favicons the plugin ships, which the theme refuses to scale — the
+   sidebar pins the same files to 16px for the same reason.
+
+   The only thing in this row that is not a control, so it takes no padding and
+   no hover: it reports, it does not act. `flex-shrink: 0` keeps it whole when
+   the row tightens, since 16px is already the smallest it can be. */
+#dracula-search-source {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* === Toolbar Icons (Phosphor Duotone SVGs) === */
+
+div#t div#add { background: transparent var(--icon-add) no-repeat center center; background-size: 28px; }
+div#t div#create { background: transparent var(--icon-create) no-repeat center center; background-size: 28px; }
+div#t div#remove { background: transparent var(--icon-remove) no-repeat center center; background-size: 28px; }
+div#t div#start, div#t div#go { background: transparent var(--icon-start) no-repeat center center; background-size: 28px; }
+div#t div#pause { background: transparent var(--icon-pause) no-repeat center center; background-size: 28px; }
+div#t div#stop { background: transparent var(--icon-stop) no-repeat center center; background-size: 28px; }
+div#t div#moveu { background: transparent var(--icon-move-up) no-repeat center center; background-size: 28px; }
+div#t div#moved { background: transparent var(--icon-move-down) no-repeat center center; background-size: 28px; }
+div#t div#search { background: transparent var(--icon-search) no-repeat center center; background-size: 28px; }
+div#t div#rss { background: transparent var(--icon-rss) no-repeat center center; background-size: 28px; }
+div#t div#setting { background: transparent var(--icon-settings) no-repeat center center; background-size: 28px; }
+div#t div#help { background: transparent var(--icon-help) no-repeat center center; background-size: 28px; }
+div#t div#plugins { background: transparent var(--icon-plugins) no-repeat center center; background-size: 28px; }
+
+/* === File/Dir Icons === */
+
+/* These sit on `.stable-icon` too, and stable.css clears that class's
+   background-image from a later sheet at the same specificity, so a plain
+   `.Icon_File` loses and the Files tab shows no icons. `!important` is how the
+   `.Status_*` rules in stable.css already win the same fight. */
+.Icon_File { background: transparent var(--icon-file) no-repeat left center !important; background-size: 16px; }
+.Icon_Dir { background: transparent var(--icon-dir) no-repeat left center !important; background-size: 16px; }
+.Icon_Share { background: transparent var(--icon-share) no-repeat left center !important; background-size: 16px; }
+
+/* === Tabs === */
+
+div.tab { background: var(--dracula-bg); }
+div#lcont { background: var(--dracula-bg); }
+
+/* The log arrives as one class for everything: `log()` in js/common.js builds
+   every entry as `span.std` holding "[stamp] message" in a single text node, and
+   log_history's separators are span.std too. CSS alone can only paint the panel
+   one colour, so init.js puts the bracketed stamp in its own element and marks
+   the separator lines; what each looks like is decided here. Monospace because
+   the stamps line up into a column only when the digits are the same width. */
+div#lcont .std {
+  font-family: var(--font-mono);
+  color: var(--dracula-yellow);
+}
+div#lcont .dracula-log-time,
+div#lcont .std.dracula-log-rule {
+  color: var(--dracula-comment);
+}
+/* The General tab is seventeen `Key: Value` rows, all in the same white, with
+   nothing separating a label from the thing it labels. The value takes Yellow
+   and the key keeps the bold white upstream gives it. */
+/* One selector does the whole tab because the markup already sorts it: every
+   value is a `span.det` and every key a `span.det-hdr`. The colon sits outside
+   the key's span, so it stays with the row rather than following the key — and
+   rutracker_check, which appends two rows of its own from JS, reuses both
+   classes, so its rows come along too. */
+div#gcont span.det {
+  color: var(--dracula-yellow);
+}
+
+/* Upstream positions `span.htkey` in the menus and never fills it; init.js
+   does. The hint is secondary to the command beside it, so it takes Comment
+   rather than the foreground. On the highlighted row it would otherwise be the
+   one grey thing on purple, so there it follows the row. */
+.CMenu span.htkey {
+  color: var(--dracula-comment);
+}
+
+.CMenu li:hover > a.menu-cmd span.htkey,
+.CMenu a.menu-cmd:focus span.htkey {
+  color: inherit;
+}
+
+/* A menu item is not one background: highlighted it flips to Purple with the
+   label in `--dracula-bg`, disabled the label drops to Comment. Any single ink
+   that clears 3:1 on the dark menu falls under 2:1 on that purple — and the
+   arrow matters most on exactly the item the pointer is on.
+
+   So the marks are painted rather than drawn: `currentColor` through a mask of
+   the shape, which takes the colour of the label it belongs to in every state.
+   `background-image: none` is not optional — a background image paints over the
+   colour beneath it, and the mask would then cut out upstream's green tick. */
+.CMenu li a.sel::before,
+.CMenu li a.exp::after {
+  background-image: none;
+  background-color: currentColor;
+}
+
+.CMenu li a.sel::before {
+  -webkit-mask: var(--menu-item-active-icon) center / 0.75rem no-repeat;
+  mask: var(--menu-item-active-icon) center / 0.75rem no-repeat;
+}
+
+.CMenu li a.exp::after {
+  -webkit-mask: var(--menu-item-exp-icon) center / 0.75rem no-repeat;
+  mask: var(--menu-item-exp-icon) center / 0.75rem no-repeat;
+  /* The box is square and the rotation is about its centre, so nothing moves —
+     upstream's `margin-left: auto` still puts it at the far edge. */
+  transform: rotate(-90deg);
+}
+
+div#gcont div.row.Header {
+  /* Upstream gives this band 0.5rem all round (`css/style.css:570`) while the
+     rows it heads take `0 0.3rem` one line below (`:571`), which sits the
+     heading's text 2.8px off the labels it names. It takes the rows' own 0.3rem
+     instead, and no block padding at all: the height is built in the cell, the
+     way the table heading builds it. */
+  padding: 0 0.3rem;
+  background: var(--dracula-bg-darker);
+  border-bottom: 1px solid var(--dracula-current);
+  color: var(--dracula-purple);
+  font-weight: bold;
+}
+
+/* This theme has one row height and it is the table's: a 22px line over 3.5px of
+   block padding with a 1px rule under it — 30px — falling to 22 over 2px for 27
+   in compact (`stable.css:81`, where those four numbers are derived from the
+   body cell). A heading is exactly as tall as the rows under it and told apart
+   by its paint alone, which is what makes the list read as one grid rather than
+   as bands; the General tab takes the same four numbers so the panel continues
+   that grid.
+
+   Heading and row want identical metrics, which is why this is one rule and not
+   two. The cell carries them rather than the row because that is where upstream
+   puts the line box, and because `.dlg-window .row > div` is 0,2,1. */
+div#gcont div.row > div {
+  line-height: 22px;
+}
+
+body.compact div#gcont div.row > div {
+  padding-block: 2px;
+  line-height: 21px;
+}
+
+/* The separator goes on the cells, not on the .row. Only Transfer is built as
+   one .row per line; Tracker and General each pack every field into a single
+   .row and let the pairs wrap, so a rule on the row drew one line under the
+   whole section instead of one per field. Each wrapped line is a set of cells
+   sharing a top and a height and spanning the full width, so bottom borders on
+   them meet edge to edge and read as a single rule. */
+div#gcont div.row:not(.Header) > div {
+  border-bottom: 1px solid color-mix(in srgb, var(--dracula-current) 45%, transparent);
+}
+
+/* The General tab is laid out `col-6 col-md-2` — two fields per line when there
+   is no room, six when there is. `col-md-*` answers to the **viewport**, but
+   this panel is sized by the splitter above it, so on a wide screen with a wide
+   sidebar the grid still believes it has six columns' worth of room while the
+   panel is half that. Measured at a 1920px viewport: at a 606px panel, 13 of 42
+   cells wrap and 10 overflow their column.
+
+   A media query cannot express that, the viewport being unchanged; a container
+   query can. 880px is the last panel width where nothing wraps and 860px the
+   first where it does, so the query fires below 880 and hands each cell the
+   width its own small-screen class already asks for.
+
+   The container is #gcont rather than the scrolling #tdcont so the containment
+   this establishes reaches one tab instead of all eleven. */
+div#gcont {
+  container-type: inline-size;
+}
+
+@container (max-width: 880px) {
+  div#gcont div.row > div.col-6  { width: 50%; }
+  div#gcont div.row > div.col-12 { width: 100%; }
+}
+
+/* === Graph === */
+
+div.graph_tab { background-color: var(--dracula-bg); }
+.graph_tab_legend { color: var(--dracula-fg); background-color: var(--dracula-bg); }
+
+/* ruTorrent hands flot its grid colours by reading them off .graph_tab_grid, a
+   hidden hook element; unstyled, the grid keeps flot's own #545454 and the axis
+   labels sit at 1.88:1 on the background. flot derives the gridline colour from
+   this one at 22% alpha, so a readable foreground here still leaves the lines
+   faint. */
+.graph_tab_grid {
+  color: var(--dracula-fg);
+  border-color: var(--dracula-current);
+}
+
+/* The hook above only reaches the canvas. flot writes the tick-label colour
+   into an inline style on .flot-text once, when the plot is first created, and
+   never rewrites it — and at that moment the theme's stylesheet is not
+   necessarily applied yet, so it captures the wrong colour. Only !important
+   beats an inline style. */
+.flot-text,
+div.graph_tab {
+  color: var(--dracula-fg);
+}
+.graph_tab_tooltip {
+  color: var(--dracula-fg);
+  background-color: var(--dracula-bg-darker);
+  border: 1px solid var(--dracula-purple);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+/* === Lists & Dialogs === */
+
+div#List { border: 1px solid var(--dracula-current); border-radius: 4px; }
+div#modalbg { background-color: color-mix(in srgb, var(--dracula-bg) 85%, transparent); }
+div#FileList, div#TrackerList, div#PeerList, div#Speed { background-color: var(--dracula-bg); }
+
+* > fieldset {
+  border: 1px solid var(--dracula-current);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+/* === Disabled States === */
+
+/* ruTorrent marks some controls with a class and leaves others to the real
+   disabled attribute, which Chrome then greys out its own way (#AAAAAA text
+   on a translucent #3B3B3B). Both spellings get the same treatment. */
+input.disabled, button.disabled,
+input:disabled, textarea:disabled, select:disabled, button:disabled {
+  background-color: var(--dracula-bg-darker);
+  color: var(--dracula-comment);
+  border: 1px solid var(--dracula-current);
+  opacity: 0.6;
+}
+
+td.disabled, label.disabled, span.disabled, div.disabled {
+  color: var(--dracula-comment);
+}
+
+/* === Column Selector === */
+
+select.cols { border: 1px solid var(--dracula-current); border-radius: 4px; }
+
+/* === Detail Panel === */
+
+div#tdetails { background-color: var(--dracula-bg); }
+
+/* === Tab Bar === */
+
+/* Drawn as real tabs rather than a row of words: each one is outlined and
+   rounded at the top, and the selected one takes the panel's own background
+   and reaches down over the bar's bottom rule, so it reads as attached to the
+   content below rather than floating above it.
+
+   No !important anywhere here. Upstream's own rules use the identical
+   selectors — including `:hover`, where it paints a #FFC73C top border that is
+   not a Dracula colour — so equal specificity plus the theme loading after
+   css/style.css settles every one of them on order alone.
+
+   Padding on `.tabbar` itself cannot be set from here at all: upstream puts
+   Bootstrap's `p-0` utility on the element, and every Bootstrap utility carries
+   `!important`. Full-width tabs want to touch the panel edges anyway. */
+.tabbar {
+  background-color: var(--dracula-bg-darker);
+  border-bottom: 1px solid var(--dracula-current);
+}
+
+/* `flex: 1 1 0` gives every tab an equal share of the row; left alone the tabs
+   stop about 60% of the way across and leave the rest of the bar empty. The
+   basis is 0 rather than auto on purpose: with auto, the free space is spread
+   evenly on top of each tab's natural width, so the row keeps the ragged rhythm
+   of the words; from 0, the share itself is the width and the row reads as one
+   segmented control.
+
+   Nothing here needs to know how many tabs there are. `ul#tabbar` is already a
+   flex row upstream, so a tab a plugin appends is an ordinary flex item and the
+   row redistributes on its own — 11 tabs at 119.7px each, 14 at 92.6px.
+   Squashing is not a risk either: `white-space: nowrap` is in force on the
+   link, so a tab's min-content size is its whole label and flex cannot shrink
+   past it — at 23 tabs upstream's `overflow-x: auto` scrolls the bar instead.
+
+   The label needs centring explicitly: `.nav-link` is a block at
+   `text-align: start`, which would pin every label to the left. */
+.tabbar li.nav-item {
+  flex: 1 1 0;
+}
+
+.tabbar li.nav-item a.nav-link {
+  /* -1px pulls the tab down onto the bar's bottom rule, which is what lets the
+     selected one punch a gap in it */
+  margin: 0 0 -1px;
+  /* The tab row lands on the theme's 30px row, the same as the sidebar's group
+     headings, and the bar's own metrics do not get it there on their own: it
+     takes its height from its tallest tab.
+
+     The bar's height works out to `3 + padding-top + line-height +
+     padding-bottom` — the 3 being the selected tab's 2px accent, its 1px seam
+     over the bar's rule, and the bar's own bottom border, less the -1px margin
+     above. The heading's is `2 + padding + line-height`, its 22px line between
+     two 1px borders.
+
+     That extra pixel of border is why the tab's line is one under the
+     heading's, 21 against 22: matched, the two can only agree in one mode at a
+     time, and compact would need a negative padding to reach 26. Offset by one
+     they fall out with the same padding the heading uses — 3px here, 0 in
+     compact — so the two rows track each other rather than being separately
+     tuned. */
+  padding: 3px 14px;
+  line-height: 21px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--dracula-comment);
+  background-color: var(--dracula-bg-darker);
+  border: 1px solid color-mix(in srgb, var(--dracula-current) 55%, transparent);
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  transition: all 0.15s ease;
+}
+
+/* Compact takes the tab row to 26px with everything else. Its own arithmetic is
+   the one above — `3 + padding-top + line-height + padding-bottom` — over the
+   21px line the tab already has, so 1px each side is the whole change. */
+body.compact .tabbar li.nav-item a.nav-link {
+  padding-block: 1px;
+}
+
+.tabbar li.nav-item a.nav-link:hover {
+  color: var(--dracula-fg);
+  background-color: var(--dracula-bg-lighter);
+  border-color: var(--dracula-current);
+  /* Upstream's hover is `border-top: 2px solid #FFC73C`. Recolouring alone
+     leaves the width, so a hovered tab grows 33px -> 34px and, with
+     `transition: all` above, wobbles on its way there. The 2px top belongs to
+     the selected tab alone — hover says its piece through fill and text. */
+  border-top-width: 1px;
+}
+
+.tabbar li.nav-item.selected a.nav-link {
+  color: var(--dracula-purple);
+  font-weight: bold;
+  background-color: var(--dracula-bg);
+  border-color: var(--dracula-current);
+  /* accent on top, where upstream puts its yellow one */
+  border-top: 2px solid var(--dracula-purple);
+  /* the panel colour over the bar's rule: the seam between tab and panel */
+  border-bottom: 1px solid var(--dracula-bg);
+}
+
+/* The panel starts at its first row, with nothing between it and the tabs. Two
+   things sit in the way and both go: 3.5px of Bootstrap's `p-1`, which is a
+   utility and carries !important, so nothing without one reaches it; and the
+   container's own top border, which draws a second line directly under the one
+   the tab bar already has. The other three sides keep theirs. */
+#tdcont {
+  padding-top: 0 !important;
+  border-top: none;
+}
+
+/* === Settings Dialog Layout === */
+
+/* Upstream wires Bootstrap's hover and active list-group variables to the same
+   pair — `--menu-highlight-background-color` and `--menu-highlight-color`, the
+   context-menu highlight — so the page under the pointer and the page you are
+   on paint identically and the list loses its "you are here" the moment the
+   pointer enters it. Only the hover half is remapped: the current page keeps
+   the purple pill, hover drops to Current Line.
+
+   Hovering the current page still leaves it purple: `.list-group-item.active`
+   and `.list-group-item-action:hover` are both two classes, and the active rule
+   sits later in bootstrap.min.css. */
+#stg .list-group {
+  --bs-list-group-action-hover-bg: var(--dracula-current);
+  --bs-list-group-action-hover-color: var(--dracula-fg);
+}
+
+/* Each settings page is one long Bootstrap .row, and options.js breaks the line
+   after the checkbox block with a bare empty .col-md-6. That only works when
+   the checkbox count is odd; the General page has sixteen, so the block already
+   ends on a line boundary and the spacer takes the left half of a fresh line,
+   pushing every following label into the right-hand column. A zero-height
+   full-width break ends the line without claiming a cell, which is right either
+   way. */
+#stg .row > div:empty {
+  flex: 0 0 100%;
+  max-width: 100%;
+  height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* === Settings Dialog Size === */
+
+/* Upstream's base rule is 95vw/95vh, but @media (min-width: 768px) pins the
+   dialog to 660x600 on every desktop, where the settings pages wrap their
+   labels onto a second line — measured across all 22 pages: six wrap at 660px,
+   one still wraps at 900px, none at 1060px (bar Upload ETA, whose label is long
+   enough that no width helps). 600px also cuts 84px off the page list on the
+   left, so Ratio Groups and below are only reachable by scrolling. Capped
+   against the viewport so the dialog cannot outgrow a 1280x720 screen; the same
+   breakpoint keeps phones on upstream's near-fullscreen sizing. No !important:
+   the theme loads after css/style.css, so equal specificity wins on order. */
+@media (min-width: 768px) {
+  #stg {
+    width: min(1060px, 92vw);
+    height: min(720px, 90vh);
+  }
+}
+
+/* === Dialogs === */
+
+/* Upstream leaves `.dlg-window` with no `overflow` deliberately: a dialog's
+   body is a `.cont` carrying `flex: 1 1 auto; overflow-y: auto`
+   (`css/style.css:594`), so at `max-height: 95dvh` the `.cont` shrinks and
+   scrolls while the sticky header and button row stay pinned. Twenty-two of the
+   twenty-four dialogs work that way.
+
+   Two have no `.cont` — `#dlgHelp` and `#dlgAbout`, whose bodies are a
+   `div.container-fluid` — so they paint past their own border with nothing able
+   to reach the overflow: `html` and `body` are both `overflow: hidden`, and an
+   element with `overflow: visible` reports `scrollHeight > clientHeight` while
+   refusing to scroll. At 667x375 `#dlgHelp` puts 309px outside its border.
+
+   Naming `.container-fluid` is safer than a negation: it is a direct child of
+   exactly those two dialogs, where `:not(.cont):not(.buttons-list)` would also
+   catch and stretch `#tegLoadTorrents`, whose button row is an unclassed div.
+   `flex: 1 1 auto` is half the fix, not tidying — without the grow the body
+   keeps `flex: 0 1 auto`, cannot claim the height the header leaves it, and
+   scrolls a box shorter than it needs to be. Inert on `#dlgAbout`. */
+.dlg-window > .container-fluid {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+/* === Help Dialog === */
+
+/* Nineteen bindings in upstream's single 300px column stand 773px tall in a
+   961px window. init.js rebuilds them as the two groups the content already
+   has — movement and commands — and this gives the dialog the width to stand
+   them side by side. Capped against the viewport the way `#stg` above is.
+
+   `width`, not only `max-width`: the dialog has no width of its own and
+   shrink-wraps its content, so unpinned the box is a function of the text
+   inside it and one-line entries pull it in to 552px, taking the description
+   column down to 166px and wrapping every entry again. Pinned, the column is
+   what the wording was measured against.
+
+   No height: this dialog is as tall as its longer group. */
+#dlgHelp {
+  width: min(720px, 92vw);
+  max-width: min(720px, 92vw);
+}
+
+/* Upstream turns every direct div of a dialog row into a centred flex row —
+   `.dlg-window .row > div` in `css/style.css` — which is how its key/value
+   pairs line up. A group is a column of two blocks, not a pair, so it opts out;
+   left in, the heading sits to the left of its own list, vertically centred.
+   The padding and margin from that rule are still wanted, so only the box type
+   is overridden. */
+.dlg-window .row > .dracula-help-group {
+  display: block;
+}
+
+/* Purple and ruled, the same way the torrent list and the sidebar mark a
+   heading — the two groups need to read as two, not as one list with a gap. */
+.dracula-help-title {
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--dracula-current);
+  color: var(--dracula-purple);
+  font-weight: bold;
+}
+
+/* `max-content` rather than a fixed fraction: each group then sizes its key
+   column to its own longest key, so "Ctrl-Enter" fits on one side and "Tab"
+   wastes nothing on the other. */
+.dracula-help-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.dracula-help-list dd {
+  margin: 0;
+}
+
+/* Stacked below 768px the two groups run together: upstream's
+   `.dlg-window .row > div` leaves them 2px apart, and at 0,2,1 that outranks a
+   bare class, so the gap has to be asked for at the same weight.
+
+   Its own top-level block. A `max-width` query opened inside the `min-width`
+   one above closes that one early and carries every rule after it into the
+   mobile branch, with the brace count still balanced. */
+@media (max-width: 767.98px) {
+  .dlg-window .row > .dracula-help-group:not(:last-child) {
+    margin-bottom: 12px;
+  }
+}
+
+/* === Status Bar === */
+
+/* Every number down here changes while you watch — the clock every second, the
+   speeds and totals every couple — and Inter's default figures are
+   proportional, so each change resizes the text and shoves its neighbours. The
+   clock alone swings 3.76px between seconds, enough to keep the port and socket
+   cells twitching for as long as the tab is open.
+
+   Tabular figures fix that at the cause, every digit taking the same advance,
+   and leave no measured constant to go stale when the font size or the locale
+   changes. The bundled Inter carries the feature — checked rather than assumed,
+   these being per-script subsets where a stripped one would fail silently: at
+   14px "1111" and "0000" measure 22.78 and 35.33 proportionally, and 36.31 both
+   when tabular. */
+#StatusBar .stval,
+#StatusBar .sthdr {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The bar is styled from two sheets and the split is load-bearing. Its
+   background lives in plugins.css because that sheet loads at index 30, after
+   every plugin sheet (10-27), and the plugins that put cells in this bar paint
+   their own; from here, at index 7, an equal-specificity rule loses on order.
+   Layout has no such fight, so it stays with the rest of the structure. */
+#StatusBar {
+  color: var(--dracula-fg);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Upload speed icon (Phosphor arrow-circle-up, Green) */
+#st_up .icon {
+  background-image: var(--icon-upload-speed);
+}
+
+/* Download speed icon (Phosphor arrow-circle-down, Cyan) */
+#st_down .icon {
+  background-image: var(--icon-download-speed);
+}
+
+#StatusBar .icon {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px;
+}
+
+.status-cell {
+  border-right: 1px solid var(--dracula-current);
+  padding: 0 8px;
+}
+
+/* Text in the bar sits a touch high without this. */
+#StatusBar .sthdr,
+#StatusBar .stval,
+#StatusBar span {
+  padding-top: 2px !important;
+}
+
+/* Status bar section icons via ::before */
+#st_fd::before,
+#StatusBar .status-cell:nth-child(6)::before,
+#StatusBar .status-cell:nth-child(7)::before,
+#StatusBar .status-cell:last-child::before {
+  content: "";
+  display: block;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px;
+  margin-right: 4px;
+  padding-top: 2px;
+}
+
+/* Open connections — plugs-connected (Comment) */
+#st_fd::before {
+  background-image: var(--icon-plugs-connected);
+  width: 20px;
+  height: 20px;
+  background-size: 20px;
+}
+
+/* rTorrent version — pulse (Comment) */
+#StatusBar .status-cell:nth-child(6)::before {
+  background-image: var(--icon-pulse);
+  width: 22px;
+  height: 22px;
+  background-size: 22px;
+}
+
+/* Torrents count — list (Comment) */
+#StatusBar .status-cell:nth-child(7)::before {
+  background-image: var(--icon-list);
+  width: 24px;
+  height: 24px;
+  background-size: 24px;
+}
+
+/* Time — clock (Comment) */
+#StatusBar .status-cell:last-child::before {
+  background-image: var(--icon-clock);
+  width: 22px;
+  height: 22px;
+  background-size: 22px;
+}
+
+/* Disk icon color: Purple (matches progress bar) */
+#meter-disk-pane .icon {
+  background-image: var(--icon-disk) !important;
+  width: 22px !important;
+  height: 22px !important;
+  background-size: 22px !important;
+}
+
+/* CPU icon color: Cyan (matches graph) */
+#meter-cpu-pane .icon {
+  background-image: var(--icon-cpu) !important;
+  width: 22px !important;
+  height: 22px !important;
+  background-size: 22px !important;
+}
+
+/* Upload/Download speed arrow icons */
+#st_up .icon, #st_down .icon {
+  width: 22px;
+  height: 22px;
+  background-size: 22px;
+}
+
+/* Hide text labels — icons speak for themselves (except rTorrent version) */
+#st_fd > .sthdr,
+#st_up > .sthdr,
+#st_down > .sthdr,
+#StatusBar > .status-cell:nth-child(7) > .sthdr {
+  display: none !important;
+}
+
+/* Speed sub-icons: Limit (speedometer) and Total (sigma) */
+#st_up > .stval:nth-child(5)::before,
+#st_down > .stval:nth-child(5)::before,
+#st_up > .stval:nth-child(7)::before,
+#st_down > .stval:nth-child(7)::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 2px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px;
+}
+
+/* Limit — Phosphor speedometer-duotone (Comment) */
+#st_up > .stval:nth-child(5)::before,
+#st_down > .stval:nth-child(5)::before {
+  background-image: var(--icon-speedometer);
+  width: 28px;
+  height: 28px;
+  background-size: 28px;
+  margin-right: 4px;
+}
+
+/* Both speed cells open the throttle menu, and nothing else marks them as
+   controls: `content.js:7-8` binds the click to the whole cell rather than to
+   something inside it, so there is no button to carry a mark and no pointer
+   cursor either.
+
+   The caret is the one the search and plugins menus wear, so a menu looks like
+   a menu everywhere in the theme. It points **up** because that is where this
+   one opens: the status bar sits on the floor of the window.
+
+   Drawn on the cell rather than on a child, which puts it after the total and
+   inside the clickable area rather than beside it. The theme's other marks in
+   this row live on `#StatusBar::after` and on the values' own `::before`, worth
+   checking before claiming a pseudo-element here. */
+#st_up,
+#st_down {
+  cursor: pointer;
+}
+
+#st_up::after,
+#st_down::after {
+  content: "";
+  margin-left: 0.45em;
+  border-bottom: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-top: 0;
+  border-left: 0.3em solid transparent;
+}
+
+/* Total — Phosphor sigma-duotone (Comment) */
+#st_up > .stval:nth-child(7),
+#st_down > .stval:nth-child(7) {
+  position: relative;
+  padding-left: 28px;
+}
+#st_up > .stval:nth-child(7)::before,
+#st_down > .stval:nth-child(7)::before {
+  background-image: var(--icon-sigma);
+  width: 25px;
+  height: 25px;
+  background-size: 25px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Status bar centering: ::before/::after spacers with flex-grow for true center */
+#StatusBar::before {
+  content: "";
+  order: 5;  /* Spacer between Torrents(4) and Upload(6) */
+  flex-grow: 1;
+  min-width: 0;
+}
+#StatusBar::after {
+  content: "";
+  order: 8;  /* Spacer between Download(7) and Open(9) */
+  flex-grow: 1;
+  min-width: 0;
+}
+#StatusBar #st_fd { margin-left: 0; }
+#StatusBar #st_fd .stval { min-width: 0; }
+
+/* === Preload (disabled — no images) === */
+
+div#preload { display: none; }
