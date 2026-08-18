@@ -1,6 +1,6 @@
 /*
  * Dracula Theme for ruTorrent — behaviour
- * Version 0.1.0 · built against ruTorrent 5.3
+ * Version 0.1.0 · built against ruTorrent 5.3   # x-release-please-version
  * https://draculatheme.com
  *
  * Checks at startup that the stylesheets beside it carry the same version — see
@@ -24,7 +24,7 @@
 
 // Bump together with the stamps on :root in each sheet: this file compares
 // itself against them at startup.
-var DRACULA_VERSION = "0.1.0";
+var DRACULA_VERSION = "0.1.0"; // x-release-please-version
 // ruTorrent minors this build was run against, not a guess at what it might
 // tolerate. The theme reaches into upstream's markup and wraps its functions by
 // name, so a new minor is a real risk.
