@@ -46,6 +46,31 @@
   border-spacing: 0;
 }
 
+/* Column widths are one profile of absolute pixels, shared by every viewport
+   and saved per table (`webui.trt.colwidth`). A width already in it outranks
+   anything the theme sets, so a phone is shown the widths someone chose at
+   1920px and `table-layout: fixed` clips whatever does not fit — a timestamp
+   loses its minutes, a peer count its bracket.
+
+   Letting the table measure itself is the only answer that writes nothing back:
+   widths chosen here would have to be saved to take effect, and saving them
+   would overwrite that same desktop profile. The row is already wider than the
+   pane and already scrolls, so the extra width costs nothing new.
+
+   The cap is what auto layout needs to stay usable: a column grows to its
+   longest cell, and a torrent name has no bound. Name is also the one column
+   where a cut is harmless, because what identifies a torrent is at the front. */
+@media (max-width: 767.98px) {
+  .stable table {
+    table-layout: auto;
+    width: max-content;
+  }
+
+  .stable td {
+    max-width: 60vw;
+  }
+}
+
 .stable thead {
   height: 24px;
 }
