@@ -25,10 +25,30 @@
 // Bump together with the stamps on :root in each sheet: this file compares
 // itself against them at startup.
 var DRACULA_VERSION = "0.1.0"; // x-release-please-version
-// ruTorrent minors this build was run against, not a guess at what it might
-// tolerate. The theme reaches into upstream's markup and wraps its functions by
-// name, so a new minor is a real risk.
-var DRACULA_RUTORRENT = ["5.3"];
+// The oldest ruTorrent the theme fits, found by testing each release in turn:
+// 5.1.12 and everything below it lays the torrent table out wrong, and 5.2.0 is
+// the first that does not.
+//
+// A floor rather than a list of the minors it has been seen on. The README
+// promises "5.2.0 or newer", and a warning that fired on a release newer than
+// this file would argue with it; a newer minor that breaks something arrives as
+// a report, which is worth more than a guess made here.
+var DRACULA_RUTORRENT_MIN = "5.2.0";
+
+// Compared a component at a time as numbers: "5.10" sorts below "5.9" as text
+// and above it as a version, and ruTorrent has already passed 5.9.
+function draculaOlderThan(version, floor)
+{
+	var a = String(version).split("."), b = String(floor).split(".");
+	for(var i = 0; i < 3; i++)
+	{
+		var x = parseInt(a[i], 10) || 0;
+		var y = parseInt(b[i], 10) || 0;
+		if(x !== y)
+			return x < y;
+	}
+	return false;
+}
 
 // getPropertyValue hands back the token stream, quotes included.
 function draculaStampedVersion(name)
@@ -93,11 +113,11 @@ function draculaCheckVersions()
 	}
 
 	var rt = (window.theWebUI && theWebUI.version) || "";
-	var line = rt.split(".").slice(0, 2).join(".");
-	if(line && DRACULA_RUTORRENT.indexOf(line) === -1 && window.console && console.warn)
-		console.warn("Dracula theme " + DRACULA_VERSION + " was built against " +
-			"ruTorrent " + DRACULA_RUTORRENT.join(", ") + "; this is " + rt +
-			". Some styling may be wrong.");
+	if(rt && draculaOlderThan(rt, DRACULA_RUTORRENT_MIN) &&
+		window.console && console.warn)
+		console.warn("Dracula theme " + DRACULA_VERSION + " needs ruTorrent " +
+			DRACULA_RUTORRENT_MIN + " or newer; this is " + rt +
+			". Some of the layout will be wrong.");
 }
 
 /* === Graphs stay sharp when the page is zoomed === */

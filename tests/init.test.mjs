@@ -87,6 +87,7 @@ test("init.js evaluates against a stub ruTorrent and exposes its helpers", () =>
 		"draculaErrorIcon",
 		"draculaStoppedTorrent",
 		"draculaUserSizedColumn",
+		"draculaOlderThan",
 		"draculaIconKind",
 		"draculaVisualScale",
 	])
@@ -95,9 +96,20 @@ test("init.js evaluates against a stub ruTorrent and exposes its helpers", () =>
 
 test("the theme version is a plain semver string", () => {
 	assert.match(theme.DRACULA_VERSION, /^\d+\.\d+\.\d+$/);
-	assert.ok(
-		Array.isArray(theme.DRACULA_RUTORRENT) && theme.DRACULA_RUTORRENT.length,
-	);
+	assert.match(theme.DRACULA_RUTORRENT_MIN, /^\d+\.\d+\.\d+$/);
+});
+
+// The trap this guards is "5.10" against "5.9": below it as text, above it as a
+// version, and ruTorrent is already past 5.9.
+test("draculaOlderThan compares versions as numbers, not as text", () => {
+	assert.equal(theme.draculaOlderThan("5.1.12", "5.2.0"), true);
+	assert.equal(theme.draculaOlderThan("5.2.0", "5.2.0"), false);
+	assert.equal(theme.draculaOlderThan("5.3.12", "5.2.0"), false);
+	assert.equal(theme.draculaOlderThan("5.9.0", "5.10.0"), true);
+	assert.equal(theme.draculaOlderThan("5.10.0", "5.9.0"), false);
+	assert.equal(theme.draculaOlderThan("4.3.11", "5.2.0"), true);
+	// A version with parts missing reads them as zero rather than as NaN.
+	assert.equal(theme.draculaOlderThan("5.2", "5.2.0"), false);
 });
 
 // The budget is by area, so a small canvas is allowed to be dense: a flat

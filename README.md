@@ -19,6 +19,11 @@ Beyond the palette: full keyboard control, vector icons throughout, one row
 height across every list, bundled fonts. Full list in
 [FEATURES.md](./FEATURES.md).
 
+## Requires
+
+**ruTorrent 5.2.0 or newer.** Older releases lay the torrent table out
+differently and the theme does not fit them.
+
 ## Install
 
 All instructions can be found in [INSTALL.md](./INSTALL.md).
