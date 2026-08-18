@@ -22,8 +22,8 @@
 /* global dStatus, askYesNo, RGBackground, dxSTable, rGraph, ALIGN_LEFT */
 /* global document, setTimeout, clearTimeout, MutationObserver, MouseEvent, Intl, $, window, getComputedStyle, Image, console */
 
-// Bump together with the stamps on :root in each sheet, which this is
-// this file compares itself against them.
+// Bump together with the stamps on :root in each sheet: this file compares
+// itself against them at startup.
 var DRACULA_VERSION = "0.1.0";
 // ruTorrent minors this build was run against, not a guess at what it might
 // tolerate. The theme reaches into upstream's markup and wraps its functions by
