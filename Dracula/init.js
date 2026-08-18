@@ -3008,12 +3008,49 @@ dxSTable.prototype.renameColumnById = function(id, name)
 // adds — AddTime and Tracker among them, which a load-time patch misses because
 // those plugins run after this file.
 //
-// A width the profile already carries is the user's own resizing and outranks a
-// default. This is the same test config() uses when it applies saved widths over
-// the definitions.
-function draculaHasSavedWidth(saved, index)
+/* `config()` lays the saved profile over the column definitions
+   (`webui.js:381`) and the tables are created from that same array afterwards,
+   so by the time the create hook runs a column's declared width is gone and a
+   saved width has nothing left to be compared against.
+
+   Read here instead. `config()` runs from `initFinish` once every plugin has
+   loaded, so the columns AddTime and Tracker add are already in place, and it is
+   the last moment before the profile covers what upstream declared. */
+var draculaDeclaredWidths = {};
+
+if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 {
-	return !!(saved && index < saved.length && saved[index] > 4);
+	plugin.draculaConfig = theWebUI.config;
+	theWebUI.config = function()
+	{
+		var tables = this.tables || {};
+		for(var name in tables)
+		{
+			if(!tables[name] || !tables[name].columns)
+				continue;
+			draculaDeclaredWidths[name] = tables[name].columns.map(function(col)
+			{
+				return col.width;
+			});
+		}
+		return plugin.draculaConfig.apply(this, arguments);
+	};
+}
+
+/* A saved width is no proof that anyone chose it. ruTorrent writes the whole
+   profile back whenever a column is dragged or moved (`webui.js:865`), so what
+   sits in it for an untouched column is upstream's own declaration, persisted.
+   A width that differs from the declaration was chosen by hand and outranks
+   anything here; one equal to it was never touched.
+
+   A declaration that cannot be read is treated as a choice. Better to leave a
+   column alone than to overwrite a decision that cannot be seen. */
+function draculaUserSizedColumn(saved, index, declared)
+{
+	if(!saved || index >= saved.length || saved[index] <= 4)
+		return false;
+	var upstream = parseInt(declared, 10);
+	return !(upstream > 0 && saved[index] === upstream);
 }
 
 function draculaPatchColumns(styles, aName)
@@ -3022,6 +3059,7 @@ function draculaPatchColumns(styles, aName)
 	if(!patch || !styles)
 		return;
 	var saved = theWebUI.settings["webui." + aName + ".colwidth"];
+	var declared = draculaDeclaredWidths[aName];
 	for(var i = 0; i < styles.length; i++)
 	{
 		var col = patch[styles[i].id];
@@ -3031,8 +3069,15 @@ function draculaPatchColumns(styles, aName)
 			styles[i].text = col.text;
 		if(col.align)
 			styles[i].align = col.align;
-		if(col.width && !draculaHasSavedWidth(saved, i))
-			styles[i].width = col.width;
+		if(!col.width ||
+			draculaUserSizedColumn(saved, i, declared && declared[i]))
+			continue;
+		styles[i].width = col.width;
+		// `config()` runs after this and lays the profile back over the
+		// definitions, so the profile is the only place a width survives being
+		// set here. One column at a time, and only one that nobody had sized.
+		if(saved && i < saved.length)
+			saved[i] = parseInt(col.width, 10);
 	}
 }
 

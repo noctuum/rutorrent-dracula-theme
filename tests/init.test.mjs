@@ -86,7 +86,7 @@ test("init.js evaluates against a stub ruTorrent and exposes its helpers", () =>
 		"draculaMinorError",
 		"draculaErrorIcon",
 		"draculaStoppedTorrent",
-		"draculaHasSavedWidth",
+		"draculaUserSizedColumn",
 		"draculaIconKind",
 		"draculaVisualScale",
 	])
@@ -184,11 +184,20 @@ test("draculaStoppedTorrent: only started, checking or hashing count as running"
 	assert.equal(theme.draculaStoppedTorrent({ state: 19 }), false); // the alpine case
 });
 
-test("draculaHasSavedWidth: a saved width over 4 outranks a theme default", () => {
-	assert.equal(theme.draculaHasSavedWidth([10, 20], 1), true);
-	assert.equal(theme.draculaHasSavedWidth([10, 3], 1), false);
-	assert.equal(theme.draculaHasSavedWidth(null, 0), false);
-	assert.equal(theme.draculaHasSavedWidth([10], 5), false);
+// The profile carries a width for every column whether or not anyone chose it,
+// so the declaration it was saved from is what tells the two apart.
+test("draculaUserSizedColumn: only a width unlike the declaration is the user's", () => {
+	// Saved exactly what upstream declares: nobody touched it.
+	assert.equal(theme.draculaUserSizedColumn([110], 0, "110px"), false);
+	// Dragged away from the declaration.
+	assert.equal(theme.draculaUserSizedColumn([309], 0, "200px"), true);
+	// No width worth the name, and config() would not apply it either.
+	assert.equal(theme.draculaUserSizedColumn([3], 0, "70px"), false);
+	assert.equal(theme.draculaUserSizedColumn(null, 0, "70px"), false);
+	assert.equal(theme.draculaUserSizedColumn([10], 5, "70px"), false);
+	// A declaration that cannot be read leaves the column alone.
+	assert.equal(theme.draculaUserSizedColumn([80], 0, undefined), true);
+	assert.equal(theme.draculaUserSizedColumn([80], 0, "auto"), true);
 });
 
 test("draculaIconKind: only tracklabels URLs classify, and by their parameter", () => {
