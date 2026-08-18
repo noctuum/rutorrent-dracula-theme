@@ -4,7 +4,9 @@ labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
-      value: |
+      # Folded, not literal: GitHub renders a single newline here as a line
+      # break, so a hard-wrapped paragraph arrives broken at the same columns.
+      value: >
         The theme is a skin: it changes how ruTorrent is drawn and how it is
         driven from a keyboard or a touch screen. It cannot add features to
         ruTorrent itself — those belong
