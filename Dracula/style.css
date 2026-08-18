@@ -1694,6 +1694,49 @@ div#tdetails { background-color: var(--dracula-bg); }
   border-bottom: 1px solid var(--dracula-current);
 }
 
+/* init.js builds this and sizes the thumb; it is a sibling of the row, so it
+   stays put while the tabs scroll under it. Absent until the row overflows. */
+#dracula-tab-scroll {
+  /* Written by init.js on every scroll; declared here so the sheet stands on
+     its own and the pair reads as part of the rule they drive. */
+  --dracula-tab-thumb-left: 0;
+  --dracula-tab-thumb-width: 0;
+
+  display: none;
+}
+
+/* A desktop scrollbar is drawn and stays drawn, so only a coarse pointer is
+   told anything. There the platform's own bar is an overlay that appears while
+   a finger moves and is gone by the time anyone looks, so it is taken out
+   rather than left to draw a second line beside this one. */
+@media (pointer: coarse) {
+  .tabbar {
+    scrollbar-width: none;
+  }
+
+  .tabbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  #dracula-tab-scroll.dracula-tabs-overflow {
+    display: block;
+    position: relative;
+    flex: 0 0 2px;
+    background-color: var(--dracula-bg-darker);
+  }
+
+  #dracula-tab-scroll.dracula-tabs-overflow::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--dracula-tab-thumb-left);
+    width: var(--dracula-tab-thumb-width);
+    border-radius: 1px;
+    background-color: var(--dracula-comment);
+  }
+}
+
 /* `flex: 1 1 0` gives every tab an equal share of the row; left alone the tabs
    stop about 60% of the way across and leave the rest of the bar empty. The
    basis is 0 rather than auto on purpose: with auto, the free space is spread

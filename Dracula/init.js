@@ -666,6 +666,53 @@ function draculaStatusCellPopovers()
 	window.addEventListener("orientationchange", draculaPlaceStatusPopoverSettled);
 }
 
+/* The row scrolls once the tabs stop fitting — eleven of them ask for 802px
+   against a 390px screen — and nothing says so: the last visible tab ends at the
+   edge like a row that is complete. Only a coarse pointer needs telling, since
+   a desktop scrollbar is already drawn and stays drawn.
+
+   The track is a sibling of the row, not a part of it. `#tabbar` is the
+   scroller, so anything painted inside travels with the tabs; `#tdetails` is a
+   flex column (`css/style.css:532`), which lands the track under the row with no
+   positioning of its own. */
+function draculaTabScrollIndicator()
+{
+	var bar = document.getElementById("tabbar");
+	if(!bar || !bar.parentNode)
+		return;
+
+	var track = document.createElement("div");
+	track.id = "dracula-tab-scroll";
+	bar.parentNode.insertBefore(track, bar.nextSibling);
+
+	function update()
+	{
+		var room = bar.clientWidth;
+		var content = bar.scrollWidth;
+		if(content - room <= 1)
+		{
+			track.classList.remove("dracula-tabs-overflow");
+			return;
+		}
+		track.classList.add("dracula-tabs-overflow");
+		// A thumb narrower than a finger's width says nothing, so it has a floor;
+		// the travel is then measured against what is left of the track rather
+		// than the whole of it, or the thumb would run past the end.
+		var width = Math.max(16, room * room / content);
+		track.style.setProperty("--dracula-tab-thumb-width", width + "px");
+		track.style.setProperty("--dracula-tab-thumb-left",
+			(bar.scrollLeft / (content - room)) * (room - width) + "px");
+	}
+
+	bar.addEventListener("scroll", update);
+	window.addEventListener("resize", update);
+	// Plugins append their tabs after this file runs, and one can arrive or leave
+	// while the page is up.
+	if(window.MutationObserver)
+		new MutationObserver(update).observe(bar, { childList: true });
+	update();
+}
+
 // Upstream binds the speed limit menu to right-click alone, which is
 // undiscoverable on a block that looks like a button. Left-click opens it too.
 function draculaSpeedClickOpensMenu(el)
@@ -2333,6 +2380,7 @@ plugin.allDone = function()
 	draculaSpeedClickOpensMenu(document.getElementById("st_up"));
 	draculaSpeedClickOpensMenu(document.getElementById("st_down"));
 	draculaStatusCellPopovers();
+	draculaTabScrollIndicator();
 	draculaStatusBarKeys();
 	draculaWatchContextMenu();
 	draculaFillKeyHelp();
