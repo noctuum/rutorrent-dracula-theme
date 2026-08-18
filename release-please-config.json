@@ -3,6 +3,7 @@
   "packages": {
     ".": {
       "release-type": "node",
+      "include-component-in-tag": false,
       "extra-files": [
         { "type": "generic", "path": "Dracula/init.js" },
         { "type": "generic", "path": "Dracula/style.css" },
