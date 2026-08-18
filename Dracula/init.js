@@ -25,10 +25,13 @@
 // Bump together with the stamps on :root in each sheet: this file compares
 // itself against them at startup.
 var DRACULA_VERSION = "0.1.0"; // x-release-please-version
-// ruTorrent minors this build was run against, not a guess at what it might
+// ruTorrent minors the theme has been run against, not a guess at what it might
 // tolerate. The theme reaches into upstream's markup and wraps its functions by
 // name, so a new minor is a real risk.
-var DRACULA_RUTORRENT = ["5.3"];
+//
+// 5.2.0 is the floor, found by bisection: 5.1.12 and everything below it lays
+// the torrent table out wrong, and 5.2.0 is the first release that does not.
+var DRACULA_RUTORRENT = ["5.2", "5.3"];
 
 // getPropertyValue hands back the token stream, quotes included.
 function draculaStampedVersion(name)
