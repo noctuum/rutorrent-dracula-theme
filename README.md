@@ -2,6 +2,15 @@
 
 > A dark theme for [ruTorrent](https://github.com/Novik/ruTorrent).
 
+> [!WARNING]
+> **Work in progress.** The desktop interface is finished and in daily use; the
+> mobile layout is not. On a phone or a tablet, parts of it are expected to be
+> rough or outright broken.
+>
+> That is why the theme has not been submitted to the
+> [Dracula](https://draculatheme.com) organization yet. Testing and bug reports
+> are very welcome in the meantime.
+
 ![Screenshot](./screenshot.png)
 
 ## Features
