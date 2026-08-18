@@ -2725,7 +2725,14 @@ function draculaDragDivider(el, onMove, onSettle, onTap)
 	el.addEventListener("pointerdown", function(e)
 	{
 		if(e.pointerType === "mouse")
+		{
+			// The drag itself stays upstream's, but upstream's DnD announces
+			// nothing, and the floor below has to know a drag is running for a
+			// mouse as much as for a finger. Cleared by the release bound in
+			// draculaTouchDividers, wherever the button happens to come up.
+			draculaDividerDragging = true;
 			return;
+		}
 		dragging = true;
 		draculaDividerDragging = true;
 		travelled = 0;
@@ -2832,6 +2839,18 @@ function draculaTouchDividers()
 	if(!window.theWebUI)
 		return;
 	draculaKeepDetailsToggleSafe();
+
+	// A mouse drag is released wherever the button comes up, which is rarely over
+	// a 5px divider, so the end of one is watched on the document. Both events are
+	// bound because the flag left standing would drop the floor for good.
+	var mouseReleased = function(e)
+	{
+		if(!e.pointerType || e.pointerType === "mouse")
+			draculaDividerDragging = false;
+	};
+	document.addEventListener("pointerup", mouseReleased);
+	document.addEventListener("pointercancel", mouseReleased);
+	document.addEventListener("mouseup", mouseReleased);
 
 	// The same two calls content.js gives the mouse (`content.js:29-33`), so a
 	// touch drag and a mouse drag save the same setting.
