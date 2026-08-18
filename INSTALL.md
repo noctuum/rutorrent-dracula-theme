@@ -10,7 +10,7 @@ git clone https://github.com/noctuum/rutorrent-dracula-theme.git
 
 #### Install manually
 
-Download using the [GitHub `.zip` download](https://github.com/noctuum/rutorrent-dracula-theme/archive/main.zip) option and unzip it.
+Download [`Dracula.tar.gz`](https://github.com/noctuum/rutorrent-dracula-theme/releases/latest/download/Dracula.tar.gz) from the latest release and unpack it.
 
 #### Activating theme
 
