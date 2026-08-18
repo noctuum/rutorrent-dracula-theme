@@ -2915,7 +2915,10 @@ var draculaColumns = {
 		downloaded: { width: "115px" },
 		uploaded:   { width: "115px" },
 		remaining:  { width: "105px" },
-		name:    { width: "260px" },
+		// Torrent names are long and the front of one is what identifies it, so
+		// this column buys the most per pixel of any in the table. 260 cut even
+		// short release names.
+		name:    { width: "320px" },
 		status:  { width: "115px" },
 		ratio:   { width: "70px" },
 		// Timestamps are TYPE_NUMBER, so dxSTable right-aligns them like a
@@ -3018,11 +3021,43 @@ dxSTable.prototype.renameColumnById = function(id, name)
    the last moment before the profile covers what upstream declared. */
 var draculaDeclaredWidths = {};
 
+/* The sidebar opens with every section collapsed on a profile that has never
+   held one. `webui.closed_panels` starts empty, so `panelClosed` answers
+   `undefined`, `Object.assign` puts that on the element
+   (`category-list-elements.js:230`), and the boolean setter runs
+   `toggleAttribute("closed", undefined)`. An undefined second argument is not
+   "false" there — it means no force is given, so the attribute is toggled, and
+   an absent one becomes present.
+
+   Coerced here rather than by writing the setting: nothing about the sidebar is
+   the user's yet, and inventing entries for them would be a decision the theme
+   has no business making. `undefined` becomes `false`, `toggleAttribute` clears
+   the attribute, and the section opens.
+
+   The list is reached through `theWebUI.categoryList` — upstream's own binding
+   is a const inside the ready handler (`webui.js:2522`) and never global. It is
+   assigned before `theWebUI.init()`, so it is already there when config runs. */
+var draculaPanelsKept = false;
+
+function draculaKeepPanelsOpen()
+{
+	var list = window.theWebUI && theWebUI.categoryList;
+	if(draculaPanelsKept || !list || typeof list.panelClosed !== "function")
+		return;
+	draculaPanelsKept = true;
+	var panelClosed = list.panelClosed;
+	list.panelClosed = function()
+	{
+		return !!panelClosed.apply(this, arguments);
+	};
+}
+
 if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 {
 	plugin.draculaConfig = theWebUI.config;
 	theWebUI.config = function()
 	{
+		draculaKeepPanelsOpen();
 		var tables = this.tables || {};
 		for(var name in tables)
 		{
@@ -3033,7 +3068,11 @@ if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 				return col.width;
 			});
 		}
-		return plugin.draculaConfig.apply(this, arguments);
+		// The list may not exist yet when the wrapper is installed, and the far
+		// side of upstream's config is the other chance to reach it.
+		var result = plugin.draculaConfig.apply(this, arguments);
+		draculaKeepPanelsOpen();
+		return result;
 	};
 }
 
