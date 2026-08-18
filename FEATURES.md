@@ -14,16 +14,16 @@ moves between them, arrows move inside one, Home and End jump to its ends. Each
 region remembers where you were, so Tab returns you to the row you left rather
 than to the top.
 
-| Key | Does |
-| --- | --- |
-| `Tab` | Move between the five regions |
-| `← ↑ → ↓` | Move inside a region |
-| `Enter` | Open details, a tab, or a filter |
-| `Space` | Toggle selection, or activate |
-| `Ctrl-Enter`, `Menu`, `Shift-F10` | Torrent menu, as a right click |
-| `Shift-↑ ↓` | Extend the selection in the list |
-| `Escape` | Close the menu and step back |
-| `F1` | The full list, on screen |
+| Key                               | Does                             |
+| --------------------------------- | -------------------------------- |
+| `Tab`                             | Move between the five regions    |
+| `← ↑ → ↓`                         | Move inside a region             |
+| `Enter`                           | Open details, a tab, or a filter |
+| `Space`                           | Toggle selection, or activate    |
+| `Ctrl-Enter`, `Menu`, `Shift-F10` | Torrent menu, as a right click   |
+| `Shift-↑ ↓`                       | Extend the selection in the list |
+| `Escape`                          | Close the menu and step back     |
+| `F1`                              | The full list, on screen         |
 
 Five bare letters act on whatever is selected: **S** start, **P** pause,
 **T** stop, **U** reannounce, **R** force recheck. They are plain letters
