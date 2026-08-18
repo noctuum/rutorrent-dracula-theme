@@ -2915,7 +2915,10 @@ var draculaColumns = {
 		downloaded: { width: "115px" },
 		uploaded:   { width: "115px" },
 		remaining:  { width: "105px" },
-		name:    { width: "260px" },
+		// Torrent names are long and the front of one is what identifies it, so
+		// this column buys the most per pixel of any in the table. 260 cut even
+		// short release names.
+		name:    { width: "320px" },
 		status:  { width: "115px" },
 		ratio:   { width: "70px" },
 		// Timestamps are TYPE_NUMBER, so dxSTable right-aligns them like a
