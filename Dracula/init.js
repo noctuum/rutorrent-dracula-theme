@@ -47,6 +47,17 @@ function draculaStampedVersion(name)
 //
 // The symptom otherwise is not obvious — new class names arrive from a new
 // init.js, the old sheet has no rules for them, and icons simply vanish.
+// `enabled` is the flag thePlugins keeps per plugin; the mobile UI clears it
+// through v.disable(). Absent object means nothing said otherwise, so the theme
+// is treated as on.
+function draculaThemeSwitchedOff()
+{
+	var theme = (window.thePlugins && typeof thePlugins.get === "function")
+		? thePlugins.get("theme")
+		: null;
+	return !!(theme && theme.enabled === false);
+}
+
 function draculaCheckVersions()
 {
 	var sheets = {
@@ -60,7 +71,15 @@ function draculaCheckVersions()
 		if(sheets[name] !== DRACULA_VERSION)
 			stale.push(name + " " + (sheets[name] || "(missing or not loaded)"));
 
-	if(stale.length)
+	/* A disabled theme is not a stale theme. The mobile plugin takes the page
+	   over by disabling every plugin outside its own keepEnabled list, `theme`
+	   included (`plugins/mobile/init.js:2138`), and this file keeps running
+	   regardless because ruTorrent splices it into the response
+	   (`plugins/theme/init.php:22`). What is left is two of the three sheets
+	   gone, no version stamp to read, and a red banner on a page the theme was
+	   never painting. Counting the sheets does not separate the two cases:
+	   plugins.css is linked twice and one copy survives. */
+	if(stale.length && !draculaThemeSwitchedOff())
 	{
 		var msg = "Dracula theme " + DRACULA_VERSION + ": stylesheet mismatch — " +
 			stale.join(", ") + ". Reload with Ctrl+Shift+R; if that does not " +
@@ -461,6 +480,237 @@ function draculaFlipConnectionValues(cell)
 	flip();
 	new MutationObserver(flip).observe(cell,
 		{ childList: true, subtree: true, characterData: true });
+}
+
+/* The four report cells carry their whole reading in `title` — see
+   draculaDiskTooltip and its siblings above — and `title` needs a hover, which a
+   touch screen has none of. On a narrow screen those cells are also collapsed to
+   their icon so the bar fits, which would leave a phone with four icons and no
+   numbers at all.
+
+   A tap opens the same string in a panel above the bar. The two speed cells are
+   not in the list: a tap there already opens the throttle menu. */
+var draculaPopoverCells = ["meter-disk-pane", "meter-cpu-pane", "st_fd", "port-pane"];
+
+// Either condition alone is enough. No hover means the titles are unreachable
+// whatever the width; under 768px the cells are collapsed and have nothing else
+// to show.
+function draculaWantsPopovers()
+{
+	return !!(window.matchMedia &&
+		window.matchMedia("(hover: none), (max-width: 767.98px)").matches);
+}
+
+function draculaStatusPopover()
+{
+	var node = document.getElementById("dracula-status-popover");
+	if(node)
+		return node;
+	node = document.createElement("div");
+	node.id = "dracula-status-popover";
+	node.setAttribute("role", "tooltip");
+	node.hidden = true;
+	document.body.appendChild(node);
+	return node;
+}
+
+function draculaHideStatusPopover()
+{
+	var node = document.getElementById("dracula-status-popover");
+	if(node)
+	{
+		node.hidden = true;
+		node.removeAttribute("data-dracula-cell");
+	}
+}
+
+function draculaStatusPopoverShows(id)
+{
+	var node = document.getElementById("dracula-status-popover");
+	return !!(node && !node.hidden &&
+		node.getAttribute("data-dracula-cell") === id);
+}
+
+// Placed after it is filled and shown: width is unknown until the text is in,
+// and a hidden element measures zero.
+function draculaShowStatusPopover(cell)
+{
+	var text = cell.getAttribute("title");
+	if(!text)
+		return;
+	var node = draculaStatusPopover();
+	node.textContent = text;
+	node.hidden = false;
+	node.setAttribute("data-dracula-cell", cell.id);
+
+	var bar = document.getElementById("StatusBar");
+	var barTop = bar ? bar.getBoundingClientRect().top : window.innerHeight;
+	var cellBox = cell.getBoundingClientRect();
+	var width = node.getBoundingClientRect().width;
+
+	node.style.bottom = (window.innerHeight - barTop + 4) + "px";
+	node.style.left = Math.max(4,
+		Math.min(cellBox.left + (cellBox.width - width) / 2,
+			window.innerWidth - width - 4)) + "px";
+}
+
+// The panel carries the id of the cell it belongs to, so a viewport change is a
+// re-placement rather than a loss.
+function draculaPlaceStatusPopover()
+{
+	var node = document.getElementById("dracula-status-popover");
+	if(!node || node.hidden)
+		return;
+	var cell = document.getElementById(node.getAttribute("data-dracula-cell"));
+	// draculaShowStatusPopover refuses a cell with no title and would leave the
+	// panel standing at coordinates that no longer describe anything.
+	if(cell && cell.getAttribute("title"))
+		draculaShowStatusPopover(cell);
+	else
+		draculaHideStatusPopover();
+}
+
+/* A rotation reports the width and height it is leaving, not the ones it is
+   arriving at, so a placement made now lands against geometry that is about to
+   move. The second pass catches the settled layout. */
+var draculaPlaceTimer = null;
+
+function draculaPlaceStatusPopoverSettled()
+{
+	draculaPlaceStatusPopover();
+	if(draculaPlaceTimer)
+		clearTimeout(draculaPlaceTimer);
+	draculaPlaceTimer = setTimeout(function()
+	{
+		draculaPlaceTimer = null;
+		draculaPlaceStatusPopover();
+	}, 300);
+}
+
+// Under the system's own press-and-hold, so the panel is up before iOS would
+// start a selection instead.
+var DRACULA_HOLD = 350;
+
+function draculaStatusCellPopovers()
+{
+	// A touch settles the panel by itself, and the click the browser sends
+	// afterwards would toggle it a second time. The stamp expires on its own, so
+	// a touch that never produces a click cannot leave the mouse path blocked.
+	var touchSettledAt = 0;
+
+	draculaPopoverCells.forEach(function(id)
+	{
+		var cell = document.getElementById(id);
+		if(!cell)
+			return;
+
+		var pressedAt = 0;
+		var wasOpen = false;
+
+		cell.addEventListener("pointerdown", function(e)
+		{
+			if(e.pointerType === "mouse" || !draculaWantsPopovers())
+				return;
+			pressedAt = Date.now();
+			wasOpen = draculaStatusPopoverShows(id);
+			// Without capture a finger that slides off the cell delivers pointerup
+			// elsewhere, and the panel is left up with nothing to close it.
+			if(cell.setPointerCapture)
+				cell.setPointerCapture(e.pointerId);
+			draculaShowStatusPopover(cell);
+		});
+
+		// A press outliving DRACULA_HOLD is a hold and ends with the finger. A
+		// shorter one is a tap: it leaves the panel where it is, unless it landed
+		// on the cell already showing, which makes it the closing half of a toggle.
+		cell.addEventListener("pointerup", function()
+		{
+			if(!pressedAt)
+				return;
+			var held = Date.now() - pressedAt >= DRACULA_HOLD;
+			pressedAt = 0;
+			touchSettledAt = Date.now();
+			if(held || wasOpen)
+				draculaHideStatusPopover();
+		});
+
+		// The browser has taken the gesture for its own — a scroll, most often.
+		// Nothing was chosen, so nothing stays open.
+		cell.addEventListener("pointercancel", function()
+		{
+			pressedAt = 0;
+			touchSettledAt = Date.now();
+			draculaHideStatusPopover();
+		});
+
+		cell.addEventListener("click", function(e)
+		{
+			if(!draculaWantsPopovers())
+				return;
+			// Without this the document listener below closes the panel in the
+			// same click that opened it.
+			e.stopPropagation();
+			if(Date.now() - touchSettledAt < 700)
+				return;
+			if(draculaStatusPopoverShows(id))
+				draculaHideStatusPopover();
+			else
+				draculaShowStatusPopover(cell);
+		});
+	});
+	document.addEventListener("click", draculaHideStatusPopover);
+	// It is placed from the cell's box and the bar's top, both of which move when
+	// the window does. Safari's toolbar returning at the bottom edge — where the
+	// bar sits — is enough to fire this during a tap on the bar itself.
+	window.addEventListener("resize", draculaPlaceStatusPopover);
+	window.addEventListener("orientationchange", draculaPlaceStatusPopoverSettled);
+}
+
+/* The row scrolls once the tabs stop fitting — eleven of them ask for 802px
+   against a 390px screen — and nothing says so: the last visible tab ends at the
+   edge like a row that is complete. Only a coarse pointer needs telling, since
+   a desktop scrollbar is already drawn and stays drawn.
+
+   The track is a sibling of the row, not a part of it. `#tabbar` is the
+   scroller, so anything painted inside travels with the tabs; `#tdetails` is a
+   flex column (`css/style.css:532`), which lands the track under the row with no
+   positioning of its own. */
+function draculaTabScrollIndicator()
+{
+	var bar = document.getElementById("tabbar");
+	if(!bar || !bar.parentNode)
+		return;
+
+	var track = document.createElement("div");
+	track.id = "dracula-tab-scroll";
+	bar.parentNode.insertBefore(track, bar.nextSibling);
+
+	function update()
+	{
+		var room = bar.clientWidth;
+		var content = bar.scrollWidth;
+		if(content - room <= 1)
+		{
+			track.classList.remove("dracula-tabs-overflow");
+			return;
+		}
+		track.classList.add("dracula-tabs-overflow");
+		// A thumb narrower than a finger's width says nothing, so it has a floor;
+		// the travel is then measured against what is left of the track rather
+		// than the whole of it, or the thumb would run past the end.
+		var width = Math.max(16, room * room / content);
+		track.style.setProperty("--dracula-tab-thumb-width", width + "px");
+		track.style.setProperty("--dracula-tab-thumb-left",
+			(bar.scrollLeft / (content - room)) * (room - width) + "px");
+	}
+
+	bar.addEventListener("scroll", update);
+	window.addEventListener("resize", update);
+	// Plugins append their tabs after this file runs, and one can arrive or leave
+	// while the page is up.
+	if(window.MutationObserver)
+		new MutationObserver(update).observe(bar, { childList: true });
+	update();
 }
 
 // Upstream binds the speed limit menu to right-click alone, which is
@@ -1973,6 +2223,20 @@ plugin.draculaAllDone = plugin.allDone;
 plugin.allDone = function()
 {
 	plugin.draculaAllDone.call(this);
+
+	/* Everything below reaches into upstream's markup, wraps its functions and
+	   binds handlers on the assumption that the theme's stylesheets are on the
+	   page. When another UI has switched the theme off — the mobile plugin
+	   disables it (`plugins/mobile/init.js:2138`) — none of that holds, and this
+	   file keeps running anyway because ruTorrent splices it into the response.
+	   The version check is the one thing still worth running: it decides for
+	   itself whether there is anything to report. */
+	if(draculaThemeSwitchedOff())
+	{
+		draculaCheckVersions();
+		return;
+	}
+
 	draculaWatchListScrollbar(0);
 
 	// Once for what exists, then again whenever a plugin adds a button or a tab:
@@ -2115,12 +2379,18 @@ plugin.allDone = function()
 	draculaFlipConnectionValues(stFd);
 	draculaSpeedClickOpensMenu(document.getElementById("st_up"));
 	draculaSpeedClickOpensMenu(document.getElementById("st_down"));
+	draculaStatusCellPopovers();
+	draculaTabScrollIndicator();
 	draculaStatusBarKeys();
 	draculaWatchContextMenu();
 	draculaFillKeyHelp();
 	draculaFixToolbarSeparators();
 	draculaWatchSearchSource();
+	// Before the toolbar wrapper: that one calls resizeTop through the property,
+	// and the floor has to be neutralised by the time it does.
+	draculaLowerListFloor();
 	draculaFixHiddenToolbarHeight();
+	draculaTouchDividers();
 	draculaTorrentActionKeys();
 	draculaStatusOverride();
 	draculaCheckVersions();
@@ -2363,6 +2633,252 @@ function draculaFixHiddenToolbarHeight()
 	draculaMainContentHeight();
 }
 
+/* === Dividers under a finger === */
+
+// A landscape phone is 320 to 430px tall and a desktop window worth protecting
+// from the floor below is taller than this.
+var DRACULA_SHORT_VIEWPORT = 500;
+
+// Below this a pointer that went down and came up is a tap, not a drag. Fingers
+// never hold still; 6px is the slop this costs.
+var DRACULA_TAP_SLOP = 6;
+
+// True between pointerdown and release on a divider. The floor below is dropped
+// while it is set, so a drag reaches both ends of the range.
+var draculaDividerDragging = false;
+
+function draculaShortViewport()
+{
+	return window.innerHeight <= DRACULA_SHORT_VIEWPORT;
+}
+
+/* resizeTop floors the list at `webui.list_table_min_height`, 300 by default
+   (`webui.js:2269`), then caps it at the height of `#main-info`
+   (`webui.js:2272`). In a landscape phone the whole main area is 230px: the
+   floor claims all of it, the cap trims 5px back, and `#tdetails` is laid out
+   0px tall with its tab row off screen — the panel is present, sized to nothing.
+
+   The same floor pins a drag. In portrait a phone is 600-700px tall, so the floor
+   applies in full and the divider moves down freely while refusing to rise above
+   300px from the top. A handle that answers in one direction only is worse than
+   one that does not move.
+
+   The floor is right for the layout a desktop opens with, so it is dropped for
+   the duration of the call rather than changed: the setting is restored
+   immediately and never saved, and the arithmetic stays upstream's. */
+function draculaLowerListFloor()
+{
+	if(!window.theWebUI || typeof theWebUI.resizeTop !== "function")
+		return;
+	var resizeTop = theWebUI.resizeTop;
+	theWebUI.resizeTop = function(w, h)
+	{
+		if((!draculaShortViewport() && !draculaDividerDragging) || !theWebUI.settings)
+			return resizeTop.call(this, w, h);
+		var floor = theWebUI.settings["webui.list_table_min_height"];
+		theWebUI.settings["webui.list_table_min_height"] = 0;
+		try
+		{
+			return resizeTop.call(this, w, h);
+		}
+		finally
+		{
+			theWebUI.settings["webui.list_table_min_height"] = floor;
+		}
+	};
+}
+
+// Swaps the main area between the list and the detail panel. A short viewport
+// cannot show both usefully, and this is also the fastest way to read a panel on
+// a phone in either orientation. resize() runs afterwards because the speed
+// graph sizes itself from its container (`webui.js:2283`).
+function draculaTogglePanelFull()
+{
+	var details = document.getElementById("tdetails");
+	if(!details || getComputedStyle(details).display === "none")
+		return;
+	document.body.classList.toggle("dracula-panel-full");
+	if(window.theWebUI && typeof theWebUI.resize === "function")
+		theWebUI.resize();
+}
+
+/* Upstream's DnD binds `mousedown`, `mousemove` and `mouseup` and nothing else
+   (`objects.js:36-37`, `objects.js:50`), and `DnD.start` returns early below
+   768px unless the caller passes `allowMobile`, which content.js does not
+   (`objects.js:41-43`, `content.js:21`, `content.js:37`). Neither divider moves
+   under a finger.
+
+   Pointer events carry `clientX`/`clientY`, which is all these two need: both
+   are constructed with `restrictX` and `restrictY`, so `DnD.run` never reads
+   `movementX` and the whole drag runs through the coordinates its `onRun` uses.
+   A touch bridged onto the mouse handlers instead would pass `undefined` there.
+
+   Mouse pointers are handed straight back so the upstream path keeps them; this
+   is bound beside that path, not over it. Capture is what keeps a drag alive
+   after the finger leaves a 16px strip. */
+function draculaDragDivider(el, onMove, onSettle, onTap)
+{
+	if(!el)
+		return;
+	var dragging = false, startX = 0, startY = 0, travelled = 0;
+
+	el.addEventListener("pointerdown", function(e)
+	{
+		if(e.pointerType === "mouse")
+		{
+			// The drag itself stays upstream's, but upstream's DnD announces
+			// nothing, and the floor below has to know a drag is running for a
+			// mouse as much as for a finger. Cleared by the release bound in
+			// draculaTouchDividers, wherever the button happens to come up.
+			draculaDividerDragging = true;
+			return;
+		}
+		dragging = true;
+		draculaDividerDragging = true;
+		travelled = 0;
+		startX = e.clientX;
+		startY = e.clientY;
+		// A finger covers the handle it is holding, so the state has to be
+		// readable at the edges of the contact: the grip goes Pink for as long as
+		// the press lasts, the colour :active already gives it under a mouse.
+		el.classList.add("dracula-divider-held");
+		el.setPointerCapture(e.pointerId);
+		e.preventDefault();
+	});
+
+	el.addEventListener("pointermove", function(e)
+	{
+		if(!dragging)
+			return;
+		travelled = Math.max(travelled,
+			Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY));
+		if(travelled > DRACULA_TAP_SLOP)
+			onMove(e);
+	});
+
+	var release = function(e)
+	{
+		if(!dragging)
+			return;
+		dragging = false;
+		draculaDividerDragging = false;
+		el.classList.remove("dracula-divider-held");
+		if(el.hasPointerCapture(e.pointerId))
+			el.releasePointerCapture(e.pointerId);
+		if(travelled > DRACULA_TAP_SLOP)
+			onSettle(e);
+		else if(onTap)
+			onTap();
+	};
+	el.addEventListener("pointerup", release);
+	el.addEventListener("pointercancel", release);
+}
+
+/* Toggle_details, F6, hides the panel and the divider together
+   (`webui.js:2331-2335`). With the swap on, the list is hidden as well, so that
+   would leave an empty main area and no divider left to tap back with. The swap
+   is dropped before upstream runs. */
+function draculaKeepDetailsToggleSafe()
+{
+	if(!window.theWebUI || typeof theWebUI.toggleDetails !== "function")
+		return;
+	var toggleDetails = theWebUI.toggleDetails;
+	theWebUI.toggleDetails = function()
+	{
+		document.body.classList.remove("dracula-panel-full");
+		return toggleDetails.apply(this, arguments);
+	};
+}
+
+/* Where the drag puts the boundary, in list height, with both ends held short of
+   swallowing the handle.
+
+   Bottom end: the panel keeps a strip as tall as the divider itself. Without it
+   the panel closes to nothing, the grip lands directly on the status bar and
+   reads as part of it — a handle nobody can find is a handle that does not exist.
+   The strip is the handle's own height because that is the smallest gap in which
+   it still reads as the edge of a block.
+
+   Top end: 1px rather than 0, because resizeTop opens with `if(!w && !h) return`
+   (`webui.js:2264`) and a zero height reads there as "no value given", which pins
+   the divider instead of letting the panel take the area. */
+function draculaListHeightFor(clientY, list)
+{
+	var wanted = clientY - list.getBoundingClientRect().top;
+	var main = document.getElementById("main-info");
+	var divider = document.getElementById("VDivider");
+	if(!main || !divider)
+		return Math.max(1, wanted);
+
+	var handle = divider.getBoundingClientRect().height;
+	var room = main.getBoundingClientRect().height - handle * 2;
+	return Math.max(1, Math.min(wanted, room));
+}
+
+/* One end of the range or the other: one of the two panes is down to a sliver.
+
+   Upstream saves the split on every release (`content.js:44`), so without this a
+   single drag to an end becomes the layout the interface opens with from then on
+   — the panel gone, and nothing but the handle to say it ever existed. Covering
+   one pane is a way of looking at the other, not a new default; the stored split
+   is left at the last position that shows both. */
+function draculaSplitAtAnEnd()
+{
+	var list = document.getElementById("list-table");
+	var divider = document.getElementById("VDivider");
+	var panel = document.getElementById("tdetails");
+	if(!list || !divider || !panel)
+		return false;
+	var handle = divider.getBoundingClientRect().height;
+	return list.getBoundingClientRect().height <= handle * 2 ||
+		panel.getBoundingClientRect().height <= handle * 2;
+}
+
+function draculaTouchDividers()
+{
+	if(!window.theWebUI)
+		return;
+	draculaKeepDetailsToggleSafe();
+
+	// A mouse drag is released wherever the button comes up, which is rarely over
+	// a 5px divider, so the end of one is watched on the document. Both events are
+	// bound because the flag left standing would drop the floor for good.
+	var mouseReleased = function(e)
+	{
+		if(!e.pointerType || e.pointerType === "mouse")
+			draculaDividerDragging = false;
+	};
+	document.addEventListener("pointerup", mouseReleased);
+	document.addEventListener("pointercancel", mouseReleased);
+	document.addEventListener("mouseup", mouseReleased);
+
+	// The same two calls content.js gives the mouse (`content.js:29-33`), so a
+	// touch drag and a mouse drag save the same setting.
+	draculaDragDivider(document.getElementById("HDivider"),
+		function(e){ theWebUI.resizeLeft(e.clientX); },
+		function(){ theWebUI.setHSplitter(); },
+		null);
+
+	draculaDragDivider(document.getElementById("VDivider"),
+		function(e)
+		{
+			// Dragging is meaningless while the list is hidden, and the
+			// measurement below would read a zero box, so the swap is undone
+			// first. Removing the class here forces the reflow that makes the
+			// box real.
+			document.body.classList.remove("dracula-panel-full");
+			var list = document.getElementById("list-table");
+			if(list)
+				theWebUI.resizeTop(null, draculaListHeightFor(e.clientY, list));
+		},
+		function()
+		{
+			if(!draculaSplitAtAnEnd())
+				theWebUI.setVSplitter();
+		},
+		draculaTogglePanelFull);
+}
+
 // Column headings and default widths, applied in the dxSTable.create hook at
 // the bottom of this file.
 //
@@ -2523,6 +3039,11 @@ function draculaPatchColumns(styles, aName)
 plugin.draculaTableCreate = dxSTable.prototype.create;
 dxSTable.prototype.create = function(ele, styles, aName)
 {
+	// Column widths and the progress gradient are the theme's; with the theme
+	// switched off they would be applied to a table nobody painted.
+	if(draculaThemeSwitchedOff())
+		return plugin.draculaTableCreate.call(this, ele, styles, aName);
+
 	draculaPatchColumns(styles, aName);
 	plugin.draculaTableCreate.call(this, ele, styles, aName);
 

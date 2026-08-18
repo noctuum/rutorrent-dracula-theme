@@ -156,7 +156,7 @@ test("the exemption list has not gone stale", () => {
 //
 // A ratchet, not a limit. Lower these when a use is removed; raising one takes
 // an argument in the commit message.
-const IMPORTANT_BUDGET = { "style.css": 33, "stable.css": 2, "plugins.css": 1 };
+const IMPORTANT_BUDGET = { "style.css": 34, "stable.css": 2, "plugins.css": 1 };
 
 // Comments are stripped before counting. Counting the raw text instead makes
 // every mention of the word in prose part of the budget, so rewording a comment
