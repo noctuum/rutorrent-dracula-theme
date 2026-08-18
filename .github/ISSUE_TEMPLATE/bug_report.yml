@@ -1,0 +1,147 @@
+name: Bug report
+description: Something the theme draws or does is wrong
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: What you see, and what you expected to see instead.
+      placeholder: |
+        The status bar covers the last row of the torrent list.
+        I expected the list to end above the bar.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to get there
+      description: The shortest path from a fresh page load to the problem.
+      placeholder: |
+        1. Open ruTorrent
+        2. Select a torrent
+        3. Open the Files tab
+    validations:
+      required: true
+
+  - type: input
+    id: theme-version
+    attributes:
+      label: Theme version
+      description: >
+        The release you installed. It is also on the third line of
+        `Dracula/style.css`.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: rutorrent-version
+    attributes:
+      label: ruTorrent version
+      description: "Printed at the top of the side panel: ruTorrent v5.3.11"
+      placeholder: "5.3.11"
+    validations:
+      required: true
+
+  - type: input
+    id: rtorrent-version
+    attributes:
+      label: rTorrent version
+      description: In the status bar, at the left, on a window wide enough to show it.
+      placeholder: "0.16.20"
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Firefox
+        - Chrome
+        - Chromium
+        - Safari
+        - Edge
+        - Other (say which below)
+    validations:
+      required: true
+
+  - type: input
+    id: browser-version
+    attributes:
+      label: Browser version
+      placeholder: "141.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - iOS or iPadOS
+        - Android
+        - Other (say which below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Screen it happens on
+      options:
+        - Desktop or laptop
+        - Phone
+        - Tablet
+    validations:
+      required: true
+
+  - type: input
+    id: viewport
+    attributes:
+      label: Window size, and orientation on a phone
+      description: >
+        Layout bugs usually depend on it. In a desktop browser the console
+        answers `innerWidth + "x" + innerHeight`.
+      placeholder: "390x664, portrait"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I reloaded the page after installing or updating the theme
+          required: true
+        - label: ruTorrent's `mobile` plugin is installed and enabled
+        - label: Compact rows is on (Settings → General → User Interface)
+        - label: The theme printed a version warning of its own when the page loaded
+        - label: It also happens with ruTorrent's Standard theme (Settings → General → Theme)
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: >
+        The fastest way to describe anything visual. Paste them straight into
+        this field. Circle the part you mean if it is not obvious.
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console
+      description: >
+        Errors printed when the page loads, if any. F12 opens the console in
+        Firefox and Chrome; on iOS there is none, so skip this.
+      render: text
+
+  - type: textarea
+    id: plugins
+    attributes:
+      label: Plugins you have installed
+      description: >
+        Only if the problem involves something a plugin draws — a status bar
+        cell, a detail tab, a column.
+      placeholder: "diskspace, cpuload, tracklabels, seedingtime"
