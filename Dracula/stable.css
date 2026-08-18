@@ -1,12 +1,12 @@
 /* Dracula Theme for ruTorrent — table styles
- * Version 0.1.0 · built against ruTorrent 5.3
+ * Version 0.1.0 · built against ruTorrent 5.3   # x-release-please-version
  * https://draculatheme.com
  */
 
 /* init.js reads this back at startup to catch a sheet the browser has cached
    from an older release. Declared per sheet, so a mixed set is caught too. */
 :root {
-  --dracula-version-stable: "0.1.0";
+  --dracula-version-stable: "0.1.0"; /* x-release-please-version */
 }
 
 .stable {

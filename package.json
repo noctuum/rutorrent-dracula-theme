@@ -9,12 +9,14 @@
     "lint:css": "stylelint \"Dracula/**/*.css\"",
     "lint:js": "eslint .",
     "lint": "npm run lint:css && npm run lint:js",
-    "check": "npm run lint && npm test"
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.1",
-    "globals": "^17.10.0",
+    "globals": "^17.11.0",
     "prettier": "^3.9.6",
     "stylelint": "^17.14.1",
     "stylelint-config-recommended": "^18.0.0",
