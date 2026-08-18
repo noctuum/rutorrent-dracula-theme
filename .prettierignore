@@ -13,6 +13,7 @@
 Dracula/
 
 # Generated or vendored.
+CHANGELOG.md
 node_modules/
 package-lock.json
 template/
