@@ -1,0 +1,65 @@
+name: Suggestion
+description: Something the theme should look like or do differently
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The theme is a skin: it changes how ruTorrent is drawn and how it is
+        driven from a keyboard or a touch screen. It cannot add features to
+        ruTorrent itself — those belong
+        [upstream](https://github.com/Novik/ruTorrent/issues).
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What you want
+      description: Describe the end state, not the implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: What is wrong with how it works now
+      description: >
+        The problem the suggestion solves. A suggestion with a problem behind it
+        is far easier to judge than one without.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part
+      options:
+        - Torrent list
+        - Side panel
+        - Toolbar
+        - Detail tabs
+        - Status bar
+        - Dialogs
+        - Keyboard control
+        - Phone or tablet layout
+        - Colours
+        - Somewhere else
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Sketches, screenshots, references
+      description: >
+        Anything visual. A screenshot of another program doing it well says more
+        than a paragraph.
+
+  - type: checkboxes
+    id: palette
+    attributes:
+      label: Colours
+      options:
+        - label: >
+            If this involves colour, I understand the theme only uses the
+            [Dracula palette](https://draculatheme.com/contribute) and cannot
+            introduce a colour outside it
