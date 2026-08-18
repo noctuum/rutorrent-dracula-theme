@@ -524,6 +524,13 @@ function draculaHideStatusPopover()
 	}
 }
 
+function draculaStatusPopoverShows(id)
+{
+	var node = document.getElementById("dracula-status-popover");
+	return !!(node && !node.hidden &&
+		node.getAttribute("data-dracula-cell") === id);
+}
+
 // Placed after it is filled and shown: width is unknown until the text is in,
 // and a hidden element measures zero.
 function draculaShowStatusPopover(cell)
@@ -547,13 +554,95 @@ function draculaShowStatusPopover(cell)
 			window.innerWidth - width - 4)) + "px";
 }
 
+// The panel carries the id of the cell it belongs to, so a viewport change is a
+// re-placement rather than a loss.
+function draculaPlaceStatusPopover()
+{
+	var node = document.getElementById("dracula-status-popover");
+	if(!node || node.hidden)
+		return;
+	var cell = document.getElementById(node.getAttribute("data-dracula-cell"));
+	// draculaShowStatusPopover refuses a cell with no title and would leave the
+	// panel standing at coordinates that no longer describe anything.
+	if(cell && cell.getAttribute("title"))
+		draculaShowStatusPopover(cell);
+	else
+		draculaHideStatusPopover();
+}
+
+/* A rotation reports the width and height it is leaving, not the ones it is
+   arriving at, so a placement made now lands against geometry that is about to
+   move. The second pass catches the settled layout. */
+var draculaPlaceTimer = null;
+
+function draculaPlaceStatusPopoverSettled()
+{
+	draculaPlaceStatusPopover();
+	if(draculaPlaceTimer)
+		clearTimeout(draculaPlaceTimer);
+	draculaPlaceTimer = setTimeout(function()
+	{
+		draculaPlaceTimer = null;
+		draculaPlaceStatusPopover();
+	}, 300);
+}
+
+// Under the system's own press-and-hold, so the panel is up before iOS would
+// start a selection instead.
+var DRACULA_HOLD = 350;
+
 function draculaStatusCellPopovers()
 {
+	// A touch settles the panel by itself, and the click the browser sends
+	// afterwards would toggle it a second time. The stamp expires on its own, so
+	// a touch that never produces a click cannot leave the mouse path blocked.
+	var touchSettledAt = 0;
+
 	draculaPopoverCells.forEach(function(id)
 	{
 		var cell = document.getElementById(id);
 		if(!cell)
 			return;
+
+		var pressedAt = 0;
+		var wasOpen = false;
+
+		cell.addEventListener("pointerdown", function(e)
+		{
+			if(e.pointerType === "mouse" || !draculaWantsPopovers())
+				return;
+			pressedAt = Date.now();
+			wasOpen = draculaStatusPopoverShows(id);
+			// Without capture a finger that slides off the cell delivers pointerup
+			// elsewhere, and the panel is left up with nothing to close it.
+			if(cell.setPointerCapture)
+				cell.setPointerCapture(e.pointerId);
+			draculaShowStatusPopover(cell);
+		});
+
+		// A press outliving DRACULA_HOLD is a hold and ends with the finger. A
+		// shorter one is a tap: it leaves the panel where it is, unless it landed
+		// on the cell already showing, which makes it the closing half of a toggle.
+		cell.addEventListener("pointerup", function()
+		{
+			if(!pressedAt)
+				return;
+			var held = Date.now() - pressedAt >= DRACULA_HOLD;
+			pressedAt = 0;
+			touchSettledAt = Date.now();
+			if(held || wasOpen)
+				draculaHideStatusPopover();
+		});
+
+		// The browser has taken the gesture for its own — a scroll, most often.
+		// Nothing was chosen, so nothing stays open.
+		cell.addEventListener("pointercancel", function()
+		{
+			pressedAt = 0;
+			touchSettledAt = Date.now();
+			draculaHideStatusPopover();
+		});
+
 		cell.addEventListener("click", function(e)
 		{
 			if(!draculaWantsPopovers())
@@ -561,8 +650,9 @@ function draculaStatusCellPopovers()
 			// Without this the document listener below closes the panel in the
 			// same click that opened it.
 			e.stopPropagation();
-			var node = document.getElementById("dracula-status-popover");
-			if(node && !node.hidden && node.getAttribute("data-dracula-cell") === id)
+			if(Date.now() - touchSettledAt < 700)
+				return;
+			if(draculaStatusPopoverShows(id))
 				draculaHideStatusPopover();
 			else
 				draculaShowStatusPopover(cell);
@@ -570,10 +660,10 @@ function draculaStatusCellPopovers()
 	});
 	document.addEventListener("click", draculaHideStatusPopover);
 	// It is placed from the cell's box and the bar's top, both of which move when
-	// the window does; a rotation would leave it pinned to coordinates that no
-	// longer describe anything.
-	window.addEventListener("resize", draculaHideStatusPopover);
-	window.addEventListener("orientationchange", draculaHideStatusPopover);
+	// the window does. Safari's toolbar returning at the bottom edge — where the
+	// bar sits — is enough to fire this during a tap on the bar itself.
+	window.addEventListener("resize", draculaPlaceStatusPopover);
+	window.addEventListener("orientationchange", draculaPlaceStatusPopoverSettled);
 }
 
 // Upstream binds the speed limit menu to right-click alone, which is

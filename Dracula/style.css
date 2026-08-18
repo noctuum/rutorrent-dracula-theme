@@ -1977,6 +1977,17 @@ body.compact .tabbar li.nav-item a.nav-link {
   padding: 0 8px;
 }
 
+/* A hold on a cell is the theme's gesture for showing that cell's reading, so
+   the system's selection and callout must not claim it first. Coarse pointers
+   only: under a mouse the readings stay selectable. */
+@media (pointer: coarse) {
+  .status-cell {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 /* Text in the bar sits a touch high without this. */
 #StatusBar .sthdr,
 #StatusBar .stval,
