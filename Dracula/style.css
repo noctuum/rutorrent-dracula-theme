@@ -1107,13 +1107,13 @@ div#VDivider {
   }
 
   div#VDivider::after {
-    width: 36px;
+    width: 72px;
     height: 3px;
   }
 
   div#HDivider::after {
     width: 3px;
-    height: 36px;
+    height: 72px;
   }
 
   /* Held: Pink, the colour :active gives these two under a mouse. The class is
@@ -1121,18 +1121,19 @@ div#VDivider {
      screen does not hold through a drag, and the grip is what changes because a
      finger is sitting on the strip around it.
 
-     Grown to 48px so the change is visible past the edge of the contact. */
+     Grown by the same third again, so the change reads past the edge of the
+     contact. */
   div#HDivider.dracula-divider-held::after,
   div#VDivider.dracula-divider-held::after {
     background-color: var(--dracula-pink);
   }
 
   div#VDivider.dracula-divider-held::after {
-    width: 48px;
+    width: 96px;
   }
 
   div#HDivider.dracula-divider-held::after {
-    height: 48px;
+    height: 96px;
   }
 }
 
