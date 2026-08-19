@@ -1411,18 +1411,146 @@ div#t div.TB_Separator {
   }
 }
 
-/* Below 768px the bar folds into a column behind the toggler, where upstream's
-   source order is the right one and a vertical hairline between two stacked
-   items means nothing. Its own top-level block, not a branch of the one above:
-   a max-width query nested inside that min-width one closes it early and
-   silently carries every rule after it, the field's 460px included, into the
-   mobile branch.
+/* Below 768px the bar folds out of the toggler into a panel, and a column of
+   one command per line spends 412px of an 844px screen on ten of them. Six
+   columns is the common multiple of the two rhythms the panel wants: three
+   across for what acts on a torrent, two for what configures the client.
 
-   One selector for both of init.js's separators — the attribute is what marks
-   them as the theme's. */
+   Its own top-level block, not a branch of the one above: a max-width query
+   nested inside that min-width one closes it early and silently carries every
+   rule after it, the field's 460px included, into the mobile branch. */
 @media (max-width: 767.98px) {
-  #top-menu .TB_Separator[data-dracula-separator] {
+  /* Every separator here, upstream's as well as init.js's. Stacked in a column
+     each one paints as a 1x1px dot and still claims its 4px margins, so they
+     cost panel height to divide nothing. The grid's gaps separate the rows. */
+  #top-menu .TB_Separator {
     display: none;
+  }
+
+  /* `.navbar-nav` is one of Bootstrap's own class rules rather than a `d-*`
+     utility, so a two-class selector takes it without `!important`. */
+  #top-menu .navbar-nav {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+
+  /* `.flex-md-nowrap` marks upstream's two action groups and nothing else —
+     `#rc` carries `.d-flex` as well, and matching on that would drag the search
+     row in. Both groups take the same `order`, so between themselves they keep
+     source order. */
+  #top-menu .navbar-nav > .flex-md-nowrap {
+    grid-column: span 6;
+    order: 1;
+    gap: 4px;
+  }
+
+  /* Thirds by `flex-basis: 0` rather than by making the group a grid: `.d-flex`
+     is `display: flex !important` and could only be overridden in kind. Add and
+     Remove already carry `flex-grow: 1 !important` from `.flex-grow-1`; Create
+     does not, and the shorthand gives it the same growth without a fight.
+     `min-width: 0` releases the automatic minimum, so a long label shrinks its
+     own cell instead of widening the row. */
+  #top-menu .navbar-nav > .flex-md-nowrap > .nav-link {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* Source order runs RSS, Settings, Plugins, Help. The panel pairs them the
+     other way round, by what each one opens: the two that configure the client
+     on one row, the two that describe it on the next. */
+  #mnu_settings {
+    grid-column: span 3;
+    order: 2;
+  }
+
+  #mnu_rss {
+    grid-column: span 3;
+    order: 3;
+  }
+
+  #mnu_help {
+    grid-column: span 3;
+    order: 4;
+  }
+
+  #top-menu .navbar-nav > .btn-group {
+    grid-column: span 3;
+    order: 5;
+  }
+
+  #top-menu .navbar-nav > #rc {
+    grid-column: span 6;
+    order: 6;
+  }
+
+  /* The cells sit flush against the grid's gaps; upstream's 0.15rem margin
+     inside them would double every gutter and leave the row edges short.
+
+     44px is the floor a finger wants, and a 28px glyph in 6px of padding and a
+     1px border stands 42px. Width is not at risk: the narrowest cell here is
+     125px.
+
+     `box-sizing` is what makes the 44 mean 44. Upstream opens with
+     `* { box-sizing: unset }` (`css/style.css:2`) and hands it back only to
+     `div, td, label, fieldset, textarea, select, input, button, dialog`
+     (`css/style.css:19`) — `a` is not on that list, so a content-box
+     `min-height` would add the padding and the border on top and stand the cell
+     at 58px. */
+  #top-menu .nav-link {
+    box-sizing: border-box;
+    min-height: 44px;
+    margin: 0;
+  }
+
+  /* A third of 390px leaves a cell 78px of label beside its 28px icon, which
+     init.js keeps the three torrent commands inside by dropping the noun. Three
+     of the languages ruTorrent ships give it nothing to drop; there the label
+     clips rather than widening the row. `min-width: 0` is what lets it: a flex
+     item's automatic minimum is its own text. */
+  #top-menu .nav-link > .d-md-none {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* `.btn-group` is a column flex box holding the toggle and its menu, and the
+     grid stretches the group rather than the toggle inside it — without this
+     the Plugins cell paints its fill short of the Help beside it. */
+  #top-menu .navbar-nav > .btn-group > #mnu_plugins {
+    flex-grow: 1;
+  }
+
+  /* Bootstrap parks the dropdown in the flow while the bar is collapsed, so
+     opening it grows the panel by the menu's own height and shoves Help, the
+     search row and the whole page below it down. A menu is not layout; it
+     belongs over the page. `.btn-group` already carries the `position:
+     relative` this anchors to, and the static position it leaves from is
+     directly under the toggle.
+
+     Right-aligned for the reason the expanded bar right-aligns it: the group
+     holds the right half of the grid, so a menu opening from its left edge
+     would run off the screen. */
+  #top-menu .navbar-nav > .btn-group > .dropdown-menu {
+    position: absolute;
+    right: 0;
+    left: auto;
+  }
+
+  /* Floating it is only half the fix. The open panel carries
+     `overflow-y: auto` (`css/style.css:345`), which keeps a panel taller than
+     the screen reachable — and an ancestor whose overflow is not `visible`
+     clips absolutely positioned descendants whether or not a scrollbar is
+     showing, so the menu lost its last entries to a box that was not
+     scrolling. No z-index reaches out of that; only removing the clip does.
+
+     Released while a menu is open and at no other time, which is precisely when
+     the panel has nothing of its own to scroll. `:has()` carries enough
+     specificity here on its own: it counts as its most specific argument, so
+     this reads (1,2,0) against upstream's (1,1,0). */
+  #top-menu:has(.dropdown-menu.show) {
+    overflow: visible;
   }
 }
 

@@ -90,6 +90,9 @@ test("init.js evaluates against a stub ruTorrent and exposes its helpers", () =>
 		"draculaOlderThan",
 		"draculaIconKind",
 		"draculaVisualScale",
+		"draculaSharedWords",
+		"draculaDropWords",
+		"draculaTrimEllipsis",
 	])
 		assert.equal(typeof theme[fn], "function", `${fn} is missing`);
 });
@@ -110,6 +113,100 @@ test("draculaOlderThan compares versions as numbers, not as text", () => {
 	assert.equal(theme.draculaOlderThan("4.3.11", "5.2.0"), true);
 	// A version with parts missing reads them as zero rather than as NaN.
 	assert.equal(theme.draculaOlderThan("5.2", "5.2.0"), false);
+});
+
+// The pairs are `mnu_add` against `mnu_create` as ruTorrent 5.3.12 and its
+// create plugin ship them. Word order, script and casing all differ across
+// them, and splitting on whitespace is what carries the derivation through:
+// German leads with the noun, Korean and Chinese space it off, Serbian writes
+// it in Cyrillic with one r.
+test("draculaSharedWords finds the noun whatever the language does with it", () => {
+	const cases = [
+		["Add Torrent", "Create Torrent", ["torrent"]],
+		["Torrent dazu", "Create Torrent", ["torrent"]],
+		["Добавить торрент", "Новый торрент", ["торрент"]],
+		["토렌트 추가", "토렌트 생성", ["토렌트"]],
+		["添加 Torrent", "创建 Torrent", ["torrent"]],
+		["Torrent hozzáadása", "Torrent létrehozása", ["torrent"]],
+		["Додај торент", "Направи торент", ["торент"]],
+		// French shares the article too, and dropping both is what gets
+		// "Ajouter un torrent" down to a label that fits a third of a phone.
+		["Ajouter un torrent", "Créer un torrent", ["un", "torrent"]],
+	];
+	// `Array.from` re-homes the result: node:vm gives the sandbox its own
+	// realm, so an array built in there fails a strict deep compare against one
+	// built out here on its prototype alone.
+	for (const [add, create, want] of cases)
+		assert.deepEqual(
+			Array.from(theme.draculaSharedWords(add, create)),
+			want,
+			add,
+		);
+});
+
+// Polish translates neither label with the noun; Latvian and Bengali translate
+// only one of the two, so the spellings never meet. Nothing shared means
+// nothing dropped — the stylesheet clips those instead.
+test("draculaSharedWords finds nothing rather than guessing", () => {
+	assert.deepEqual(Array.from(theme.draculaSharedWords("Dodaj", "Utwórz")), []);
+	assert.deepEqual(
+		Array.from(theme.draculaSharedWords("Pievienot torentu", "Create Torrent")),
+		[],
+	);
+	assert.deepEqual(Array.from(theme.draculaSharedWords("Add Torrent", "")), []);
+	assert.deepEqual(
+		Array.from(theme.draculaSharedWords(undefined, "Create Torrent")),
+		[],
+	);
+});
+
+// Only buttons a plugin adds carry the dots in the label; the ones ruTorrent
+// builds keep them in the tooltip, which the panel never shows.
+test("draculaTrimEllipsis takes the dots a plugin writes into a label", () => {
+	assert.equal(
+		theme.draculaTrimEllipsis("Create Torrent..."),
+		"Create Torrent",
+	);
+	assert.equal(
+		theme.draculaTrimEllipsis("RSS Downloader..."),
+		"RSS Downloader",
+	);
+	// The single character as well as the three dots.
+	assert.equal(theme.draculaTrimEllipsis("Plugins…"), "Plugins");
+	assert.equal(theme.draculaTrimEllipsis("Settings"), "Settings");
+	// Dots and nothing else name no command, so they stay.
+	assert.equal(theme.draculaTrimEllipsis("..."), "...");
+});
+
+test("draculaDropWords takes the noun and leaves the verb", () => {
+	assert.equal(theme.draculaDropWords("Add Torrent", ["torrent"]), "Add");
+	assert.equal(theme.draculaDropWords("Torrent dazu", ["torrent"]), "dazu");
+	assert.equal(
+		theme.draculaDropWords("Ajouter un torrent", ["un", "torrent"]),
+		"Ajouter",
+	);
+	// Nothing to drop is not a reason to touch the label.
+	assert.equal(theme.draculaDropWords("Remove", ["torrent"]), "Remove");
+	assert.equal(theme.draculaDropWords("Remove", []), "Remove");
+});
+
+// The order the panel applies them in, and the reason it is that order: the
+// noun is compared as a bare word, which "Torrent..." is not until the dots
+// come off.
+test("trimming before dropping is what shortens a plugin's label", () => {
+	const words = theme.draculaSharedWords("Add Torrent", "Create Torrent");
+	assert.equal(
+		theme.draculaDropWords(
+			theme.draculaTrimEllipsis("Create Torrent..."),
+			words,
+		),
+		"Create",
+	);
+});
+
+// A label reduced to nothing says less than one that has to be clipped.
+test("draculaDropWords never empties a label", () => {
+	assert.equal(theme.draculaDropWords("Torrent", ["torrent"]), "Torrent");
 });
 
 // The budget is by area, so a small canvas is allowed to be dense: a flat
