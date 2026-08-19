@@ -1161,6 +1161,95 @@ function draculaFixToolbarSeparators()
 	draculaInsertSeparator(document.getElementById("mnu_help"));
 }
 
+// Whatever two labels have in common, lower-cased and in the order the first
+// one uses them. Splitting on whitespace is what makes this work outside the
+// Latin scripts: Korean writes "토렌트 추가" and "토렌트 생성" with the space
+// already there.
+function draculaSharedWords(first, second)
+{
+	var shared = [];
+	if(!first || !second)
+		return shared;
+	var other = String(second).toLowerCase().split(draculaWhitespace);
+	var words = String(first).toLowerCase().split(draculaWhitespace);
+	for(var i = 0; i < words.length; i++)
+	{
+		if(words[i] && other.indexOf(words[i]) >= 0 && shared.indexOf(words[i]) < 0)
+			shared.push(words[i]);
+	}
+	return shared;
+}
+
+function draculaDropWords(text, words)
+{
+	if(!text || !words.length)
+		return text;
+	var parts = String(text).split(draculaWhitespace);
+	var kept = [];
+	for(var i = 0; i < parts.length; i++)
+	{
+		if(words.indexOf(parts[i].toLowerCase()) < 0)
+			kept.push(parts[i]);
+	}
+	// A label emptied says less than one that has to be clipped.
+	return kept.length ? kept.join(" ") : text;
+}
+
+/* Buttons a plugin adds write the ellipsis into the label itself
+   (`plugins.js:370`); the ones ruTorrent builds carry it in the tooltip alone
+   (`content.js:15`). Down the expanded bar that difference never shows, every
+   label there being hidden. In the panel the two kinds sit in one grid, where
+   Create, RSS Downloader and Plugins trailing dots that Settings and Help do
+   not reads as three commands behaving differently rather than as three that
+   open a dialog.
+
+   Runs before the noun is dropped, so the noun is a bare word by the time it is
+   compared: "Create Torrent..." ends in a token that matches no dictionary
+   entry until the dots are off it. */
+function draculaTrimEllipsis(text)
+{
+	var trimmed = String(text).replace(/\s*[.…]+$/, "");
+	return trimmed || text;
+}
+
+/* Below 768px the toolbar folds into a panel where Add, Create and Remove share
+   a row three cells wide, and a cell there holds 78px of label beside its 28px
+   icon. "Add Torrent" measures 81px and "Create Torrent..." 113px, so both
+   would be clipped. Standing together in one row they do not need the noun:
+   Add, Create and Remove say what they do, and what they do it to is the row.
+
+   The noun is derived rather than listed. Add and Create name the same thing
+   with different verbs, so whatever their two labels share is the thing — and
+   the derivation reads the strings ruTorrent itself ships, which no list here
+   could stay in step with. It yields the noun in 24 of the 27 languages, across
+   every script and word order among them: "Add Torrent"/"Create Torrent" gives
+   Torrent, "Torrent dazu"/"Create Torrent" gives Torrent, "Добавить
+   торрент"/"Новый торрент" gives торрент, "Ajouter un torrent"/"Créer un
+   torrent" gives both un and torrent. Polish translates neither label with the
+   noun, Latvian and Bengali only one of the two; there the two labels share
+   nothing, the labels are left alone and the stylesheet clips them.
+
+   Only the `d-inline d-md-none` span is rewritten. It is built for this panel
+   and nothing else — `d-md-none` hides it from 768px up — so the expanded bar
+   and every tooltip keep the full wording. */
+function draculaShortenMenuLabels()
+{
+	var lang = window.theUILang || {};
+	var words = draculaSharedWords(lang.mnu_add, lang.mnu_create);
+	// The noun goes from the row that no longer needs it. The other cells stand
+	// alone and keep theirs: "RSS Downloader" beside Settings names a thing,
+	// where Add beside Create and Remove names an action on the obvious one.
+	var torrentRow = { mnu_add: 1, mnu_create: 1, mnu_remove: 1 };
+	var labels = document.querySelectorAll("#top-menu .nav-link > .d-md-none");
+	for(var i = 0; i < labels.length; i++)
+	{
+		var text = draculaTrimEllipsis(labels[i].textContent);
+		if(words.length && torrentRow[labels[i].parentNode.id])
+			text = draculaDropWords(text, words);
+		labels[i].textContent = text;
+	}
+}
+
 // The search box has two behaviours and the toolbar shows neither: with "Local
 // Torrents" chosen the field filters the list live on every keystroke
 // (webui.js:497 -> updateQuickSearch), and with an engine chosen it does nothing
@@ -2405,6 +2494,7 @@ plugin.allDone = function()
 	draculaWatchContextMenu();
 	draculaFillKeyHelp();
 	draculaFixToolbarSeparators();
+	draculaShortenMenuLabels();
 	draculaWatchSearchSource();
 	// Before the toolbar wrapper: that one calls resizeTop through the property,
 	// and the floor has to be neutralised by the time it does.
