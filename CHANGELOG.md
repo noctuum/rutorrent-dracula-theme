@@ -5,7 +5,7 @@
 
 ### Bug Fixes
 
-* **mobile:** lay the phone menu out in a grid ([#21](https://github.com/noctuum/rutorrent-dracula-theme/issues/21)) ([2e3fb86](https://github.com/noctuum/rutorrent-dracula-theme/commit/2e3fb8677f5f9c0284a28417bf7964dd26f78029))
+* **mobile:** a toolbar menu that fits, and a dropdown that opens over the page ([#21](https://github.com/noctuum/rutorrent-dracula-theme/issues/21)) ([2e3fb86](https://github.com/noctuum/rutorrent-dracula-theme/commit/2e3fb8677f5f9c0284a28417bf7964dd26f78029))
 
 ## [0.2.0](https://github.com/noctuum/rutorrent-dracula-theme/compare/v0.1.0...v0.2.0) (2026-08-18)
 
