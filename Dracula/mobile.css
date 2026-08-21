@@ -489,6 +489,25 @@
   margin-left: auto;
 }
 
+/* With no torrent open there are two groups, not three, and they stand at
+   opposite edges of a bar that is always this wide — nothing can arrive to fill
+   the middle, so there is nothing for a rule to divide. It goes, and the readout
+   takes the slack the rule was holding.
+
+   The plugin hides the torrent controls by writing `display: none` inline
+   (`plugins/mobile/init.js:279`, `:1105` puts them back), which is the only
+   signal in the markup that says which of the two states the bar is in. */
+#mainContainer
+  #mainNavbar
+  .nav:has(.torrentControl[style*="none"])
+  > li.divider-vertical {
+  display: none;
+}
+
+#mainContainer #mainNavbar .nav:has(.torrentControl[style*="none"]) > li:last-child {
+  margin-left: auto;
+}
+
 /* The readout, as three columns rather than two lines of running text. Reading
    inward from the edge: the icon, the unit, then the rate itself — so the
    numbers line up under each other whatever their length, which two centred
@@ -532,17 +551,50 @@
   justify-items: end;
 }
 
+/* The number and its unit sit on one line, which is only true once the plugin's
+   nudge comes off: it lifts the number 2px (`plugins/mobile/mobile.css:295`) to
+   square it against an icon it used to sit beside inline, and the unit is a
+   `<b>` and out of that rule's reach, so the pair came apart by exactly that.
+
+   Centred rather than on a shared baseline. The two are the same size, so
+   centring puts them on one line anyway — and it puts the icon there too, where
+   baseline alignment drops it 5.8px, its box carrying the line's leading around
+   a glyph that has none. */
+#mainContainer #mainNavbar .nav > li:last-child > div > span {
+  top: 0;
+}
+
 #mainContainer #mainNavbar .nav > li:last-child .bi {
   order: 3;
   margin-right: 0;
 }
 
+/* Centring the icon's box is not centring the icon. Measured: the box stands
+   25.5px around a 17px glyph, the difference being a line box this element does
+   not need — the strut of its own font, plus the `vertical-align: -.125em` the
+   plugin gives the glyph (`plugins/mobile/mobile.css:7`) to sit it against text
+   it used to stand beside. The box lined up while the glyph rode 2.8px low.
+
+   A block has no line box and no baseline to hang off, so here the element's box
+   is the glyph and centring it centres what is drawn. Only here: everywhere else
+   the glyph does sit beside text on a line, which is what that rule is for. */
+#mainContainer #mainNavbar .nav > li:last-child .bi::before {
+  display: block;
+}
+
 /* Digits line up on their right, so a rate reads against the one above it; the
    unit lines up on its left, so "B/s" and "KiB/s" begin together instead of
-   ending together. */
+   ending together.
+
+   The line height matches the number's, which the plugin sets to zero
+   (`plugins/mobile/mobile.css:298`). Centring an item centres its box, and a box
+   of no height is centred on its own ink where a 21px one is centred on a line
+   whose ascent and descent are not equal — measured, that alone left the number
+   half a pixel above its unit. Zero on both puts the two on the same footing. */
 #mainContainer #mainNavbar .nav > li:last-child .dracula-unit {
   justify-self: start;
   font-weight: inherit;
+  line-height: 0;
 }
 
 /* The bottom bar, on Dark. The plugin builds it as one fixed surface for both
