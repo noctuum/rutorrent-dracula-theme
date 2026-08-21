@@ -74,6 +74,49 @@
   --bs-primary-rgb: 98, 114, 164;
 }
 
+/* Bootstrap compiles its variants with literal hex rather than through
+   `--bs-primary`: `.btn-primary` opens `--bs-btn-bg:#0d6efd`, and
+   `.form-check-input:checked` sets `#0d6efd` outright. Recolouring the theme
+   token never reaches either, which is why OK on the sort page, Add File, Add
+   URL and the ascending radio all stayed Bootstrap blue while everything around
+   them turned. Their own tokens are what has to be written.
+
+   The label goes dark rather than white. Dracula's purple is a light hue —
+   white on it measures 2.41:1, the theme's own background on it 5.91:1 — so the
+   fill takes dark text, which is what the plugin's `--mobile-accent-contrast`
+   does for the same reason.
+
+   Pink for the press, as everywhere else in this theme. Purple has no darker
+   sibling in the palette to fall back to and nothing is invented for one, so
+   hover holds the rest colour and the change lands on the active state, where
+   it reads as a press rather than as a second accent. */
+#mainContainer .btn-primary {
+  --bs-btn-color: var(--dracula-bg);
+  --bs-btn-bg: var(--dracula-purple);
+  --bs-btn-border-color: var(--dracula-purple);
+  --bs-btn-hover-color: var(--dracula-bg);
+  --bs-btn-hover-bg: var(--dracula-purple);
+  --bs-btn-hover-border-color: var(--dracula-purple);
+  --bs-btn-active-color: var(--dracula-bg);
+  --bs-btn-active-bg: var(--dracula-pink);
+  --bs-btn-active-border-color: var(--dracula-pink);
+  --bs-btn-disabled-color: var(--dracula-bg);
+  --bs-btn-disabled-bg: var(--dracula-comment);
+  --bs-btn-disabled-border-color: var(--dracula-comment);
+  --bs-btn-focus-shadow-rgb: 189, 147, 249;
+}
+
+/* The nine checkboxes and radios the plugin ships are bare `<input>`s — it
+   carries no `.form-check-input` anywhere, so Bootstrap's own rules never touch
+   them and the browser paints them with its own accent. `accent-color` is what
+   reaches a native control, and keeping them native is worth more on a phone
+   than any restyling: the platform's own hit area and press feedback come with
+   them. */
+#mainContainer input[type="checkbox"],
+#mainContainer input[type="radio"] {
+  accent-color: var(--dracula-purple);
+}
+
 /* A field with a button on its end — the directory pickers on the Add and Save
    pages, and Add Peer — is marked `.input-append`, which is Bootstrap 3's name
    for it. Bootstrap 5 renamed the whole construct to `.input-group` and defines
@@ -147,4 +190,49 @@
    `margin: 0 15px 0 0`, and both are class-weight. */
 #mainContainer #mainNavbar .nav > li {
   margin-right: 10px;
+}
+
+/* A tracker message is the longest thing a list row ever holds — "Tracker: [No
+   DHT nodes available for peer search.]" runs past two lines on a phone — and
+   it sits at the end of the row's status line:
+
+     <span>Downloading | ETA ∞ | <i class="text-danger">Tracker: […]</i></span>
+
+   Wrapped, it grows the row and makes the least actionable part of a torrent
+   the largest. Laying the line out as a flex row lets the message scroll inside
+   itself instead: the state and the ETA are a bare text node, which becomes an
+   anonymous flex item and keeps its natural width, while the message is a real
+   element and can be given a box that scrolls.
+
+   `flex-basis: 0` is what protects the text before it — the message asks for
+   none of the row's width and takes only what is left over, so the state can
+   never be pushed out by a long enough tracker. Rows without a message have no
+   second item and are unaffected. */
+#mainContainer #torrentsList #list span {
+  display: flex;
+  white-space: nowrap;
+}
+
+/* No scrollbar, and the mask is why. Measured on this row: the line stands 18px
+   with `scrollbar-width: none`, 28px at `thin` and 33px at `auto` — any gutter
+   a browser reserves hands back the second line this rule exists to remove, and
+   whether one is reserved depends on the device rather than on anything here.
+
+   The signal moves into the paint instead. The last 16px of the box fade out,
+   which says the message continues and costs no height at all. It cannot
+   misfire on a short message either: `flex-basis: 0` leaves the box as wide as
+   the row has to spare, so a message that ends early ends well before the fade
+   and nothing visible is touched. `-webkit-` first for Safari, which is the
+   browser most of these phones are. */
+#mainContainer #torrentsList #list span > .text-danger {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - 16px),
+    transparent
+  );
+  mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent);
 }
