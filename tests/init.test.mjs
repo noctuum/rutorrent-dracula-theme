@@ -330,3 +330,58 @@ test("draculaIconKind: only tracklabels URLs classify, and by their parameter", 
 test("draculaVisualScale: falls back to 1 when the viewport reports nothing", () => {
 	assert.equal(theme.draculaVisualScale(), 1);
 });
+
+// The mobile plugin writes its whole status line as one string, so the ratio's
+// value has to be found in text before it can be given an element and coloured.
+// Everything below is what a real line looks like, taken off the plugin's own
+// template at `plugins/mobile/init.js:1907`.
+
+test("draculaMobileRatioAt: finds the value, whatever precedes it", () => {
+	const at = (text, word = "Ratio") => theme.draculaMobileRatioAt(text, word);
+
+	const plain = at("Seeding | Ratio 0.377");
+	assert.equal(plain.value, 0.377);
+	assert.equal(
+		"Seeding | Ratio 0.377".substr(plain.start, plain.length),
+		"0.377",
+	);
+
+	// A tracker message follows the value, so it ends at a space, not at the end.
+	const withMessage = at("Seeding | Ratio 1.250 | ");
+	assert.equal(withMessage.value, 1.25);
+	assert.equal(withMessage.length, 5);
+
+	// Speeds sit between the state and the separator.
+	const withSpeeds = at("Seeding ↑12.3 KiB/s | Ratio 2.000");
+	assert.equal(withSpeeds.value, 2);
+
+	// The word is the user's language, never assumed.
+	assert.equal(at("Раздаётся | Рейтинг 0.500", "Рейтинг").value, 0.5);
+});
+
+test("draculaMobileRatioAt: finds nothing rather than guessing", () => {
+	const at = (text, word = "Ratio") => theme.draculaMobileRatioAt(text, word);
+
+	// A downloading torrent shows an ETA and carries no ratio at all.
+	assert.equal(at("Downloading | ETA ∞"), null);
+	// The plugin writes ∞ for an unknown ratio: no number, no side of 1.
+	assert.equal(at("Seeding | Ratio ∞"), null);
+	// The word alone, with nothing behind it.
+	assert.equal(at("Seeding | Ratio "), null);
+	assert.equal(at("Seeding | Ratio"), null);
+	// Nothing to read.
+	assert.equal(at(""), null);
+	assert.equal(at(null), null);
+	assert.equal(at("Seeding | Ratio 1.0", ""), null);
+	assert.equal(at("Seeding | Ratio 1.0", null), null);
+});
+
+test("draculaMobileRatioAt: 1.000 is met, 0.999 is not", () => {
+	const value = (text) => theme.draculaMobileRatioAt(text, "Ratio").value;
+	assert.equal(value("Ratio 0.999") >= 1, false);
+	assert.equal(value("Ratio 1.000") >= 1, true);
+	assert.equal(value("Ratio 1.001") >= 1, true);
+	assert.equal(value("Ratio 0.000") >= 1, false);
+	// A ratio past ten still parses whole, not truncated at the dot.
+	assert.equal(value("Ratio 12.500"), 12.5);
+});

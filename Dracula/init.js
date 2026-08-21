@@ -3191,12 +3191,97 @@ function draculaDarkByDefaultOnMobile()
 		mobile.theme = "dark";
 }
 
+/* Where the ratio's value sits inside a mobile status line, or null when the
+   line carries none. The plugin builds the whole line as one string and the
+   number is plain text inside it (`plugins/mobile/init.js:1907`), so nothing
+   can reach the value until it is given an element of its own.
+
+   The word is `theUILang.Ratio` and is whatever the user's language calls it,
+   so it is passed in rather than written here. The number itself is not
+   localised: `theConverter.round` builds it with `v + ""` (`js/common.js:344`),
+   which is a full stop in every locale.
+
+   `∞`, what the plugin writes when the ratio is unknown, fails the test and is
+   left alone — it is not a number and has no side of 1 to be on. */
+function draculaMobileRatioAt(text, word)
+{
+	if(typeof text !== "string" || typeof word !== "string" || word === "")
+		return null;
+	var at = text.indexOf(word + " ");
+	if(at === -1)
+		return null;
+	var start = at + word.length + 1;
+	var end = text.indexOf(" ", start);
+	var raw = text.slice(start, end === -1 ? text.length : end);
+	if(!/^[0-9]+(\.[0-9]+)?$/.test(raw))
+		return null;
+	return { start: start, length: raw.length, value: parseFloat(raw) };
+}
+
+/* One element per status line, and only for a line without one yet. The plugin
+   rewrites a row's line whole on every change — `row.find('span').html(…)`,
+   `plugins/mobile/init.js:1953` — which takes the element with it, so the check
+   is what holds the work down to the rows that actually changed: over eleven
+   update cycles on a three-torrent list, three wraps.
+
+   A `<b>` rather than a `<span>` because that same update line selects `span`
+   and would take this element into its jQuery set. The weight it brings is
+   reset in mobile.css, where the element also carries the margins that stand in
+   for white space a flex row drops at an item's edges. */
+function draculaMarkMobileRatios()
+{
+	var word = window.theUILang ? theUILang.Ratio : null;
+	var lines = document.querySelectorAll("#torrentsList #list td > span");
+	for(var i = 0; i < lines.length; i++)
+	{
+		if(lines[i].querySelector(".dracula-ratio"))
+			continue;
+		var text = lines[i].firstChild;
+		if(!text || text.nodeType !== 3)
+			continue;
+		var found = draculaMobileRatioAt(text.textContent, word);
+		if(!found)
+			continue;
+		var value = text.splitText(found.start);
+		value.splitText(found.length);
+		var box = document.createElement("b");
+		box.className = found.value >= 1
+			? "dracula-ratio dracula-ratio-met"
+			: "dracula-ratio";
+		value.parentNode.replaceChild(box, value);
+		box.appendChild(value);
+	}
+}
+
+/* `plugin.processTorrents` is where every row is written, created on the first
+   pass and rewritten in place after (`plugins/mobile/init.js:1844`), and it
+   builds them synchronously — so the marks go on as it returns. Installed from
+   the same window as the dark default, where the plugin object already exists
+   and its own init has not run.
+
+   Silent when the plugin is absent, which is every desktop page. */
+function draculaColourMobileRatios()
+{
+	var mobile = window.thePlugins && typeof thePlugins.get === "function"
+		? thePlugins.get("mobile") : null;
+	if(!mobile || typeof mobile.processTorrents !== "function")
+		return;
+	var upstream = mobile.processTorrents;
+	mobile.processTorrents = function()
+	{
+		var result = upstream.apply(this, arguments);
+		draculaMarkMobileRatios();
+		return result;
+	};
+}
+
 if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 {
 	plugin.draculaConfig = theWebUI.config;
 	theWebUI.config = function()
 	{
 		draculaDarkByDefaultOnMobile();
+		draculaColourMobileRatios();
 		draculaKeepPanelsOpen();
 		var tables = this.tables || {};
 		for(var name in tables)
