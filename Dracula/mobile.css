@@ -25,11 +25,15 @@
  * the page background is painted above that wrapper.
  */
 
-/* The plugin offers Light, Dark and System and defaults to Light. Dracula is a
-   dark palette and has no light counterpart, so the switch is not honoured
-   here — a theme installed on purpose is the stronger signal. Whether the
-   plugin's Light should instead be left alone is still open. */
-:root:has(#mainNavbar) {
+/* The plugin offers Light, Dark and System, and `applyTheme` resolves all three
+   down to `data-bs-theme` on the root element. Keying the surfaces off that
+   attribute honours the switch, System included, without reading the setting.
+
+   Dracula is published as a dark palette only. Its light counterpart, Alucard,
+   belongs to Dracula PRO and is not in the free spec, so there is no light
+   Dracula to paint here and none is invented: on Light the plugin keeps
+   Bootstrap's own surfaces and only the accent comes from the palette. */
+:root[data-bs-theme="dark"]:has(#mainNavbar) {
   --bs-body-bg: var(--dracula-bg);
   --bs-body-bg-rgb: 40, 42, 54;
   --bs-body-color: var(--dracula-fg);
@@ -43,7 +47,11 @@
   --bs-tertiary-bg: var(--dracula-bg-darker);
 
   /* Purple is the theme's accent everywhere else, and the plugin's default
-     accent is `primary`, so this is the one the user sees without choosing. */
+     accent is `primary`, so this is the one a user sees without choosing.
+     Recolouring Bootstrap's token rather than `--mobile-accent` leaves the
+     plugin's own accent picker in charge: it writes an inline
+     `--mobile-accent` for every accent except `primary`, and removes it for
+     `primary`, which is when this shows through. */
   --bs-primary: var(--dracula-purple);
   --bs-primary-rgb: 189, 147, 249;
 
@@ -51,4 +59,17 @@
   --bs-success: var(--dracula-green);
   --bs-warning: var(--dracula-orange);
   --bs-info: var(--dracula-cyan);
+}
+
+/* On a white surface the bright half of the palette is unreadable — measured
+   against #FFF, purple is 2.41:1, pink 2.39, cyan 1.38, green 1.37, yellow
+   1.12, and 4.5:1 is what text needs. Comment is the one accent the palette can
+   spare here at 4.71:1, and being a blue-purple it still reads as this theme
+   rather than as Bootstrap's blue.
+
+   The semantic four are left to Bootstrap on Light for the same reason: Dracula
+   tunes them for a dark background, and red at 3.14:1 is the best of them. */
+:root:not([data-bs-theme="dark"]):has(#mainNavbar) {
+  --bs-primary: var(--dracula-comment);
+  --bs-primary-rgb: 98, 114, 164;
 }

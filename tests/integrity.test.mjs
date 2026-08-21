@@ -91,19 +91,34 @@ test("every @import asks for the version the theme is on", () => {
 	const declared = read("init.js").match(/DRACULA_VERSION\s*=\s*"([^"]+)"/)[1];
 	let found = 0;
 	for (const name of SHEETS) {
-		for (const m of read(name).matchAll(
-			/@import\s+url\(\s*"([^"]+?)\?v=([^"]+)"\s*\)/g,
-		)) {
+		// Comments first: the prose in palette.css discusses these URLs, and a
+		// match inside a comment would be checked as though it were code.
+		const text = read(name).replace(/\/\*[\s\S]*?\*\//g, "");
+		// Every @import, not only the ones already written the right way — a new
+		// one added without a version is exactly what this has to catch.
+		for (const m of text.matchAll(/@import\s+[^;]*;/g)) {
 			found++;
+			const statement = m[0].replace(/\s+/g, " ").trim();
+			const asked = statement.match(/\?v=([^"')\s]+)/);
+			assert.ok(
+				asked,
+				`${name}: ${statement} carries no ?v=, so an edit to the imported ` +
+					`sheet keeps its URL and the browser answers from cache`,
+			);
 			assert.equal(
-				m[2],
+				asked[1],
 				declared,
-				`${name} imports ${m[1]} at ${m[2]}, the theme is ${declared}`,
+				`${name}: ${statement} asks for ${asked[1]}, the theme is ${declared}`,
 			);
 		}
 	}
-	// A rewrite that drops the imports would otherwise pass this silently.
-	assert.equal(found, 3, `expected 3 versioned @imports, found ${found}`);
+	// Exact, not a floor: a fourth import is a decision, and it should cost
+	// whoever makes it a look at this test.
+	assert.equal(
+		found,
+		3,
+		`expected 3 @imports across the sheets, found ${found}`,
+	);
 });
 
 // The imports are the only way palette.css and mobile.css reach a page: nothing
