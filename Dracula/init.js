@@ -3346,16 +3346,46 @@ var draculaRefreshSpin = { pending: false, timer: null };
 
 /* Whether the refresh arrow is turning. The glyph is painted on the
    pseudo-element, so that is what turns; the class goes on the element it
-   inherits from. */
+   inherits from.
+
+   Stopping waits for the turn to finish. A list that arrives in a tenth of a
+   second would otherwise cut the arrow off wherever it had got to, which reads
+   as a twitch rather than as an answer — so the class comes off on the next
+   `animationiteration`, and the arrow always completes whole turns.
+
+   Two things that would strand it. With no animation running — a reduced-motion
+   preference makes it `none` — the event never comes, so the class comes off at
+   once. And a request that starts while one is finishing clears the flag, which
+   the listener checks: the arrow keeps turning rather than stopping under a
+   fresh request. */
 function draculaSpinRefresh(on)
 {
 	var icon = document.querySelector("#refreshIcon i");
 	if(!icon)
 		return;
 	if(on)
+	{
+		delete icon.dataset.draculaStopping;
 		icon.classList.add("dracula-refreshing");
-	else
+		return;
+	}
+	if(!icon.classList.contains("dracula-refreshing")
+		|| icon.dataset.draculaStopping)
+		return;
+	if(window.getComputedStyle(icon, "::before").animationName === "none")
+	{
 		icon.classList.remove("dracula-refreshing");
+		return;
+	}
+	icon.dataset.draculaStopping = "1";
+	icon.addEventListener("animationiteration", function whole()
+	{
+		icon.removeEventListener("animationiteration", whole);
+		if(!icon.dataset.draculaStopping)
+			return;
+		delete icon.dataset.draculaStopping;
+		icon.classList.remove("dracula-refreshing");
+	});
 }
 
 /* A list request has gone out. `now` is a press: the control has to answer the
