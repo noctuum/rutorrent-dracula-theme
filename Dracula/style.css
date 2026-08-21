@@ -6,6 +6,12 @@
  * Icons: Phosphor Icons Duotone (MIT) - https://phosphoricons.com
  */
 
+/* The colours themselves, so both this sheet and plugins.css can name them
+   without either owning them. The version in the URL is the theme's own, which
+   moves on every release — unlike the `?v=<ruTorrent version>` ruTorrent gives
+   the sheets it loads, under which an edited file keeps its old URL. */
+@import url("palette.css?v=0.2.1"); /* x-release-please-version */
+
 /* === Dracula Palette === */
 
 :root {
@@ -16,23 +22,6 @@
      (`plugins/theme/init.php:22`). Each sheet stamps separately, so a set of
      files from two different releases is caught too. */
   --dracula-version:    "0.2.1"; /* x-release-please-version */
-
-  --dracula-bg:         #282A36;
-  --dracula-fg:         #F8F8F2;
-  --dracula-current:    #44475A;
-  --dracula-selection:  #44475A;
-  --dracula-comment:    #6272A4;
-  --dracula-red:        #FF5555;
-  --dracula-orange:     #FFB86C;
-  --dracula-yellow:     #F1FA8C;
-  --dracula-green:      #50FA7B;
-  --dracula-cyan:       #8BE9FD;
-  --dracula-purple:     #BD93F9;
-  --dracula-pink:       #FF79C6;
-
-  /* Derived colors */
-  --dracula-bg-darker:  #21222C;
-  --dracula-bg-lighter: #343746;
 
   /* Monospace stack, shared by the plugin consoles, the chunk map and the
      URL textarea so they do not drift apart */

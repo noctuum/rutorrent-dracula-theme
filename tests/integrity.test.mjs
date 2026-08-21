@@ -17,18 +17,30 @@ import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const THEME = join(ROOT, "Dracula");
-const SHEETS = ["style.css", "stable.css", "plugins.css"];
+const SHEETS = [
+	"style.css",
+	"stable.css",
+	"plugins.css",
+	"palette.css",
+	"mobile.css",
+];
 const FILES = [...SHEETS, "init.js"];
 
 const read = (name) => readFileSync(join(THEME, name), "utf8");
 const css = SHEETS.map((name) => ({ name, text: read(name) }));
 
-// --- 1. One version, written in eight places -------------------------------
+// --- 1. One version, written in thirteen places ----------------------------
 //
 // Every file carries a human-readable "Version X.Y.Z" line in its header, the
-// three sheets each stamp a machine-readable custom property, and init.js
-// carries the constant it compares them against at runtime. All eight have to
-// agree, or the startup check cries wolf at the user.
+// three sheets ruTorrent loads each stamp a machine-readable custom property,
+// init.js carries the constant it compares them against at runtime, and the
+// three @import URLs carry it as their cache-buster. All of them have to agree,
+// or the startup check cries wolf at the user and an edited sheet is served
+// from cache.
+//
+// palette.css and mobile.css stamp no custom property: they are fetched under
+// the version in the URL that imports them, so they cannot go stale on their
+// own — see the header of palette.css.
 
 const VERSION_HEADER = /^\s*\*\s*Version\s+(\d+\.\d+\.\d+)\b/m;
 
@@ -69,6 +81,45 @@ test("the machine-readable stamps agree with the headers", () => {
 		read("init.js").match(VERSION_HEADER)[1],
 		"init.js header and DRACULA_VERSION disagree",
 	);
+});
+
+// An @import whose version has stopped moving is the exact failure the URLs
+// were given a version to prevent: the importing sheet arrives new, names the
+// old palette, and the browser answers from cache. Nothing about the page looks
+// broken, so only this test would notice.
+test("every @import asks for the version the theme is on", () => {
+	const declared = read("init.js").match(/DRACULA_VERSION\s*=\s*"([^"]+)"/)[1];
+	let found = 0;
+	for (const name of SHEETS) {
+		for (const m of read(name).matchAll(
+			/@import\s+url\(\s*"([^"]+?)\?v=([^"]+)"\s*\)/g,
+		)) {
+			found++;
+			assert.equal(
+				m[2],
+				declared,
+				`${name} imports ${m[1]} at ${m[2]}, the theme is ${declared}`,
+			);
+		}
+	}
+	// A rewrite that drops the imports would otherwise pass this silently.
+	assert.equal(found, 3, `expected 3 versioned @imports, found ${found}`);
+});
+
+// The imports are the only way palette.css and mobile.css reach a page: nothing
+// links them, and the mobile UI loads no sheet of the theme's but plugins.css.
+test("the sheets that carry the imports still carry them", () => {
+	assert.match(
+		read("style.css"),
+		/@import\s+url\("palette\.css/,
+		"style.css no longer imports the palette; the desktop would lose its colours",
+	);
+	for (const target of ["palette.css", "mobile.css"])
+		assert.match(
+			read("plugins.css"),
+			new RegExp(`@import\\s+url\\("${target.replace(".", "\\.")}`),
+			`plugins.css no longer imports ${target}; the mobile UI would lose it`,
+		);
 });
 
 // --- 2. Theme-owned custom properties resolve ------------------------------
@@ -156,7 +207,15 @@ test("the exemption list has not gone stale", () => {
 //
 // A ratchet, not a limit. Lower these when a use is removed; raising one takes
 // an argument in the commit message.
-const IMPORTANT_BUDGET = { "style.css": 34, "stable.css": 2, "plugins.css": 1 };
+const IMPORTANT_BUDGET = {
+	"style.css": 34,
+	"stable.css": 2,
+	"plugins.css": 1,
+	// Nothing here needs one: this sheet is last of the three the mobile UI
+	// loads, so it already outranks the plugin's own rules.
+	"mobile.css": 0,
+	"palette.css": 0,
+};
 
 // Comments are stripped before counting. Counting the raw text instead makes
 // every mention of the word in prose part of the budget, so rewording a comment

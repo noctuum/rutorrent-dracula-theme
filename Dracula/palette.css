@@ -1,0 +1,40 @@
+/* Dracula Theme for ruTorrent — the palette
+ * Version 0.2.1 · built against ruTorrent 5.3   # x-release-please-version
+ * https://draculatheme.com
+ *
+ * Every colour the theme uses, declared once and imported by the sheets that
+ * need it rather than copied into each.
+ *
+ * A file of its own because the two UIs load different sheets. When the mobile
+ * plugin takes the page over it disables the theme plugin
+ * (`plugins/mobile/init.js:2138`), and style.css — where these used to live —
+ * never arrives; plugins.css does, and imports this. On the desktop style.css
+ * imports it directly, so the palette lands with the first sheet rather than at
+ * config time.
+ *
+ * No version stamp on :root here, and none in mobile.css: those stamps exist
+ * because ruTorrent serves its sheets under `?v=<its own version>`, which does
+ * not move between theme releases. These two are fetched under the theme's own
+ * version instead, written into the @import URLs, so they cannot go stale
+ * without the sheet that imports them going stale first — which the stamp on
+ * that sheet already catches.
+ */
+
+:root {
+  --dracula-bg: #282a36;
+  --dracula-fg: #f8f8f2;
+  --dracula-current: #44475a;
+  --dracula-selection: #44475a;
+  --dracula-comment: #6272a4;
+  --dracula-red: #ff5555;
+  --dracula-orange: #ffb86c;
+  --dracula-yellow: #f1fa8c;
+  --dracula-green: #50fa7b;
+  --dracula-cyan: #8be9fd;
+  --dracula-purple: #bd93f9;
+  --dracula-pink: #ff79c6;
+
+  /* Derived colors */
+  --dracula-bg-darker: #21222c;
+  --dracula-bg-lighter: #343746;
+}

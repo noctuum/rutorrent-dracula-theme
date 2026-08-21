@@ -6,6 +6,17 @@
  * lands twice: same name, same value, later copy wins.
  */
 
+/* Both imports carry the theme's own version rather than ruTorrent's, which is
+   what the sheets ruTorrent loads are stamped for — see palette.css.
+
+   This sheet is the only one of the theme's that reaches the mobile plugin's
+   interface, so it is where the palette and the rules for that interface have
+   to enter. Imported rules take the position of the @import, which is above
+   everything else here and below every sheet loaded before this one: still
+   later than the plugin's own, which is what matters. */
+@import url("palette.css?v=0.2.1"); /* x-release-please-version */
+@import url("mobile.css?v=0.2.1"); /* x-release-please-version */
+
 /* init.js reads this back at startup to catch a sheet the browser has cached
    from an older release. Declared per sheet, so a mixed set is caught too. */
 :root {

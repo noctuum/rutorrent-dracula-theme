@@ -1,0 +1,54 @@
+/* Dracula Theme for ruTorrent — the mobile plugin's interface
+ * Version 0.2.1 · built against ruTorrent 5.3   # x-release-please-version
+ * https://draculatheme.com
+ *
+ * `plugins/mobile` replaces the whole desktop UI with its own when a phone is
+ * detected or `?mobile=1` is passed, and disables the theme plugin on the way
+ * in (`plugins/mobile/init.js:2138`). Only three sheets load there —
+ * `css/bootstrap.min.css`, `plugins/mobile/mobile.css`, and this theme's
+ * plugins.css, in that order — so this file rides in on the last of the three
+ * and every rule here already outranks the plugin's own without `!important`.
+ *
+ * The plugin is Bootstrap 5.3 throughout and re-colours itself through custom
+ * properties: `--mobile-accent` reads `--bs-primary`, and `applyAccentColor`
+ * only writes an inline `--mobile-accent` when the user picks an accent that is
+ * not `primary`. Recolouring Bootstrap's token rather than the plugin's leaves
+ * that logic intact and the user's own pick still winning, which is why nothing
+ * here writes `--mobile-*`.
+ *
+ * Scope: plugins.css loads on the desktop too, and the classes below —
+ * `.progress`, `.form-control`, `.btn` — exist in both UIs. `#mainNavbar` is
+ * the plugin's bottom bar and appears on none of its pages but all of them, and
+ * on no desktop page at all: measured, `data-bs-theme` and `#mainContainer` are
+ * both absent there. Element rules go under `#mainContainer`, which wraps the
+ * plugin's whole interface; only the custom properties need `:root`, because
+ * the page background is painted above that wrapper.
+ */
+
+/* The plugin offers Light, Dark and System and defaults to Light. Dracula is a
+   dark palette and has no light counterpart, so the switch is not honoured
+   here — a theme installed on purpose is the stronger signal. Whether the
+   plugin's Light should instead be left alone is still open. */
+:root:has(#mainNavbar) {
+  --bs-body-bg: var(--dracula-bg);
+  --bs-body-bg-rgb: 40, 42, 54;
+  --bs-body-color: var(--dracula-fg);
+  --bs-body-color-rgb: 248, 248, 242;
+  --bs-emphasis-color: var(--dracula-fg);
+  --bs-border-color: var(--dracula-current);
+
+  /* The surfaces Bootstrap layers over the body: cards, striped rows, and the
+     track a progress bar is drawn on. */
+  --bs-secondary-bg: var(--dracula-bg-lighter);
+  --bs-tertiary-bg: var(--dracula-bg-darker);
+
+  /* Purple is the theme's accent everywhere else, and the plugin's default
+     accent is `primary`, so this is the one the user sees without choosing. */
+  --bs-primary: var(--dracula-purple);
+  --bs-primary-rgb: 189, 147, 249;
+
+  --bs-danger: var(--dracula-red);
+  --bs-success: var(--dracula-green);
+  --bs-warning: var(--dracula-orange);
+  --bs-info: var(--dracula-cyan);
+}
