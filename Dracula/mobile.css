@@ -1,0 +1,1214 @@
+/* Dracula Theme for ruTorrent — the mobile plugin's interface
+ * Version 0.2.1 · built against ruTorrent 5.3   # x-release-please-version
+ * https://draculatheme.com
+ *
+ * `plugins/mobile` replaces the whole desktop UI with its own when a phone is
+ * detected or `?mobile=1` is passed, and disables the theme plugin on the way
+ * in (`plugins/mobile/init.js:2138`). Only three sheets load there —
+ * `css/bootstrap.min.css`, `plugins/mobile/mobile.css`, and this theme's
+ * plugins.css, in that order — so this file rides in on the last of the three
+ * and every rule here already outranks the plugin's own without `!important`.
+ *
+ * The plugin is Bootstrap 5.3 throughout and re-colours itself through custom
+ * properties: `--mobile-accent` reads `--bs-primary`, and `applyAccentColor`
+ * only writes an inline `--mobile-accent` when the user picks an accent that is
+ * not `primary`. Recolouring Bootstrap's token rather than the plugin's leaves
+ * that logic intact and the user's own pick still winning, which is why the
+ * accent is never written here directly. The two `--mobile-progress-*` names
+ * are, having no Bootstrap counterpart to go through — see the note at them.
+ *
+ * Scope: plugins.css loads on the desktop too, and the classes below —
+ * `.progress`, `.form-control`, `.btn` — exist in both UIs. `#mainNavbar` is
+ * the plugin's bottom bar and appears on none of its pages but all of them, and
+ * on no desktop page at all: measured, `data-bs-theme` and `#mainContainer` are
+ * both absent there. Element rules go under `#mainContainer`, which wraps the
+ * plugin's whole interface; only the custom properties need `:root`, because
+ * the page background is painted above that wrapper.
+ */
+
+/* The plugin offers Light, Dark and System, and `applyTheme` resolves all three
+   down to `data-bs-theme` on the root element. Keying the surfaces off that
+   attribute honours the switch, System included, without reading the setting.
+
+   Only the dark half is painted from the palette. The specification publishes a
+   light one too — Alucard Classic, its own background, foreground and twelve
+   tokens — and this theme does not carry it yet, so Light keeps Bootstrap's own
+   surfaces here and takes only the accent from Dracula. That is a gap, not a
+   decision about what Light should look like. */
+:root[data-bs-theme="dark"]:has(#mainNavbar) {
+  --bs-body-bg: var(--dracula-bg);
+  --bs-body-bg-rgb: 40, 42, 54;
+  --bs-body-color: var(--dracula-fg);
+  --bs-body-color-rgb: 248, 248, 242;
+  --bs-emphasis-color: var(--dracula-fg);
+  --bs-border-color: var(--dracula-current);
+
+  /* The surfaces Bootstrap layers over the body: cards, striped rows, and the
+     track a progress bar is drawn on. */
+  --bs-secondary-bg: var(--dracula-bg-lighter);
+  --bs-tertiary-bg: var(--dracula-bg-darker);
+
+  /* Purple is the theme's accent everywhere else, and the plugin's default
+     accent is `primary`, so this is the one a user sees without choosing.
+     Recolouring Bootstrap's token rather than `--mobile-accent` leaves the
+     plugin's own accent picker in charge: it writes an inline
+     `--mobile-accent` for every accent except `primary`, and removes it for
+     `primary`, which is when this shows through. */
+  --bs-primary: var(--dracula-purple);
+  --bs-primary-rgb: 189, 147, 249;
+
+  /* The progress label is one string laid across two surfaces: `min-width:
+     max-content` lets it overhang the fill onto the track, so whatever colour
+     it takes has to hold on both — and the fill is mixed from whichever accent
+     the user picked, which is not knowable here. The halo is what carries one
+     colour across the pair, and these two names are what the plugin exposes for
+     it; only their values are the theme's. `applyAccentColor` overwrites both
+     for a near-white accent, which is its business to get right and is left
+     alone.
+
+     Cyan rather than the body colour: the label is the one number in a row, and
+     in white it read as a third line of the same text. On this theme's own fill
+     it measures 5.32:1, and 8.52:1 where it overhangs onto the track. */
+  --mobile-progress-label: var(--dracula-cyan);
+  --mobile-progress-halo: var(--dracula-bg);
+
+  /* What sits on a solid accent fill — the selected row of a filter list, and
+     its icon. The plugin's default is #fff and it flips to dark only for an
+     accent it judges near-white, which Dracula's purple is not; white on it
+     measures 2.41:1, the theme's background 5.90:1.
+
+     Right for six of the seven accents the plugin offers, because the palette's
+     hues are all light ones: purple, green, red, orange and cyan all want a
+     dark label, and `dark` resolves to `light` here, which the plugin already
+     handles. The seventh, `secondary`, stays Bootstrap's grey #6C757D, where
+     this reads 3.03:1 against 4.68:1 for white — a trade taken knowingly for
+     the accent nobody is given by default. */
+  --mobile-accent-contrast: var(--dracula-bg);
+
+  /* Both halves of each name are needed. Bootstrap's text utilities never read
+     the colour — `.text-danger` resolves to `rgba(var(--bs-danger-rgb),
+     var(--bs-text-opacity))` — and its own dark block leaves the triples at
+     their light values, so the tracker message on a list row paints Bootstrap's
+     #dc3545 at 2.69:1 over a striped surface while `--bs-danger` beside it goes
+     unread. The palette's own red measures 3.88:1 there. */
+  --bs-danger: var(--dracula-red);
+  --bs-danger-rgb: 255, 85, 85;
+  --bs-success: var(--dracula-green);
+  --bs-success-rgb: 80, 250, 123;
+  --bs-warning: var(--dracula-orange);
+  --bs-warning-rgb: 255, 184, 108;
+  --bs-info: var(--dracula-cyan);
+  --bs-info-rgb: 139, 233, 253;
+}
+
+/* The plugin runs its whole interface off one accent, and on a white surface no
+   single colour can do both jobs: measured against #FFF, purple is 2.41:1,
+   pink 2.39, cyan 1.38, green 1.37, yellow 1.12, where text needs 4.5. So on
+   Light the accent splits by role, and the split is what a thing has to be
+   legible against.
+
+   A solid area carries its own label, so the constraint is the label against
+   the fill, not the fill against the page: those stay Dracula's purple, which
+   takes a dark label at 5.90:1. Text and thin lines have only the page behind
+   them, and take Comment at 4.71:1 — the one accent the palette can spare
+   there, and being a blue-purple it still reads as this theme rather than as
+   Bootstrap's blue.
+
+   The semantic four are left to Bootstrap on Light for the same reason: Dracula
+   Classic tunes them for a dark background, and red at 3.14:1 is the best of
+   them.
+
+   Every figure above is Dracula Classic measured on white, which is the wrong
+   pairing and the reason the accent has to be split at all. The specification's
+   light variant, Alucard Classic, has its own twelve tokens for exactly this
+   surface; carrying it would replace this whole block rather than refine it. */
+:root:not([data-bs-theme="dark"]):has(#mainNavbar) {
+  --bs-primary: var(--dracula-purple);
+  --bs-primary-rgb: 189, 147, 249;
+
+  /* Purple takes a dark label; the plugin's Light default is a white one at
+     2.41:1. Where the string overhangs onto Bootstrap's light track a dark
+     label reads at 12.01:1, so the halo turns light and only has to sharpen
+     the edge rather than rescue it. */
+  --mobile-progress-label: var(--dracula-bg);
+  --mobile-progress-halo: var(--dracula-fg);
+}
+
+/* Two surfaces have no Light half in this file, and both are left to the plugin
+   whole rather than half-painted: the bottom bar, and the state colours in the
+   filter list.
+
+   The bar is #222 under white icons and a white readout
+   (`plugins/mobile/mobile.css:256`, `:186`, `:295`); the filter icons take the
+   row's own colour. Each is a pairing, and half of one — this theme's bar under
+   the plugin's white icons, or the theme's state colours on Bootstrap's white
+   list — reads worse than either whole.
+
+   What is missing is a light palette, not a decision. Dracula Classic is tuned
+   for a dark background: measured on white its six state colours run from
+   1.12:1 to 3.14:1. The specification's light variant, Alucard Classic, has
+   twelve tokens and five UI surfaces of its own for exactly this
+   (https://draculatheme.com/spec); both surfaces above are for it to paint. */
+
+/* The accent's text and border uses, taken back to Comment. The plugin paints
+   every one of them straight from `--mobile-accent` — `a` at mobile.css:97, the
+   tab links at :331, the active tab's underline at :335, the toolbar icons at
+   :363 and the filter's funnel at :406 — so there is no token to intercept and
+   the selectors have to be met. Two of them carry two ids, which `#mainContainer`
+   on its own does not outrank.
+
+   `#mainContainer a` reaches further than the links it is aimed at: a filter row
+   is an `<a class="list-group-item">`, so a selected one takes Comment on the
+   accent fill at 1.95:1 instead of the `--mobile-accent-contrast` the plugin
+   puts there, which measures 5.90:1. Narrowing the selector is not the fix —
+   the row is a link and Comment is what Light has for links. */
+:root:not([data-bs-theme="dark"]) #mainContainer a,
+:root:not([data-bs-theme="dark"]) #mainContainer #sortIcon i,
+:root:not([data-bs-theme="dark"]) #mainContainer #refreshIcon i,
+:root:not([data-bs-theme="dark"]) #mainContainer #searchIcon i,
+:root:not([data-bs-theme="dark"]) #mainContainer #torrentsFilter > a > i {
+  color: var(--dracula-comment);
+}
+
+:root:not([data-bs-theme="dark"]) #mainContainer .nav-tabs > li.active > a {
+  border-bottom-color: var(--dracula-comment);
+}
+
+/* Bootstrap compiles its variants with literal hex rather than through
+   `--bs-primary`: `.btn-primary` opens `--bs-btn-bg:#0d6efd`, and
+   `.form-check-input:checked` sets `#0d6efd` outright. Recolouring the theme
+   token never reaches either, which is why OK on the sort page, Add File, Add
+   URL and the ascending radio all stayed Bootstrap blue while everything around
+   them turned. Their own tokens are what has to be written.
+
+   The label goes dark rather than white. Dracula's purple is a light hue —
+   white on it measures 2.41:1, the theme's own background on it 5.91:1 — so the
+   fill takes dark text, which is what the plugin's `--mobile-accent-contrast`
+   does for the same reason.
+
+   Pink for the press, as everywhere else in this theme. Purple has no darker
+   sibling in the palette to fall back to and nothing is invented for one, so
+   hover holds the rest colour and the change lands on the active state, where
+   it reads as a press rather than as a second accent. */
+#mainContainer .btn-primary {
+  --bs-btn-color: var(--dracula-bg);
+  --bs-btn-bg: var(--dracula-purple);
+  --bs-btn-border-color: var(--dracula-purple);
+  --bs-btn-hover-color: var(--dracula-bg);
+  --bs-btn-hover-bg: var(--dracula-purple);
+  --bs-btn-hover-border-color: var(--dracula-purple);
+  --bs-btn-active-color: var(--dracula-bg);
+  --bs-btn-active-bg: var(--dracula-pink);
+  --bs-btn-active-border-color: var(--dracula-pink);
+  --bs-btn-disabled-color: var(--dracula-bg);
+  --bs-btn-disabled-bg: var(--dracula-comment);
+  --bs-btn-disabled-border-color: var(--dracula-comment);
+  --bs-btn-focus-shadow-rgb: 189, 147, 249;
+}
+
+/* The other button this interface has, on fifteen controls: the search field's
+   close, both directory pickers, Select, four peer commands, the recheck and the
+   label editor, Clear, and every Cancel. Bootstrap compiles it around #6c757d,
+   which belongs to no palette here.
+
+   The outline shape is kept. A filled primary beside an outlined secondary is
+   what says which button is the answer, and the desktop's single filled style is
+   for dialogs that have no such pair.
+
+   The label is the body colour rather than the border's: Comment on this surface
+   measures 3.03:1, which is a border but not a label — Bootstrap's own grey is
+   at 3.11:1 and no better. The quiet comes from the outline and the absent fill
+   instead, and the label reads at 12.74:1. Filling on hover puts that label on
+   Comment at 4.45:1, the pairing the desktop's buttons already use.
+
+   Pink for the press, as everywhere else in this theme.
+
+   Dark only: the label is this theme's foreground, which on Light would be white
+   on white. Light keeps the plugin's pairing whole, as it does the bars. */
+:root[data-bs-theme="dark"] #mainContainer .btn-outline-secondary {
+  --bs-btn-color: var(--dracula-fg);
+  --bs-btn-border-color: var(--dracula-comment);
+  --bs-btn-hover-color: var(--dracula-fg);
+  --bs-btn-hover-bg: var(--dracula-comment);
+  --bs-btn-hover-border-color: var(--dracula-comment);
+  --bs-btn-active-color: var(--dracula-bg);
+  --bs-btn-active-bg: var(--dracula-pink);
+  --bs-btn-active-border-color: var(--dracula-pink);
+  --bs-btn-disabled-color: var(--dracula-comment);
+  --bs-btn-disabled-border-color: var(--dracula-comment);
+  --bs-btn-focus-shadow-rgb: 189, 147, 249;
+}
+
+/* Four of the plugin's ten selects are outside Bootstrap's reach — priority,
+   ratio group and channel in a torrent's General tab carry no class at all, and
+   the per-file priority in its Files tab carries one of the plugin's own — so
+   the browser paints them as its own dark control: #6B6B6B on #858585 with white
+   text, beside `.form-select`s that are already this theme's.
+
+   Keyed on the absence of Bootstrap's class rather than on the four, so a select
+   the plugin adds later is themed rather than left grey.
+
+   Colour only, and deliberately. `appearance` stays `auto`, so the native
+   chevron and the platform's own picker are untouched, which is the same trade
+   the checkboxes take. Geometry stays too: the plugin measures these cells to
+   size the selects (`plugins/mobile/init.js:1100`), and padding here would move
+   what it computes. */
+:root[data-bs-theme="dark"] #mainContainer select:not(.form-select) {
+  color: var(--dracula-fg);
+  background-color: var(--dracula-bg);
+  border-color: var(--dracula-current);
+}
+
+/* A focused field rings in Bootstrap's own blue, and for the same reason the
+   button above needs its tokens spelled out: the two rules are compiled with
+   literal hex rather than through anything. Read off the build this theme is
+   measured against —
+
+     .form-control:focus{…border-color:#86b7fe;outline:0;
+       box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+     .form-select:focus{border-color:#86b7fe;outline:0;
+       box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+
+   `--bs-focus-ring-color` exists and holds that same blue, so recolouring it
+   looks like the fix and does nothing: neither rule reads it. Nor do they read
+   `--bs-primary`, which has been this theme's purple all along.
+
+   The ring is the accent rather than a surface, and `--bs-primary` carries a
+   value in the Dark block and the Light one alike, so this is right in both
+   without a light palette. The width and the 25% are Bootstrap's own, kept so a
+   focused field looks like a focused field on the platform it borrows from. */
+#mainContainer .form-control:focus,
+#mainContainer .form-select:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* The nine checkboxes and radios the plugin ships are bare `<input>`s — it
+   carries no `.form-check-input` anywhere, so Bootstrap's own rules never touch
+   them and the browser paints them with its own accent. `accent-color` is what
+   reaches a native control, and keeping them native is worth more on a phone
+   than any restyling: the platform's own hit area and press feedback come with
+   them. */
+#mainContainer input[type="checkbox"],
+#mainContainer input[type="radio"] {
+  accent-color: var(--dracula-purple);
+}
+
+/* A field with a button on its end — the directory pickers on the Add and Save
+   pages, and Add Peer — is marked `.input-append`, which is Bootstrap 3's name
+   for it. Bootstrap 5 renamed the whole construct to `.input-group` and defines
+   nothing under the old name, so the wrapper stays a block and the field keeps
+   `.form-control`'s full width. What holds the two on one line instead is
+   `float: left` from the plugin's own compat shim plus a width measured in
+   script:
+
+     var used = (outer - inner) + $('#showGetDir').outerWidth(true) + 1;
+     $('#dir_edit').width($('#addTorrentFile').outerWidth(true) - used);
+
+   That `+ 1` is the whole gap between them, and the button, being `.btn-sm`,
+   ends up 4px shorter than the field beside it.
+
+   Making the wrapper a flex row settles both. Floats do not apply to flex
+   items, so the shim's `float` stops mattering without being overridden, and
+   `flex-basis: 0` takes the main size out of `width`, so the inline value the
+   script writes is ignored rather than fought — no `!important` for either.
+   `align-items: stretch` is what levels the button with the field. */
+#mainContainer .input-append {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#mainContainer .input-append > .form-control {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+#mainContainer .input-append > .btn {
+  flex: 0 0 auto;
+}
+
+/* The two browse buttons carry a hard `height: 34px`
+   (`plugins/mobile/mobile.css:469`), four short of the field they sit beside,
+   and an explicit cross size is also what makes a flex item ineligible to
+   stretch — which is why neither `align-self`, nor the button's padding, nor
+   Bootstrap's own `--bs-btn-*` tokens moved it. Releasing the height is the
+   whole fix: at `auto` the row stretches it to the field's 38px.
+
+   Three ids to clear two, because the plugin's own selectors are already at
+   two and the later sheet still has to outrank them. */
+#mainContainer #addTorrent #showGetDir,
+#mainContainer #torrentDataDir #showGetDirDataDir {
+  height: auto;
+}
+
+/* The top toolbar's icons are a third smaller than the bottom bar's — 15px
+   against 20px, because the plugin sizes them through the link's font
+   (`plugins/mobile/mobile.css:316` against `:290`) — and the same font sizes the
+   filter's text, so the size has to go on the glyph rather than on the link.
+
+   Levelling them up is two changes, not one: at 20px the glyph's box grows the
+   line box and the row with it, 44.5px to 52px, while `#mainContainer` reserves
+   45px for a row that is `position: fixed`. Below are all three parts of that. */
+#mainContainer :is(#sortIcon, #searchIcon, #refreshIcon) i,
+#mainContainer #torrentsFilter > a > i {
+  font-size: 20px;
+}
+
+/* A deliberate height rather than one the font metrics happen to give. 48px is
+   the larger of the two platform minimums for a tap target, and the row was
+   40.5px — under both. It also settles the second toolbar: `#detailsNav` is a
+   `.nav-tabs` too and has no icons, so without a height its row would stay at
+   44.5px against a reserve sized for 52.
+
+   Only the three icon links are turned into flex containers. The funnel's is
+   already `inline-flex` and centred (`plugins/mobile/mobile.css:388`), and
+   deliberately so — inline is what keeps its tap target the width of the icon
+   and its text rather than the whole empty stretch of the row. */
+#mainContainer .nav-tabs > li > a {
+  height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#mainContainer :is(#sort, #search, #refresh) > a,
+#mainContainer #detailsNav > li > a {
+  display: flex;
+  align-items: center;
+}
+
+/* The refresh arrow turns while the interface is waiting for a list — always on
+   a press, and on the background poll only once it has run past a second, which
+   is set in `init.js`. The glyph is painted on the pseudo-element, so that is
+   what turns.
+
+   Under a reduced-motion preference the arrow takes the accent instead of
+   turning. The control still has to answer the finger; what it must not do is
+   turn forever in the corner of someone's eye. */
+@keyframes dracula-refreshing {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+#mainContainer #refreshIcon .dracula-refreshing::before {
+  animation: dracula-refreshing 900ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mainContainer #refreshIcon .dracula-refreshing::before {
+    animation: none;
+  }
+
+  #mainContainer #refreshIcon .dracula-refreshing {
+    color: var(--bs-primary);
+  }
+}
+
+/* Chrome, not page. The plugin paints this row `var(--bs-body-bg)`
+   (`plugins/mobile/mobile.css:318`), which is the same colour as everything
+   below it, so it reads as the top of the list rather than as a bar — while the
+   bottom bar reads as one. Both take the same surface, and the border each
+   already carries is Current Line on both, so the two now mirror each other.
+
+   Three rules deep, not one: `.nav-tabs` is the list's toolbar and the details
+   tabs both, and the search bar tucks 1px under whichever is showing with a
+   surface of its own at `:375`. Leaving any of them behind puts the seam back.
+
+   Dark only, and the same pairing argument as the bottom bar: the rule this
+   replaces paints a Bootstrap token, so Light stays Bootstrap's until there is
+   a light palette to paint it from. */
+:root[data-bs-theme="dark"] #mainContainer .nav-tabs,
+:root[data-bs-theme="dark"] #mainContainer #searchBar {
+  background-color: var(--dracula-bg-darker);
+}
+
+/* The reserve the fixed row stands on: 3px of `.nav-tabs` padding, the 48px
+   link, and the 1px bottom border. The plugin's own 45px
+   (`plugins/mobile/mobile.css:246`) matched its 44.5px row.
+
+   Nothing else needs telling. The search bar reads the row's height when it
+   opens and tucks itself 1px under it (`plugins/mobile/init.js:421`), and the
+   details page derives its table height the same way at `:1185`. */
+#mainContainer {
+  padding-top: 52px;
+}
+
+/* The bottom bar doubles in height the moment a transfer has a speed to report.
+   With a torrent open it carries ten items — three for the app, a rule, four
+   for the torrent, a rule, and the up/down readout — and the arithmetic runs
+   out: the bar is 390px with 20px of padding a side, so 350px hold 228px of
+   content and `margin-right: 15px` on nine of the ten
+   (`plugins/mobile/mobile.css:275`) adds 135px. 363 into 350 does not go, the
+   readout wraps, and the bar stands 138px instead of 73.
+
+   The margin is what gives, not the content: at 10px the same row measures 308
+   and still fits with a speed twice as long as the ones seen here. `nowrap` is
+   the guarantee behind that — the height of this bar should not depend on how
+   many digits a transfer rate happens to have.
+
+   `float: left` sits on those items too, from the same Bootstrap 3 shim as the
+   input groups above. It is already inert, the list being a flex container, and
+   is left alone rather than tidied. */
+#mainContainer #mainNavbar .nav {
+  display: flex;
+  flex: 1;
+  flex-wrap: nowrap;
+  column-gap: 8px;
+}
+
+/* Room for the three groups to stand apart. With a torrent open the bar carries
+   seven 20px icons, two rules and the 110px the readout reserves — 252px of
+   content — and the plugin's 20px of padding a side left 335 to put it in.
+   Eight gaps of ten and it was 7px over, which is what pushed the readout past
+   the edge and moved it between the two pages. Twelve a side and a gap of eight
+   leaves 27 to spread, so the rules have air on both sides instead of standing
+   against a group.
+
+   Twelve rather than nothing: the bar's outermost icons then sit close to where
+   the list's own rows begin, which is 3px of padding plus a row's own inset. */
+#mainContainer #mainNavbar .container {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+/* A gap rather than a margin on each item, which is what lets the rules carry an
+   auto margin on both sides and still sit centred: a margin belongs to one item
+   and would land under one side of the rule, where the gap is laid between every
+   pair equally. Two ids to clear the plugin's own, which are class-weight — the
+   items take `margin-right` from `.navbar .nav > li` and the rules their own
+   `margin: 0 15px 0 0`. */
+#mainContainer #mainNavbar .nav > li {
+  margin-right: 0;
+}
+
+/* The bar carries three groups — the app, the torrent, the readout — and packed
+   left they left a third of it empty. Measured before this: the list ran 261px
+   of the 335 it had, and everything sat against the left edge.
+
+   `flex: 1` on the list is what fills the bar. The list is a flex item of
+   `.container`, which the plugin makes a flex row, so it was shrink-wrapped to
+   its content rather than block-level.
+
+   The rules do the spreading, and they take the slack on **both** sides. One
+   auto margin would put every spare pixel in front of the rule and leave it
+   against the group behind it; two split it, so the rule stands in the middle of
+   its own gap and the groups sit apart evenly. Four auto margins share the slack
+   equally, which is what makes the two gaps match.
+
+   Nothing is positioned and nothing is measured in script: with no torrent open
+   the first rule and the actions are hidden, the remaining rule takes all the
+   slack, and the readout is still against the right edge. */
+#mainContainer #mainNavbar .nav > li.divider-vertical {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/* With no torrent open there are two groups, not three, and they stand at
+   opposite edges of a bar that is always this wide — nothing can arrive to fill
+   the middle, so there is nothing for a rule to divide. It goes, and the readout
+   takes the slack the rule was holding.
+
+   The plugin hides the torrent controls by writing `display: none` inline
+   (`plugins/mobile/init.js:279`, `:1105` puts them back), which is the only
+   signal in the markup that says which of the two states the bar is in. */
+#mainContainer
+  #mainNavbar
+  .nav:has(.torrentControl[style*="none"])
+  > li.divider-vertical {
+  display: none;
+}
+
+#mainContainer #mainNavbar .nav:has(.torrentControl[style*="none"]) > li:last-child {
+  margin-left: auto;
+}
+
+/* The readout, as three columns rather than two lines of running text. Reading
+   inward from the edge: the icon, the unit, then the rate itself — so the
+   numbers line up under each other whatever their length, which two centred
+   strings never do.
+
+   Subgrid is what shares the columns without touching the plugin's markup: the
+   list item owns the three tracks and each `<div>` adopts them, so the up row
+   and the down row measure their columns together. `display: contents` would
+   flatten both rows into one item stream instead, where `order` is global and
+   would gather the two icons at the end rather than one per row.
+
+   The rate and its unit are one string in one span; `init.js` gives the unit an
+   element of its own, which is what there is to put in the middle track. Where
+   there is no rate the plugin writes an empty string, the unit never appears,
+   and the row is the icon alone.
+
+   **The width is reserved, and that is the point of the block.** A rate appears
+   and disappears with every transfer, and left to its content this item would
+   grow and shove the rest of the bar sideways each time. 110px is what it can
+   ever need, measured in the bar's own font: 44 for the number — `bytes()`
+   divides until the value is under 1024, so "1023.9" is the widest it gets — 38
+   for the unit, which is the widest of the ones seen and is localised, 17 for
+   the icon, and the two gaps. Under that the rows are held right by
+   `justify-content`, so the icons stay against the edge whether a rate is
+   showing or not, and nothing outside this item ever moves.
+
+   The two rows are a pair, not two halves of the bar's height. Left to stretch
+   they filled the 65px this item stands in, 32.5px apart, which put the upper
+   one near the bar's top edge and the pair's centre 3.4px above the action icons
+   beside it. Centring the content and spacing the rows by 6px keeps them
+   together and puts that centre where the icons are. */
+#mainContainer #mainNavbar .nav > li:last-child {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  min-width: 110px;
+  margin-right: 0;
+  align-content: center;
+  justify-content: end;
+  justify-items: end;
+  column-gap: 5px;
+  row-gap: 6px;
+}
+
+#mainContainer #mainNavbar .nav > li:last-child > div {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  justify-items: end;
+}
+
+/* The number and its unit sit on one line, which is only true once the plugin's
+   nudge comes off: it lifts the number 2px (`plugins/mobile/mobile.css:295`) to
+   square it against an icon it used to sit beside inline, and the unit is a
+   `<b>` and out of that rule's reach, so the pair came apart by exactly that.
+
+   Centred rather than on a shared baseline. The two are the same size, so
+   centring puts them on one line anyway — and it puts the icon there too, where
+   baseline alignment drops it 5.8px, its box carrying the line's leading around
+   a glyph that has none.
+
+   Each part is named to its own cell, row and column both, and both halves
+   matter. Without the column, a row whose rate is empty — one direction silent
+   while the other works, which is most of the time — put its icon in the middle
+   track and stood 22px out of line with the row below it. Without the row, the
+   icon comes first in the markup and takes the third column of the first line,
+   after which the grid will not go back for the number: it lands a line lower,
+   17px under the icon it belongs to. Named, the cells hold whatever the rate is
+   doing. */
+#mainContainer #mainNavbar .nav > li:last-child > div > span {
+  grid-row: 1;
+  grid-column: 1;
+  top: 0;
+  line-height: 17px;
+}
+
+#mainContainer #mainNavbar .nav > li:last-child .bi {
+  grid-row: 1;
+  grid-column: 3;
+  margin-right: 0;
+}
+
+/* Centring the icon's box is not centring the icon. Measured: the box stands
+   25.5px around a 17px glyph, the difference being a line box this element does
+   not need — the strut of its own font, plus the `vertical-align: -.125em` the
+   plugin gives the glyph (`plugins/mobile/mobile.css:7`) to sit it against text
+   it used to stand beside. The box lined up while the glyph rode 2.8px low.
+
+   A block has no line box and no baseline to hang off, so here the element's box
+   is the glyph and centring it centres what is drawn. Only here: everywhere else
+   the glyph does sit beside text on a line, which is what that rule is for. */
+#mainContainer #mainNavbar .nav > li:last-child .bi::before {
+  display: block;
+}
+
+/* Digits line up on their right, so a rate reads against the one above it; the
+   unit lines up on its left, so "B/s" and "KiB/s" begin together instead of
+   ending together.
+
+   Both take the icon's own height for their line, and that is what puts all
+   three on one line. The plugin gives the number `line-height: 0`
+   (`plugins/mobile/mobile.css:298`), which leaves a box of no height — and
+   measured, a box of no height does not centre in a grid row, it lands on the
+   row's bottom edge, 8px under the icon beside it. Given a height they behave
+   like the icon does; equal to each other, the number and the unit also land on
+   the same line as each other. 17px is what the icon measures, its glyph being
+   one em of the 17px the plugin sets on these two rows. */
+#mainContainer #mainNavbar .nav > li:last-child .dracula-unit {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: start;
+  font-weight: inherit;
+  line-height: 17px;
+}
+
+/* The bottom bar, on Dark. The plugin builds it as one fixed surface for both
+   themes — #222 with white icons and a white readout
+   (`plugins/mobile/mobile.css:256`, `:186`, `:295`) — and that pairing is
+   internally consistent, so it is taken or left whole. Dark takes it; Light
+   keeps the plugin's until a light palette is carried, at which point the bar
+   is one of the surfaces the two variants part company over.
+
+   Current Line above it is what separates it from the page: `.navbar` sets
+   `border: none` at :252 and the plugin relies on #222 being darker than
+   whatever sits above.
+
+   `.navbar-inverse` is on the `<nav>` and again on the `<ul>` inside it
+   (`plugins/mobile/mobile.html:3`, `:5`). Measured, the two are not the same
+   box — the list is 263px of the bar's 375 and starts 8px below its top edge,
+   Bootstrap's `--bs-navbar-padding-y` holding it off — so a surface on the
+   `<nav>` alone leaves the inner one painting a rectangle over it. */
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar {
+  border-top: 1px solid var(--dracula-current);
+  background-color: var(--dracula-bg-darker);
+}
+
+/* The bar's content sat low in it, and by an even 8px: Bootstrap pads a navbar
+   `--bs-navbar-padding-y` top and bottom, and the plugin then replaces the
+   bottom one with the safe-area inset (`plugins/mobile/mobile.css:262`), which
+   is nothing on a device that has no notch. Everything rode 4px below the
+   middle.
+
+   Split evenly instead, and the bar keeps the height it had: 1 of border, 4, the
+   65px row, 4, and whatever inset the device asks for — the same 74 plus inset
+   as 8 and nothing gave. */
+#mainContainer #mainNavbar {
+  padding-top: 4px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+}
+
+/* A page that scrolls took 15px for its scrollbar and a page that does not took
+   none, so the bar — fixed to both edges — was 375px wide on a torrent's details
+   and 390px on the list, and everything anchored right moved with it. Measured
+   on both. Holding the gutter open makes the two the same page.
+
+   `:has(#mainNavbar)` because this sheet loads on the desktop too, where the
+   layout is the theme's own and this would be a change nobody asked for. */
+:root:has(#mainNavbar) {
+  scrollbar-gutter: stable;
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .navbar-inverse {
+  background-color: transparent;
+}
+
+/* One line rather than two. The plugin draws the rule as a bevel — #111111 on
+   the left, #323232 on the right (`plugins/mobile/mobile.css:305`) — which is
+   a groove cut into its own #222 and, on any other surface, 2px of noise. */
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .divider-vertical {
+  border-right: 1px solid var(--dracula-current);
+  border-left: none;
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .nav > li > div > span {
+  color: var(--dracula-fg);
+}
+
+/* A tracker message is the longest thing a list row ever holds — "Tracker: [No
+   DHT nodes available for peer search.]" runs past two lines on a phone — and
+   it sits at the end of the row's status line:
+
+     <span>Downloading | ETA ∞ | <i class="text-danger">Tracker: […]</i></span>
+
+   Wrapped, it grows the row and makes the least actionable part of a torrent
+   the largest. Laying the line out as a flex row lets the message scroll inside
+   itself instead: the state and the ETA are a bare text node, which becomes an
+   anonymous flex item and keeps its natural width, while the message is a real
+   element and can be given a box that scrolls.
+
+   `flex-basis: 0` is what protects the text before it — the message asks for
+   none of the row's width and takes only what is left over, so the state can
+   never be pushed out by a long enough tracker. Rows without a message have no
+   second item and are unaffected.
+
+   The gap is where every space between the line's parts comes from. A flex
+   container drops the white space at an item's edges, both of them, and raising
+   `white-space` to `pre` does not bring it back — the removal is the flex box's,
+   not the white-space rules'. Measured, the parts butt together at 0.00px
+   without this. `init.js` gives elements to the ratio and to both separators, so
+   the line is five or six items where it used to be two, and a gap holds them
+   all evenly where per-element margins would double wherever two of them meet.
+   A space in this row measures 3.13px at 12px; 0.25em tracks the font size where
+   a pixel value would not. */
+#mainContainer #torrentsList #list span {
+  display: flex;
+  column-gap: 0.25em;
+  white-space: nowrap;
+}
+
+/* The three lines of a row say three different things and are read at three
+   different moments. The name keeps the body colour, being what a scrolling eye
+   looks for; the state and its numbers step back to yellow, which measures
+   10.90:1 on the striped rows and 12.74:1 on the plain ones. Striping is a 5%
+   white layer Bootstrap paints through `--bs-table-bg-type`, not a background
+   colour, so those two surfaces are #333540 and #282a36.
+
+   `td > span` rather than `span`: the bar's own label is a span in this subtree
+   too, and takes its colour from `--mobile-progress-label` instead.
+
+   Dark only, and by selector rather than by a custom property, because Light
+   has no counterpart to fall back to: yellow on Bootstrap's white row measures
+   1.12:1. Light keeps the body colour for the same reason the semantic four
+   stay Bootstrap's there.
+
+   The tracker message inside the line needs no exemption. Bootstrap's text
+   utilities carry `!important` — `.text-danger` resolves to
+   `color: rgba(var(--bs-danger-rgb), var(--bs-text-opacity)) !important` — so
+   nothing set on the parent reaches it. */
+:root[data-bs-theme="dark"] #mainContainer #torrentsList #list td > span {
+  color: var(--dracula-yellow);
+}
+
+/* A row spends 111px on three lines of content. Broken down: 16 of cell
+   padding, 17 of name inside 20 of margin, 18 of status, and a 20px bar
+   trailing 20px of `margin-bottom` (`plugins/mobile/mobile.css:148`) directly
+   above the next row's padding. Forty of those pixels are gaps that separate
+   nothing — the cell padding and the row border already do that work — and on
+   an 844px screen they cost three of the nine torrents that would otherwise be
+   on it.
+
+   The gaps are not removed, only sized: 4px between the name and its status,
+   4px between the status and the bar, and the cell's own 8px around the lot.
+   That reads as one grouped card rather than three loose lines, which 20px of
+   trailing margin was never doing. */
+/* The bar carries its own label, so on Dark its fill cannot be the accent at
+   full strength: the desktop hit this first and the answer is recorded beside
+   the torrent table — the accent mixed 35% over the background, which keeps the
+   hue recognisable while the label clears 5:1 at every fill level. The mix
+   takes `--mobile-accent` rather than the palette directly, so a user who picks
+   another accent gets their own colour mixed rather than this one.
+
+   Dark only, because the second half of the mix is this theme's background and
+   the sheet carries no light one to swap in yet: applied on Light, the same mix
+   drags Bootstrap's white card down to #3C435C, which is neither the accent nor
+   any colour of Dracula's. Light keeps the plugin's own bar — the accent at
+   full strength, which is purple there and carries the dark label set with it
+   at 5.90:1. */
+:root[data-bs-theme="dark"] #mainContainer .progress-bar {
+  background-color: color-mix(
+    in srgb,
+    var(--mobile-accent) 35%,
+    var(--dracula-bg)
+  );
+}
+
+#mainContainer #torrentsList #list h5 {
+  margin: 0 0 4px;
+}
+
+#mainContainer #torrentsList #list .progress {
+  margin: 4px 0 0;
+}
+
+/* Air around the label. It is a box the width of the fill, centring its text
+   (`plugins/mobile/mobile.css:216`), with `min-width: max-content` so a short
+   fill cannot cut the reading off — and at a low percentage that minimum is what
+   sizes it, which put the text hard against the bar's left edge. Padding goes
+   into the minimum, so the box asks for the text plus this and the text sits off
+   the edge at every fill.
+
+   Both sides, because the same box is centred at a middling fill and overhangs
+   to the right at none: symmetric padding is the only kind that cannot be seen
+   moving as the bar grows. */
+#mainContainer .progress .progress-label {
+  padding: 0 6px;
+}
+
+/* The ratio is the one number in the line that says whether a torrent has paid
+   back, so it answers by colour: orange below 1, green at 1 and above. The word
+   beside it stays with the rest of the line — only the value carries the
+   verdict. `init.js` is what gives it an element, because the plugin writes the
+   whole line as one string.
+
+   The weight is reset in both themes — the element is a `<b>`, and it is one
+   because the plugin's update line selects `span` and would otherwise take it.
+   The colours are Dark's alone: on Bootstrap's white card orange is 1.72:1 and
+   green 1.37:1, and the palette holds no second pair that would read there.
+   Spacing is the row's gap, not this element's. */
+#mainContainer #torrentsList #list .dracula-ratio {
+  font-weight: inherit;
+}
+
+:root[data-bs-theme="dark"] #mainContainer #torrentsList #list .dracula-ratio {
+  color: var(--dracula-orange);
+}
+
+/* Two classes, so the verdict wins over the default whatever the source order
+   is — both rules would otherwise carry the same weight. */
+:root[data-bs-theme="dark"]
+  #mainContainer
+  #torrentsList
+  #list
+  .dracula-ratio.dracula-ratio-met {
+  color: var(--dracula-green);
+}
+
+/* The bars between the line's parts are structure, not words, and read as words
+   while they share the line's colour. Comment says separator: it measures
+   3.03:1 on the striped rows and 3.54:1 on the plain ones, above the floor for a
+   graphical divider and deliberately below the 10.90:1 the text beside it has.
+
+   Two elements per line at most, both written by the plugin as `" | "`; the
+   spaces stay in the text and the row's gap is what keeps them apart. Weight
+   reset in both themes for the same reason the ratio's is, colour on Dark alone
+   for the same reason as the rest of the line. */
+#mainContainer #torrentsList #list .dracula-sep {
+  font-weight: inherit;
+}
+
+:root[data-bs-theme="dark"] #mainContainer #torrentsList #list .dracula-sep {
+  color: var(--dracula-comment);
+}
+
+/* No scrollbar, and the mask is why. Measured on this row: the line stands 18px
+   with `scrollbar-width: none`, 28px at `thin` and 33px at `auto` — any gutter
+   a browser reserves hands back the second line this rule exists to remove, and
+   whether one is reserved depends on the device rather than on anything here.
+
+   The signal moves into the paint instead. The last 16px of the box fade out,
+   which says the message continues and costs no height at all. It cannot
+   misfire on a short message either: `flex-basis: 0` leaves the box as wide as
+   the row has to spare, so a message that ends early ends well before the fade
+   and nothing visible is touched. `-webkit-` first for Safari, which is the
+   browser most of these phones are.
+
+   The space before it is the row's gap; see the note at the line. */
+#mainContainer #torrentsList #list span > .text-danger {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - 16px),
+    transparent
+  );
+  mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent);
+}
+
+/* A torrent's General tab is 27 `Label | Value` rows in one white, so a row
+   reads as a single string. The value takes Yellow and the label keeps the body
+   colour — the same split the desktop makes at `style.css:1433`, where every
+   value is a `span.det`.
+
+   Here there is no class to key on: the plugin writes each row as
+   `<tr id="…"><td>Label</td><td>Value</td></tr>`, so position is the only
+   handle. All 27 carry exactly two cells, and `td:nth-child(2)` is the spelling
+   the plugin's own width arithmetic uses (`plugins/mobile/init.js:1100`).
+
+   Five of the values are a control rather than text — three `<select>`s, the
+   recheck button and the label editor. None of them inherit this: Bootstrap
+   gives `.form-select` and `.btn` a colour of their own, so the stencils inside
+   the two buttons stay with their button. Measured rather than assumed.
+
+   The id keeps this to the General tab. Trackers, Files and Peers are tables of
+   several columns where the second one is data, not a value.
+
+   Same striping as the list, so the figures are the list's: 12.74:1 on the plain
+   rows and 10.90:1 on the striped. Dark only — Yellow on white is 1.12:1. */
+:root[data-bs-theme="dark"] #mainContainer #detailsDetailsPage td:nth-child(2) {
+  color: var(--dracula-yellow);
+}
+
+/* Every icon in this interface is a glyph from the plugin's own webfont. The
+   theme replaces all 25 of them, and the swap happens on the pseudo-element
+   rather than on the `<i>`: the element's box is inline and takes its height
+   from the line box, while `.bi::before` is already `inline-block` with
+   `line-height: 1` and `vertical-align: -.125em` (`plugins/mobile/mobile.css:7`).
+   Painting there keeps the geometry the font had. Measured: the glyph's box is
+   exactly square at the element's font size — 20px in the bottom bar, 15px in
+   the toolbar, 17px on the speed counters — which is why the size is `1em`.
+
+   `content` is the plugin's only hold on the glyph and it carries no
+   `!important`, so one id outranks it.
+
+   The list is spelled out rather than matching `.bi` as a whole: an icon this
+   theme has no answer for keeps the plugin's own glyph instead of turning into
+   a blank square. */
+#mainContainer
+  :is(
+    .bi-house,
+    .bi-gear,
+    .bi-plus-lg,
+    .bi-play-fill,
+    .bi-stop-fill,
+    .bi-pause-fill,
+    .bi-trash,
+    .bi-upload,
+    .bi-download,
+    .bi-arrow-down-up,
+    .bi-search,
+    .bi-arrow-clockwise,
+    .bi-funnel,
+    .bi-x-lg,
+    .bi-sort-down-alt,
+    .bi-sort-down,
+    .bi-asterisk,
+    .bi-check-lg,
+    .bi-exclamation-triangle-fill,
+    .bi-tag,
+    .bi-globe2,
+    .bi-pencil-square,
+    .bi-folder2-open,
+    .bi-file-earmark,
+    .bi-list-ul
+  )::before {
+  content: "";
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask-image: var(--dracula-glyph);
+  mask-image: var(--dracula-glyph);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* Which stencil each class gets. Set on the element, read by the pseudo-element
+   above, because custom properties inherit and `::before` inherits from its
+   originating element.
+
+   Seven of these are the desktop's own icons rather than stencils. A mask reads
+   only the alpha channel, so the palette colours baked into them never arrive
+   and the `opacity="0.2"` backdrop still gives the second tone — they behave as
+   stencils here without being duplicated as ones. The rest are flat by design;
+   see the header of icons.css. */
+#mainContainer .bi-house { --dracula-glyph: var(--stencil-home); }
+#mainContainer .bi-gear { --dracula-glyph: var(--icon-settings); }
+#mainContainer .bi-plus-lg { --dracula-glyph: var(--stencil-add); }
+#mainContainer .bi-play-fill { --dracula-glyph: var(--stencil-start); }
+#mainContainer .bi-stop-fill { --dracula-glyph: var(--stencil-stop); }
+#mainContainer .bi-pause-fill { --dracula-glyph: var(--stencil-pause); }
+#mainContainer .bi-trash { --dracula-glyph: var(--stencil-remove); }
+#mainContainer .bi-upload { --dracula-glyph: var(--stencil-upload); }
+#mainContainer .bi-download { --dracula-glyph: var(--stencil-download); }
+#mainContainer .bi-arrow-down-up { --dracula-glyph: var(--stencil-sort); }
+#mainContainer .bi-search { --dracula-glyph: var(--icon-search); }
+#mainContainer .bi-arrow-clockwise { --dracula-glyph: var(--stencil-refresh); }
+#mainContainer .bi-funnel { --dracula-glyph: var(--stencil-filter); }
+#mainContainer .bi-x-lg { --dracula-glyph: var(--stencil-close); }
+#mainContainer .bi-sort-down-alt { --dracula-glyph: var(--stencil-sort-asc); }
+#mainContainer .bi-sort-down { --dracula-glyph: var(--stencil-sort-desc); }
+/* The desktop's own All, not a stencil: the three filter lists each open with
+   this row and the sidebar panels open with that icon, so the two interfaces
+   name the same thing the same way. A mask reads alpha alone, so the palette
+   colour baked into it never arrives and the row colours it like any other. */
+#mainContainer .bi-asterisk { --dracula-glyph: var(--icon-status-all); }
+#mainContainer .bi-check-lg { --dracula-glyph: var(--stencil-check); }
+#mainContainer .bi-exclamation-triangle-fill { --dracula-glyph: var(--stencil-warning); }
+#mainContainer .bi-tag { --dracula-glyph: var(--icon-tag); }
+
+/* The row for torrents nobody labelled wears the tag of the labels it is not
+   one of. The desktop draws it as a name crossed out; `init.js` marks the row,
+   because only the plugin knows which of its `bi-tag`s that is. */
+#mainContainer .bi-tag.dracula-no-label {
+  --dracula-glyph: var(--icon-no-label);
+}
+#mainContainer .bi-globe2 { --dracula-glyph: var(--icon-peer-network); }
+#mainContainer .bi-pencil-square { --dracula-glyph: var(--stencil-edit); }
+#mainContainer .bi-folder2-open { --dracula-glyph: var(--icon-dir); }
+#mainContainer .bi-file-earmark { --dracula-glyph: var(--icon-file); }
+#mainContainer .bi-list-ul { --dracula-glyph: var(--icon-list); }
+
+/* The stencils take `currentColor`, and the plugin gives every icon in the bar
+   the same white (`.icon-white`, `plugins/mobile/mobile.css:186`). The colours
+   below are not new: each is the one the desktop already paints into the icon
+   for that same action — `--icon-add` and `--icon-start` green, `--icon-stop`
+   and `--icon-remove` red, `--icon-pause` orange, `--icon-settings` comment,
+   `--icon-upload-speed` green against `--icon-download-speed` cyan. Home has no
+   desktop counterpart; it returns to the unfiltered list, which is what
+   `--icon-status-all` means, and takes its purple.
+
+   Keyed by class, not by the ids the bar's links carry, because the two speed
+   glyphs have no id to key on. All nine classes are distinct within the bar.
+
+   Dark only, with the surface they are measured against: white on #222 is the
+   plugin's own pairing and Light keeps both halves of it. Measured here: green
+   11.51:1, cyan 11.41:1, orange 9.27:1, purple 6.55:1, red 5.03:1, comment
+   3.36:1 — the gear is the quiet one exactly as it is on the desktop, where it
+   measures 3.03:1. */
+:root[data-bs-theme="dark"]
+  #mainContainer
+  #mainNavbar
+  :is(.bi-plus-lg, .bi-play-fill, .bi-upload) {
+  color: var(--dracula-green);
+}
+
+:root[data-bs-theme="dark"]
+  #mainContainer
+  #mainNavbar
+  :is(.bi-stop-fill, .bi-trash) {
+  color: var(--dracula-red);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-pause-fill {
+  color: var(--dracula-orange);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-download {
+  color: var(--dracula-cyan);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-house {
+  color: var(--dracula-purple);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-gear {
+  color: var(--dracula-comment);
+}
+
+/* The same seven states the desktop's panel colours, in the list that offers
+   them as filters, from the same `--icon-status-*` icons: All and Active
+   purple, Downloading cyan, Completed green, Stopped orange, Inactive comment,
+   Error red. The label and tracker rows fall back to a tag or a globe when
+   tracklabels has no icon for them (`plugins/mobile/init.js:572`, `:579`), and
+   those two take the colour of the desktop icon they stand in for.
+
+   Three of these classes also appear in the bar above and mean something else
+   there — `bi-stop-fill` is the Stop action, `bi-pause-fill` is Pause,
+   `bi-download` is the download speed — so the scope is the filter page rather
+   than the class alone.
+
+   On the list's own surface these measure green 10.38:1, cyan 10.29:1, orange
+   8.36:1, purple 5.90:1, red 4.53:1, comment 3.03:1.
+
+   Not on a selected row: it is filled with the accent, and a state colour on
+   purple measures 1.30:1 for red and 1.95:1 for comment. Those rows keep
+   `--mobile-accent-contrast`, which is what the plugin already puts there and
+   what measures 5.90:1.
+
+   Dark only. On Light the list sits on white, where the same six measure
+   between 1.12:1 and 3.14:1. */
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > :is(.bi-asterisk, .bi-arrow-down-up, .bi-tag) {
+  color: var(--dracula-purple);
+}
+
+/* Not one of the labels, and not their colour either. The row wears a tag
+   because the plugin has one glyph for that list, but it stands for the torrents
+   nobody named — the desktop draws it as a crossed-out name in Comment, and it
+   reads here for the same reason the Inactive row does: a row that counts what
+   is missing should not sit at the same weight as the rows that count what is
+   there. */
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-tag.dracula-no-label {
+  color: var(--dracula-comment);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-download {
+  color: var(--dracula-cyan);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-check-lg {
+  color: var(--dracula-green);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-stop-fill {
+  color: var(--dracula-orange);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > :is(.bi-pause-fill, .bi-globe2) {
+  color: var(--dracula-comment);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-exclamation-triangle-fill {
+  color: var(--dracula-red);
+}
+
+/* A filter row is a block with the count floated right
+   (`plugins/mobile/mobile.css:150`), so the count sits at the top of the line
+   rather than beside the label: measured, 8px above it and 12.16px below in a
+   38px row. Laying the row out as a flex line centres it, and a float is inert
+   on a flex item, so the plugin's rule stops applying rather than being fought.
+
+   The count is first in the markup and the float was what moved it right, so it
+   needs `order` once the float stops counting. Nothing is lost to the flex
+   boxing: the gap before the label is `margin-right` on the icon, not white
+   space. */
+#mainContainer .list-group-item {
+  display: flex;
+  align-items: center;
+}
+
+/* A tracker tracklabels has no favicon for. It answers for every tracker rather
+   than 404ing, falling back to a 16x16 PNG whose every pixel is transparent
+   (`plugins/tracklabels/action.php`, last line), so the row is blank rather than
+   broken and nothing in the markup says which it is. `init.js` loads the image,
+   counts opaque pixels and marks the ones that have none.
+
+   The background sits behind the image rather than replacing it, which is only
+   safe because the mark is proof: an image with ink of its own never gets one.
+
+   Two kinds, and the same two glyphs the desktop's panels use for them, so a
+   row without a picture looks the same in both interfaces: a tag for a label,
+   which is a name someone chose, and the peer network for a tracker, which is a
+   host that answered. */
+#mainContainer #torrentFilter .filter-icon[data-dracula-blank] {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+#mainContainer #torrentFilter .filter-icon[data-dracula-blank="label"] {
+  background-image: var(--icon-tag);
+}
+
+#mainContainer #torrentFilter .filter-icon[data-dracula-blank="tracker"] {
+  background-image: var(--icon-peer-network);
+}
+
+/* The pill itself was Bootstrap's grey. `.text-bg-secondary` carries
+   `!important` on both of its declarations, so there is nothing to outrank and
+   the only sheet-side answer is another one — the single use this file has.
+
+   The token behind it is deliberately left alone. `--bs-secondary` is not just
+   this pill: the plugin's accent picker offers it as "Gray (secondary)" and
+   paints that option's swatch from the same name, so recolouring the token
+   changes an accent a user can choose, and Current Line takes neither a dark
+   label nor a light one well enough to be one. A pill is a container for a
+   number; an accent is a surface. The two want different colours and this
+   reaches only the pill.
+
+   Current Line for the pill, and Cyan for the number on it at 6.61:1. Cyan is
+   what this theme already gives a count elsewhere in the same interface — the
+   percentage on a progress bar — and it is the reason for the second
+   `!important`: the utility forces `#fff` with one, so a colour here needs one
+   to be seen at all. */
+#mainContainer .list-group-item > .badge.text-bg-secondary {
+  color: var(--dracula-cyan) !important;
+  background-color: var(--dracula-current) !important;
+}
+
+/* And the digit inside the pill, which is a second offset with its own cause.
+   Counted off the painted pixels rather than the font's metrics: the pill
+   stands 17 rows, the digit's ink 8 of them, with 4 rows above and 5 below. A
+   digit has no descender, so a box centred on the font's ascent-and-descent
+   leaves its empty descent space at the bottom and the ink rides half a pixel
+   high. At the phone's pixel ratio that is the pixel and a half you can see.
+
+   0.048em is that half pixel at the badge's 10.5px, written against Bootstrap's
+   own token so it holds if the padding or the size moves. */
+#mainContainer .list-group-item > .badge {
+  order: 1;
+  margin-left: auto;
+  padding-top: calc(var(--bs-badge-padding-y) + 0.048em);
+  padding-bottom: calc(var(--bs-badge-padding-y) - 0.048em);
+}

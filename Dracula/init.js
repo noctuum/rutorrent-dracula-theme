@@ -2218,10 +2218,41 @@ function draculaMarkIcon(label)
 		label.removeAttribute("data-dracula-blank");
 }
 
+/* The phone's filter list paints the same icons somewhere else again: an
+   `img.filter-icon` with the URL in its src (`plugins/mobile/init.js:579`),
+   where the panels carry it in an attribute. The probe above answers for both,
+   being keyed by the URL rather than by the element.
+
+   Marking is all that is needed. The image tracklabels serves is transparent,
+   not missing, so a background behind it shows through — and only a row proved
+   blank is ever given one, which is why a real favicon can never be covered. */
+function draculaMarkFilterIcons()
+{
+	var icons = document.querySelectorAll("#torrentFilter img.filter-icon");
+	for(var i = 0; i < icons.length; i++)
+	{
+		var url = icons[i].getAttribute("src") || "";
+		var kind = draculaIconKind(url);
+		if(!kind)
+		{
+			icons[i].removeAttribute("data-dracula-blank");
+			continue;
+		}
+		var state = draculaIconInk[url];
+		if(state === undefined)
+			draculaProbeIcon(url);
+		else if(state === "blank")
+			icons[i].setAttribute("data-dracula-blank", kind);
+		else if(state === "inked")
+			icons[i].removeAttribute("data-dracula-blank");
+	}
+}
+
 function draculaSweepIcons()
 {
 	var rows = document.querySelectorAll("panel-label[icon^='url:']");
 	Array.prototype.forEach.call(rows, draculaMarkIcon);
+	draculaMarkFilterIcons();
 }
 
 /* The panels are rebuilt as labels and trackers come and go, and a row can keep
@@ -3162,11 +3193,484 @@ function draculaKeepPanelsOpen()
 	};
 }
 
+/* The mobile plugin defaults to its light theme, which is the wrong default
+   under a theme that only has a dark one. It reads that default late and only
+   as a fallback:
+
+     plugin.applyTheme(plugin.storedSetting('theme', validator, plugin.theme))
+
+   so writing `plugin.theme` changes what a user who has never opened the
+   setting sees, and changes nothing for one who has — the stored value wins.
+   Never write the stored setting itself: that is the user's, and this is only
+   the default behind it.
+
+   The moment is available because of how the two plugins nest. Both wrap
+   `theWebUI.config`; this theme is runlevel 5 and the mobile plugin 15, so the
+   mobile plugin wraps the wrapper installed here, and its own wrapper reads
+
+     plugin.config.call(this, data);   // this wrapper runs inside that call
+     plugin.init();                    // and the default is read here
+
+   which puts this call before the read with nothing to race against.
+
+   Silent when the plugin is absent, which is every desktop page. */
+function draculaDarkByDefaultOnMobile()
+{
+	var mobile = window.thePlugins && typeof thePlugins.get === "function"
+		? thePlugins.get("mobile") : null;
+	if(mobile && mobile.theme === "light")
+		mobile.theme = "dark";
+}
+
+/* Where the ratio's value sits inside a mobile status line, or null when the
+   line carries none. The plugin builds the whole line as one string and the
+   number is plain text inside it (`plugins/mobile/init.js:1907`), so nothing
+   can reach the value until it is given an element of its own.
+
+   The word is `theUILang.Ratio` and is whatever the user's language calls it,
+   so it is passed in rather than written here. The number itself is not
+   localised: `theConverter.round` builds it with `v + ""` (`js/common.js:344`),
+   which is a full stop in every locale.
+
+   `∞`, what the plugin writes when the ratio is unknown, fails the test and is
+   left alone — it is not a number and has no side of 1 to be on. */
+function draculaMobileRatioAt(text, word)
+{
+	if(typeof text !== "string" || typeof word !== "string" || word === "")
+		return null;
+	var at = text.indexOf(word + " ");
+	if(at === -1)
+		return null;
+	var start = at + word.length + 1;
+	var end = text.indexOf(" ", start);
+	var raw = text.slice(start, end === -1 ? text.length : end);
+	if(!/^[0-9]+(\.[0-9]+)?$/.test(raw))
+		return null;
+	return { start: start, length: raw.length, value: parseFloat(raw) };
+}
+
+/* One element per status line, and only for a line without one yet. The plugin
+   rewrites a row's line whole on every change — `row.find('span').html(…)`,
+   `plugins/mobile/init.js:1953` — which takes the element with it, so the check
+   is what holds the work down to the rows that actually changed: over eleven
+   update cycles on a three-torrent list, three wraps.
+
+   A `<b>` rather than a `<span>` because that same update line selects `span`
+   and would take this element into its jQuery set. The weight it brings is
+   reset in mobile.css, where the element also carries the margins that stand in
+   for white space a flex row drops at an item's edges. */
+function draculaMarkMobileRatios()
+{
+	var word = window.theUILang ? theUILang.Ratio : null;
+	var lines = document.querySelectorAll("#torrentsList #list td > span");
+	for(var i = 0; i < lines.length; i++)
+	{
+		if(lines[i].querySelector(".dracula-ratio"))
+			continue;
+		var text = lines[i].firstChild;
+		if(!text || text.nodeType !== 3)
+			continue;
+		var found = draculaMobileRatioAt(text.textContent, word);
+		if(!found)
+			continue;
+		var value = text.splitText(found.start);
+		value.splitText(found.length);
+		var box = document.createElement("b");
+		box.className = found.value >= 1
+			? "dracula-ratio dracula-ratio-met"
+			: "dracula-ratio";
+		value.parentNode.replaceChild(box, value);
+		box.appendChild(value);
+	}
+}
+
+/* Where the next separator's bar sits in a status line, or -1 for none.
+
+   The plugin writes exactly two, and writes both as the literal `" | "` — one
+   before the ETA or the ratio, one before a tracker message and only when there
+   is one (`plugins/mobile/init.js:1907`). Requiring the spaces is what keeps a
+   bar the daemon put inside a state string from being read as a separator; the
+   returned index is the bar alone, so the spaces stay in the text they came
+   from. */
+function draculaMobileSeparatorAt(text, from)
+{
+	if(typeof text !== "string")
+		return -1;
+	var at = text.indexOf(" | ", from > 0 ? from : 0);
+	return at === -1 ? -1 : at + 1;
+}
+
+/* Both separators of one line, wrapped so they can take a colour of their own.
+
+   Runs after the ratio, never before: that pass reads the line's first text
+   node, and splitting the node here would leave the ratio in a later one where
+   it would not be found.
+
+   A tracker message can hold a bar of its own, but it arrives inside an `<i>`
+   (`plugins/mobile/init.js:1910`) — walking only the line's own text children
+   is what keeps this out of it. `<b>` for the same reason the ratio uses one:
+   the plugin's update line selects `span`. */
+function draculaMarkMobileSeparators()
+{
+	var lines = document.querySelectorAll("#torrentsList #list td > span");
+	for(var i = 0; i < lines.length; i++)
+	{
+		if(lines[i].querySelector(".dracula-sep"))
+			continue;
+		var texts = [];
+		for(var child = lines[i].firstChild; child; child = child.nextSibling)
+		{
+			if(child.nodeType === 3)
+				texts.push(child);
+		}
+		for(var t = 0; t < texts.length; t++)
+		{
+			var node = texts[t];
+			for(;;)
+			{
+				var at = draculaMobileSeparatorAt(node.textContent, 0);
+				if(at === -1)
+					break;
+				var bar = node.splitText(at);
+				node = bar.splitText(1);
+				var box = document.createElement("b");
+				box.className = "dracula-sep";
+				bar.parentNode.replaceChild(box, bar);
+				box.appendChild(bar);
+			}
+		}
+	}
+}
+
+var draculaRefreshSpin = { pending: false, timer: null };
+
+/* Whether the refresh arrow is turning. The glyph is painted on the
+   pseudo-element, so that is what turns; the class goes on the element it
+   inherits from.
+
+   Stopping waits for the turn to finish. A list that arrives in a tenth of a
+   second would otherwise cut the arrow off wherever it had got to, which reads
+   as a twitch rather than as an answer — so the class comes off on the next
+   `animationiteration`, and the arrow always completes whole turns.
+
+   Two things that would strand it. With no animation running — a reduced-motion
+   preference makes it `none` — the event never comes, so the class comes off at
+   once. And a request that starts while one is finishing clears the flag, which
+   the listener checks: the arrow keeps turning rather than stopping under a
+   fresh request. */
+function draculaSpinRefresh(on)
+{
+	var icon = document.querySelector("#refreshIcon i");
+	if(!icon)
+		return;
+	if(on)
+	{
+		delete icon.dataset.draculaStopping;
+		icon.classList.add("dracula-refreshing");
+		return;
+	}
+	if(!icon.classList.contains("dracula-refreshing")
+		|| icon.dataset.draculaStopping)
+		return;
+	if(window.getComputedStyle(icon, "::before").animationName === "none")
+	{
+		icon.classList.remove("dracula-refreshing");
+		return;
+	}
+	icon.dataset.draculaStopping = "1";
+	icon.addEventListener("animationiteration", function whole()
+	{
+		icon.removeEventListener("animationiteration", whole);
+		if(!icon.dataset.draculaStopping)
+			return;
+		delete icon.dataset.draculaStopping;
+		icon.classList.remove("dracula-refreshing");
+	});
+}
+
+/* A list request has gone out. `now` is a press: the control has to answer the
+   finger whatever the connection is doing. Everything else is the background
+   poll, every 2500ms, and turning the arrow that often would be motion nobody
+   asked for — so it waits a second first, and a request that comes back inside
+   that second never shows at all. What is left showing is a slow answer or a
+   stalled one, which is the thing worth seeing. */
+function draculaListRequestStarted(now)
+{
+	draculaRefreshSpin.pending = true;
+	if(now)
+	{
+		draculaSpinRefresh(true);
+		return;
+	}
+	if(draculaRefreshSpin.timer !== null)
+		return;
+	draculaRefreshSpin.timer = window.setTimeout(function()
+	{
+		draculaRefreshSpin.timer = null;
+		if(draculaRefreshSpin.pending)
+			draculaSpinRefresh(true);
+	}, 1000);
+}
+
+/* Any end at all, and there are three: the list was processed, the request
+   errored, or it timed out. A flag rather than a count of requests in flight —
+   the arrow says whether the interface is waiting, not how many things it is
+   waiting for, and a count that leaks once turns forever. */
+function draculaListRequestEnded()
+{
+	draculaRefreshSpin.pending = false;
+	if(draculaRefreshSpin.timer !== null)
+	{
+		window.clearTimeout(draculaRefreshSpin.timer);
+		draculaRefreshSpin.timer = null;
+	}
+	draculaSpinRefresh(false);
+}
+
+var draculaDiskMeterWatched = false;
+
+/* The phone's disk meter, on the palette the desktop's already uses.
+
+   The plugin ramps it green to red and writes the result as an inline
+   `background-color` (`plugins/mobile/init.js:807`), which puts it past any rule
+   that carries no `!important`. Pink to Purple for the reason at
+   `draculaRecolorMeter`, and through the same `RGBackground` so both UIs
+   interpolate identically and agree at every percentage.
+
+   An observer rather than a wrapper: the colour is written from inside an async
+   response handler that offers no seam of its own. The element is static markup
+   (`plugins/mobile/mobile.html:202`), so one observer covers every write for the
+   life of the page. It disconnects around its own write, which is what keeps the
+   write from re-entering it.
+
+   Installed from the settings page rather than at config time: the element
+   arrives with `mobile.html`, which the plugin fetches and injects after this
+   script has run, and the settings page is the only place it is seen. */
+function draculaColourMobileDiskMeter()
+{
+	if(draculaDiskMeterWatched)
+		return;
+	var bar = document.querySelector("#diskSpaceBar .progress-bar");
+	if(!bar || typeof RGBackground !== "function"
+		|| typeof MutationObserver !== "function")
+		return;
+	draculaDiskMeterWatched = true;
+
+	var start = new RGBackground("#FF79C6");
+	var end = new RGBackground("#BD93F9");
+	var watch = { attributes: true, attributeFilter: ["style"] };
+	var observer = new MutationObserver(function()
+	{
+		observer.disconnect();
+		var percent = parseFloat(bar.style.width);
+		if(!isNaN(percent))
+		{
+			bar.style.backgroundColor = new RGBackground()
+				.setGradient(start, end, percent)
+				.getColor();
+		}
+		observer.observe(bar, watch);
+	});
+	observer.observe(bar, watch);
+}
+
+/* Where the unit begins in a rate the converter built, or -1 when the string is
+   not one.
+
+   `theConverter.speed` is `bytes()` with "/" and the localised second appended,
+   and `bytes()` is the rounded number, one space, and the localised unit
+   (`js/common.js:429`, `:433`) — so the one space is the seam and everything
+   past it is the unit, "/s" included. Both halves are localised and neither is
+   written here.
+
+   A rate of zero is the empty string, not "0 B/s", so nothing to split; and the
+   number is built by `theConverter.round` as `v + ""`, which is a full stop in
+   every locale. */
+function draculaSpeedUnitAt(text)
+{
+	if(typeof text !== "string")
+		return -1;
+	var at = text.indexOf(" ");
+	if(at <= 0)
+		return -1;
+	if(!/^[0-9]+(\.[0-9]+)?$/.test(text.slice(0, at)))
+		return -1;
+	return at + 1;
+}
+
+/* The unit as an element beside the rate, so the bar's readout can lay the two
+   out in columns of their own.
+
+   Beside rather than inside: the plugin sets the span's text whole on every
+   pass (`plugins/mobile/init.js:2096`), which would take a child with it, and
+   the grid needs the two as separate items in any case. The old element is
+   dropped first — the span is refilled each pass and a stale unit would
+   otherwise stand next to a fresh number. */
+function draculaMarkMobileSpeeds()
+{
+	var ids = ["upspeed", "downspeed"];
+	for(var i = 0; i < ids.length; i++)
+	{
+		var span = document.getElementById(ids[i]);
+		if(!span)
+			continue;
+		var stale = span.nextElementSibling;
+		if(stale && stale.className === "dracula-unit")
+			stale.parentNode.removeChild(stale);
+		var text = span.textContent;
+		var at = draculaSpeedUnitAt(text);
+		if(at === -1)
+			continue;
+		var unit = document.createElement("b");
+		unit.className = "dracula-unit";
+		unit.textContent = text.slice(at);
+		span.textContent = text.slice(0, at - 1);
+		span.parentNode.insertBefore(unit, span.nextSibling);
+	}
+}
+
+/* `plugin.processTorrents` is where every row is written, created on the first
+   pass and rewritten in place after (`plugins/mobile/init.js:1844`), and it
+   builds them synchronously — so the marks go on as it returns. Installed from
+   the same window as the dark default, where the plugin object already exists
+   and its own init has not run.
+
+   Silent when the plugin is absent, which is every desktop page. */
+function draculaMarkMobileLines()
+{
+	var mobile = window.thePlugins && typeof thePlugins.get === "function"
+		? thePlugins.get("mobile") : null;
+	if(!mobile || typeof mobile.processTorrents !== "function")
+		return;
+	var upstream = mobile.processTorrents;
+	mobile.processTorrents = function()
+	{
+		var result = upstream.apply(this, arguments);
+		draculaMarkMobileRatios();
+		draculaMarkMobileSeparators();
+		draculaMarkMobileSpeeds();
+		draculaListRequestEnded();
+		return result;
+	};
+
+	/* Both ends of both paths. A list arrives two ways — the core's own poll,
+	   which reaches `processTorrents` through `theWebUI.addTorrents`, and the
+	   plugin's one-shot `update` — and it fails two ways, neither of which
+	   reaches `processTorrents` at all (`js/webui.js:1591`, `:1597`). Without the
+	   failing pair the arrow would turn until the next success, which after an
+	   error is up to two minutes away. */
+	if(typeof mobile.update === "function")
+	{
+		var update = mobile.update;
+		mobile.update = function()
+		{
+			draculaListRequestStarted(false);
+			return update.apply(this, arguments);
+		};
+	}
+
+	if(typeof theWebUI.update === "function")
+	{
+		var poll = theWebUI.update;
+		theWebUI.update = function()
+		{
+			draculaListRequestStarted(false);
+			return poll.apply(this, arguments);
+		};
+	}
+
+	var stop = ["error", "timeout"];
+	for(var s = 0; s < stop.length; s++)
+	{
+		if(typeof theWebUI[stop[s]] !== "function")
+			continue;
+		theWebUI[stop[s]] = (function(name, was)
+		{
+			return function()
+			{
+				draculaListRequestEnded();
+				return was.apply(this, arguments);
+			};
+		})(stop[s], theWebUI[stop[s]]);
+	}
+
+	if(typeof mobile.showSettings === "function")
+	{
+		var settings = mobile.showSettings;
+		mobile.showSettings = function()
+		{
+			draculaColourMobileDiskMeter();
+			return settings.apply(this, arguments);
+		};
+	}
+
+	/* Which of the filter page's `bi-tag` rows is the one for torrents nobody
+	   labelled. The plugin gives that glyph to two different rows — always to
+	   that one, and to every label when tracklabels is absent and there are no
+	   pictures to serve (`plugins/mobile/init.js:572`) — and the only thing that
+	   tells them apart is the filter value, which is the empty string for it and
+	   a name for the others. Nothing in the markup carries that, so it is marked
+	   here where the value is still in hand. */
+	if(typeof mobile.makeFilterItem === "function")
+	{
+		var makeItem = mobile.makeFilterItem;
+		mobile.makeFilterItem = function(text, count, isSelected, type, value)
+		{
+			var item = makeItem.apply(this, arguments);
+			if(type === "label" && value === "")
+				item.find("i.bi-tag").addClass("dracula-no-label");
+			return item;
+		};
+	}
+
+	/* The filter page is where the tracker icons are, and it is rebuilt whole
+	   every time it opens and again whenever the torrent set changes
+	   (`plugins/mobile/init.js:2035`). `#CatList` is what drives the sweep on the
+	   desktop and does not exist here, so this is its trigger. */
+	if(typeof mobile.renderFilterPage === "function")
+	{
+		var render = mobile.renderFilterPage;
+		mobile.renderFilterPage = function()
+		{
+			var result = render.apply(this, arguments);
+			draculaMarkFilterIcons();
+			return result;
+		};
+	}
+
+	/* Refresh reloads the page — `window.location.reload(true)`
+	   (`plugins/mobile/init.js:867`) — which throws away the whole interface to
+	   re-fetch a list, and costs the 415KB of `getplugins.php` on the way back.
+	   `update(true)` asks for the same list and rebuilds every row from it,
+	   which is what the control says it does; the tracker classes come with it,
+	   the argument being what forces the full pass.
+
+	   `resetInterval` is the other half and is what the control is actually for.
+	   The plugin runs no timer of its own — its own comment at
+	   `plugins/mobile/init.js:2589` says the periodic refreshes arrive through
+	   the core's hook — and the core's chain answers an error by waiting
+	   `webui.retry_on_error` seconds, 120 by default (`js/webui.js:1597`). A
+	   fetch alone repaints the list and leaves the chain sitting out those two
+	   minutes; this puts it back on its own interval. */
+	if(typeof mobile.refresh === "function" && typeof mobile.update === "function")
+	{
+		mobile.refresh = function()
+		{
+			draculaListRequestStarted(true);
+			this.update(true);
+			if(typeof theWebUI.resetInterval === "function")
+				theWebUI.resetInterval();
+		};
+	}
+}
+
 if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 {
 	plugin.draculaConfig = theWebUI.config;
 	theWebUI.config = function()
 	{
+		draculaDarkByDefaultOnMobile();
+		draculaMarkMobileLines();
 		draculaKeepPanelsOpen();
 		var tables = this.tables || {};
 		for(var name in tables)

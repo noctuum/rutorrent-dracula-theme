@@ -330,3 +330,125 @@ test("draculaIconKind: only tracklabels URLs classify, and by their parameter", 
 test("draculaVisualScale: falls back to 1 when the viewport reports nothing", () => {
 	assert.equal(theme.draculaVisualScale(), 1);
 });
+
+// The mobile plugin writes its whole status line as one string, so the ratio's
+// value has to be found in text before it can be given an element and coloured.
+// Everything below is what a real line looks like, taken off the plugin's own
+// template at `plugins/mobile/init.js:1907`.
+
+test("draculaMobileRatioAt: finds the value, whatever precedes it", () => {
+	const at = (text, word = "Ratio") => theme.draculaMobileRatioAt(text, word);
+
+	const plain = at("Seeding | Ratio 0.377");
+	assert.equal(plain.value, 0.377);
+	assert.equal(
+		"Seeding | Ratio 0.377".substr(plain.start, plain.length),
+		"0.377",
+	);
+
+	// A tracker message follows the value, so it ends at a space, not at the end.
+	const withMessage = at("Seeding | Ratio 1.250 | ");
+	assert.equal(withMessage.value, 1.25);
+	assert.equal(withMessage.length, 5);
+
+	// Speeds sit between the state and the separator.
+	const withSpeeds = at("Seeding ↑12.3 KiB/s | Ratio 2.000");
+	assert.equal(withSpeeds.value, 2);
+
+	// The word is the user's language, never assumed.
+	assert.equal(at("Раздаётся | Рейтинг 0.500", "Рейтинг").value, 0.5);
+});
+
+test("draculaMobileRatioAt: finds nothing rather than guessing", () => {
+	const at = (text, word = "Ratio") => theme.draculaMobileRatioAt(text, word);
+
+	// A downloading torrent shows an ETA and carries no ratio at all.
+	assert.equal(at("Downloading | ETA ∞"), null);
+	// The plugin writes ∞ for an unknown ratio: no number, no side of 1.
+	assert.equal(at("Seeding | Ratio ∞"), null);
+	// The word alone, with nothing behind it.
+	assert.equal(at("Seeding | Ratio "), null);
+	assert.equal(at("Seeding | Ratio"), null);
+	// Nothing to read.
+	assert.equal(at(""), null);
+	assert.equal(at(null), null);
+	assert.equal(at("Seeding | Ratio 1.0", ""), null);
+	assert.equal(at("Seeding | Ratio 1.0", null), null);
+});
+
+test("draculaMobileRatioAt: 1.000 is met, 0.999 is not", () => {
+	const value = (text) => theme.draculaMobileRatioAt(text, "Ratio").value;
+	assert.equal(value("Ratio 0.999") >= 1, false);
+	assert.equal(value("Ratio 1.000") >= 1, true);
+	assert.equal(value("Ratio 1.001") >= 1, true);
+	assert.equal(value("Ratio 0.000") >= 1, false);
+	// A ratio past ten still parses whole, not truncated at the dot.
+	assert.equal(value("Ratio 12.500"), 12.5);
+});
+
+test("draculaMobileSeparatorAt: points at the bar, not at its spaces", () => {
+	const at = (text, from = 0) => theme.draculaMobileSeparatorAt(text, from);
+
+	const line = "Seeding | Ratio 0.377 | ";
+	const first = at(line);
+	assert.equal(line[first], "|");
+	assert.equal(line.substr(first - 1, 3), " | ");
+
+	// Both of the plugin's separators are reachable by walking forward.
+	const second = at(line, first + 1);
+	assert.equal(line[second], "|");
+	assert.notEqual(second, first);
+	assert.equal(at(line, second + 1), -1);
+});
+
+test("draculaSpeedUnitAt: the seam is the one space the converter writes", () => {
+	const at = (text) => theme.draculaSpeedUnitAt(text);
+
+	const rate = "1.2 MiB/s";
+	assert.equal(rate.slice(0, at(rate) - 1), "1.2");
+	assert.equal(rate.slice(at(rate)), "MiB/s");
+
+	// The unit is whatever the user's language calls it, and "/s" rides with it.
+	const russian = "340.0 КиБ/с";
+	assert.equal(russian.slice(at(russian)), "КиБ/с");
+
+	// A whole number and a long one both split at the same seam.
+	assert.equal("15 B/s".slice(at("15 B/s")), "B/s");
+	assert.equal("1024.75 GiB/s".slice(at("1024.75 GiB/s")), "GiB/s");
+});
+
+test("draculaSpeedUnitAt: anything that is not a rate splits nowhere", () => {
+	const at = (text) => theme.draculaSpeedUnitAt(text);
+
+	// A rate of zero is the empty string, not "0 B/s".
+	assert.equal(at(""), -1);
+	assert.equal(at(null), -1);
+	assert.equal(at(undefined), -1);
+	// No seam at all.
+	assert.equal(at("1.2MiB/s"), -1);
+	// Something that is not a number in front of it.
+	assert.equal(at("about 1.2 MiB/s"), -1);
+	assert.equal(at(" 1.2 MiB/s"), -1);
+	assert.equal(at("- MiB/s"), -1);
+});
+
+test("draculaMobileSeparatorAt: a bar without its spaces is not one", () => {
+	const at = (text, from = 0) => theme.draculaMobileSeparatorAt(text, from);
+
+	// What the plugin writes is " | ". Anything else came from the daemon, in
+	// a state string or a speed, and is text rather than structure.
+	assert.equal(at("Seeding|Ratio 0.377"), -1);
+	assert.equal(at("Seeding |Ratio 0.377"), -1);
+	assert.equal(at("Seeding| Ratio 0.377"), -1);
+
+	// A downloading line has one separator; a bare state has none.
+	assert.equal(at("Downloading | ETA ∞") >= 0, true);
+	assert.equal(at("Hashing"), -1);
+
+	// Nothing to read.
+	assert.equal(at(""), -1);
+	assert.equal(at(null), -1);
+
+	// A negative or absent start is the beginning of the string.
+	assert.equal(at("Seeding | Ratio 1.0", -5), at("Seeding | Ratio 1.0", 0));
+});

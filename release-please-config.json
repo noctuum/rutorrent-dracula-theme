@@ -9,6 +9,9 @@
         { "type": "generic", "path": "Dracula/style.css" },
         { "type": "generic", "path": "Dracula/stable.css" },
         { "type": "generic", "path": "Dracula/plugins.css" },
+        { "type": "generic", "path": "Dracula/palette.css" },
+        { "type": "generic", "path": "Dracula/icons.css" },
+        { "type": "generic", "path": "Dracula/mobile.css" },
         { "type": "generic", "path": ".github/ISSUE_TEMPLATE/bug_report.yml" }
       ]
     }

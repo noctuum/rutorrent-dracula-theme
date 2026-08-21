@@ -17,18 +17,31 @@ import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const THEME = join(ROOT, "Dracula");
-const SHEETS = ["style.css", "stable.css", "plugins.css"];
+const SHEETS = [
+	"style.css",
+	"stable.css",
+	"plugins.css",
+	"palette.css",
+	"icons.css",
+	"mobile.css",
+];
 const FILES = [...SHEETS, "init.js"];
 
 const read = (name) => readFileSync(join(THEME, name), "utf8");
 const css = SHEETS.map((name) => ({ name, text: read(name) }));
 
-// --- 1. One version, written in eight places -------------------------------
+// --- 1. One version, written in thirteen places ----------------------------
 //
 // Every file carries a human-readable "Version X.Y.Z" line in its header, the
-// three sheets each stamp a machine-readable custom property, and init.js
-// carries the constant it compares them against at runtime. All eight have to
-// agree, or the startup check cries wolf at the user.
+// three sheets ruTorrent loads each stamp a machine-readable custom property,
+// init.js carries the constant it compares them against at runtime, and the
+// three @import URLs carry it as their cache-buster. All of them have to agree,
+// or the startup check cries wolf at the user and an edited sheet is served
+// from cache.
+//
+// palette.css and mobile.css stamp no custom property: they are fetched under
+// the version in the URL that imports them, so they cannot go stale on their
+// own — see the header of palette.css.
 
 const VERSION_HEADER = /^\s*\*\s*Version\s+(\d+\.\d+\.\d+)\b/m;
 
@@ -69,6 +82,65 @@ test("the machine-readable stamps agree with the headers", () => {
 		read("init.js").match(VERSION_HEADER)[1],
 		"init.js header and DRACULA_VERSION disagree",
 	);
+});
+
+// An @import whose version has stopped moving is the exact failure the URLs
+// were given a version to prevent: the importing sheet arrives new, names the
+// old palette, and the browser answers from cache. Nothing about the page looks
+// broken, so only this test would notice.
+test("every @import asks for the version the theme is on", () => {
+	const declared = read("init.js").match(/DRACULA_VERSION\s*=\s*"([^"]+)"/)[1];
+	let found = 0;
+	for (const name of SHEETS) {
+		// Comments first: the prose in palette.css discusses these URLs, and a
+		// match inside a comment would be checked as though it were code.
+		const text = read(name).replace(/\/\*[\s\S]*?\*\//g, "");
+		// Every @import, not only the ones already written the right way — a new
+		// one added without a version is exactly what this has to catch.
+		for (const m of text.matchAll(/@import\s+[^;]*;/g)) {
+			found++;
+			const statement = m[0].replace(/\s+/g, " ").trim();
+			const asked = statement.match(/\?v=([^"')\s]+)/);
+			assert.ok(
+				asked,
+				`${name}: ${statement} carries no ?v=, so an edit to the imported ` +
+					`sheet keeps its URL and the browser answers from cache`,
+			);
+			assert.equal(
+				asked[1],
+				declared,
+				`${name}: ${statement} asks for ${asked[1]}, the theme is ${declared}`,
+			);
+		}
+	}
+	// Exact, not a floor: another import is a decision, and it should cost
+	// whoever makes it a look at this test. Five of them — the palette and the
+	// icons into style.css, and the palette, the icons and the mobile rules into
+	// plugins.css, which is the only sheet the mobile plugin's UI ever loads.
+	// icons.css is named twice on purpose: same URL, fetched once, and the
+	// desktop would otherwise wait for config time to get its icons.
+	assert.equal(
+		found,
+		5,
+		`expected 5 @imports across the sheets, found ${found}`,
+	);
+});
+
+// The imports are the only way palette.css, icons.css and mobile.css reach a
+// page: nothing links them, and the mobile UI loads no sheet of the theme's but
+// plugins.css. Losing one costs the colours or the icons everywhere at once,
+// and nothing else in this suite would notice.
+test("the sheets that carry the imports still carry them", () => {
+	const carries = (sheet, target) =>
+		assert.match(
+			read(sheet),
+			new RegExp(`@import\\s+url\\("${target.replace(".", "\\.")}`),
+			`${sheet} no longer imports ${target}`,
+		);
+	for (const target of ["palette.css", "icons.css"])
+		carries("style.css", target);
+	for (const target of ["palette.css", "icons.css", "mobile.css"])
+		carries("plugins.css", target);
 });
 
 // --- 2. Theme-owned custom properties resolve ------------------------------
@@ -146,6 +218,65 @@ test("the exemption list has not gone stale", () => {
 	);
 });
 
+// --- 2b. The decimal copies of palette colours ------------------------------
+//
+// Bootstrap's utilities take a bare `r, g, b` triple rather than a colour —
+// `.text-danger` resolves to `rgba(var(--bs-danger-rgb), var(--bs-text-opacity))`
+// — and CSS cannot derive one from a hex custom property. So each triple is a
+// second, decimal copy of a colour that palette.css already holds, and nothing
+// but this test keeps the two in step when a palette value moves.
+
+const paletteHex = new Map(
+	[
+		...css
+			.find(({ name }) => name === "palette.css")
+			.text.matchAll(/(--dracula-[a-z-]+)\s*:\s*#([0-9a-fA-F]{6})/g),
+	].map(([, name, hex]) => [name, hex.toLowerCase()]),
+);
+
+const asTriple = (hex) =>
+	[0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ");
+
+test("every --*-rgb triple still spells out the palette colour it stands for", () => {
+	const wrong = [];
+	for (const { name, text } of css) {
+		for (const m of text.matchAll(
+			/(--[a-zA-Z0-9-]+)-rgb\s*:\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*;/g,
+		)) {
+			const [, base, r, g, b] = m;
+			const written = [r, g, b].map(Number).join(", ");
+			// Most triples are written directly under the name they belong to,
+			// which says exactly which colour they should spell. The nearest one
+			// above and not the first in the file: `--bs-primary` is set once for
+			// Dark and again for Light, to two different colours, and each block's
+			// triple belongs to its own.
+			//
+			// `--bs-btn-focus-shadow-rgb` has no such partner — Bootstrap exposes
+			// only the triple — so all it can be held to is being some colour the
+			// palette publishes.
+			const beside = [
+				...text
+					.slice(0, m.index)
+					.matchAll(
+						new RegExp(
+							`${base}\\s*:\\s*var\\(\\s*(--dracula-[a-z-]+)\\s*\\)`,
+							"g",
+						),
+					),
+			].pop();
+			const candidates = beside ? [beside[1]] : [...paletteHex.keys()];
+			if (candidates.some((n) => asTriple(paletteHex.get(n)) === written))
+				continue;
+			wrong.push(
+				beside
+					? `${name}: ${base}-rgb is ${written}, but ${beside[1]} is #${paletteHex.get(beside[1])}`
+					: `${name}: ${base}-rgb is ${written}, which is no colour in palette.css`,
+			);
+		}
+	}
+	assert.deepEqual(wrong, [], `\n${wrong.join("\n")}`);
+});
+
 // --- 3. !important does not creep ------------------------------------------
 //
 // stylelint's declaration-no-important is switched off in stylelint.config.mjs,
@@ -156,7 +287,19 @@ test("the exemption list has not gone stale", () => {
 //
 // A ratchet, not a limit. Lower these when a use is removed; raising one takes
 // an argument in the commit message.
-const IMPORTANT_BUDGET = { "style.css": 34, "stable.css": 2, "plugins.css": 1 };
+const IMPORTANT_BUDGET = {
+	"style.css": 34,
+	"stable.css": 2,
+	"plugins.css": 1,
+	// Two, both Bootstrap's rather than the plugin's and both in one rule: being
+	// last of the three sheets outranks every rule the plugin writes, but not a
+	// utility class that carries !important on its own declarations. See the
+	// filter count's pill, where the utility forces both of them.
+	"mobile.css": 2,
+	// Declarations only, no selectors to fight over.
+	"palette.css": 0,
+	"icons.css": 0,
+};
 
 // Comments are stripped before counting. Counting the raw text instead makes
 // every mention of the word in prose part of the budget, so rewording a comment
