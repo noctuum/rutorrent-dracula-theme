@@ -3311,6 +3311,53 @@ function draculaMarkMobileSeparators()
 	}
 }
 
+var draculaDiskMeterWatched = false;
+
+/* The phone's disk meter, on the palette the desktop's already uses.
+
+   The plugin ramps it green to red and writes the result as an inline
+   `background-color` (`plugins/mobile/init.js:807`), which puts it past any rule
+   that carries no `!important`. Pink to Purple for the reason at
+   `draculaRecolorMeter`, and through the same `RGBackground` so both UIs
+   interpolate identically and agree at every percentage.
+
+   An observer rather than a wrapper: the colour is written from inside an async
+   response handler that offers no seam of its own. The element is static markup
+   (`plugins/mobile/mobile.html:202`), so one observer covers every write for the
+   life of the page. It disconnects around its own write, which is what keeps the
+   write from re-entering it.
+
+   Installed from the settings page rather than at config time: the element
+   arrives with `mobile.html`, which the plugin fetches and injects after this
+   script has run, and the settings page is the only place it is seen. */
+function draculaColourMobileDiskMeter()
+{
+	if(draculaDiskMeterWatched)
+		return;
+	var bar = document.querySelector("#diskSpaceBar .progress-bar");
+	if(!bar || typeof RGBackground !== "function"
+		|| typeof MutationObserver !== "function")
+		return;
+	draculaDiskMeterWatched = true;
+
+	var start = new RGBackground("#FF79C6");
+	var end = new RGBackground("#BD93F9");
+	var watch = { attributes: true, attributeFilter: ["style"] };
+	var observer = new MutationObserver(function()
+	{
+		observer.disconnect();
+		var percent = parseFloat(bar.style.width);
+		if(!isNaN(percent))
+		{
+			bar.style.backgroundColor = new RGBackground()
+				.setGradient(start, end, percent)
+				.getColor();
+		}
+		observer.observe(bar, watch);
+	});
+	observer.observe(bar, watch);
+}
+
 /* `plugin.processTorrents` is where every row is written, created on the first
    pass and rewritten in place after (`plugins/mobile/init.js:1844`), and it
    builds them synchronously — so the marks go on as it returns. Installed from
@@ -3332,6 +3379,16 @@ function draculaMarkMobileLines()
 		draculaMarkMobileSeparators();
 		return result;
 	};
+
+	if(typeof mobile.showSettings === "function")
+	{
+		var settings = mobile.showSettings;
+		mobile.showSettings = function()
+		{
+			draculaColourMobileDiskMeter();
+			return settings.apply(this, arguments);
+		};
+	}
 }
 
 if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")

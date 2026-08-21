@@ -206,6 +206,59 @@
   --bs-btn-focus-shadow-rgb: 189, 147, 249;
 }
 
+/* The other button this interface has, on fifteen controls: the search field's
+   close, both directory pickers, Select, four peer commands, the recheck and the
+   label editor, Clear, and every Cancel. Bootstrap compiles it around #6c757d,
+   which belongs to no palette here.
+
+   The outline shape is kept. A filled primary beside an outlined secondary is
+   what says which button is the answer, and the desktop's single filled style is
+   for dialogs that have no such pair.
+
+   The label is the body colour rather than the border's: Comment on this surface
+   measures 3.03:1, which is a border but not a label — Bootstrap's own grey is
+   at 3.11:1 and no better. The quiet comes from the outline and the absent fill
+   instead, and the label reads at 12.74:1. Filling on hover puts that label on
+   Comment at 4.45:1, the pairing the desktop's buttons already use.
+
+   Pink for the press, as everywhere else in this theme.
+
+   Dark only: the label is this theme's foreground, which on Light would be white
+   on white. Light keeps the plugin's pairing whole, as it does the bars. */
+:root[data-bs-theme="dark"] #mainContainer .btn-outline-secondary {
+  --bs-btn-color: var(--dracula-fg);
+  --bs-btn-border-color: var(--dracula-comment);
+  --bs-btn-hover-color: var(--dracula-fg);
+  --bs-btn-hover-bg: var(--dracula-comment);
+  --bs-btn-hover-border-color: var(--dracula-comment);
+  --bs-btn-active-color: var(--dracula-bg);
+  --bs-btn-active-bg: var(--dracula-pink);
+  --bs-btn-active-border-color: var(--dracula-pink);
+  --bs-btn-disabled-color: var(--dracula-comment);
+  --bs-btn-disabled-border-color: var(--dracula-comment);
+  --bs-btn-focus-shadow-rgb: 189, 147, 249;
+}
+
+/* Four of the plugin's ten selects are outside Bootstrap's reach — priority,
+   ratio group and channel in a torrent's General tab carry no class at all, and
+   the per-file priority in its Files tab carries one of the plugin's own — so
+   the browser paints them as its own dark control: #6B6B6B on #858585 with white
+   text, beside `.form-select`s that are already this theme's.
+
+   Keyed on the absence of Bootstrap's class rather than on the four, so a select
+   the plugin adds later is themed rather than left grey.
+
+   Colour only, and deliberately. `appearance` stays `auto`, so the native
+   chevron and the platform's own picker are untouched, which is the same trade
+   the checkboxes take. Geometry stays too: the plugin measures these cells to
+   size the selects (`plugins/mobile/init.js:1100`), and padding here would move
+   what it computes. */
+:root[data-bs-theme="dark"] #mainContainer select:not(.form-select) {
+  color: var(--dracula-fg);
+  background-color: var(--dracula-bg);
+  border-color: var(--dracula-current);
+}
+
 /* A focused field rings in Bootstrap's own blue, and for the same reason the
    button above needs its tokens spelled out: the two rules are compiled with
    literal hex rather than through anything. Read off the build this theme is
@@ -825,6 +878,24 @@
 #mainContainer .list-group-item {
   display: flex;
   align-items: center;
+}
+
+/* The pill itself was Bootstrap's grey. `.text-bg-secondary` carries
+   `!important` on both of its declarations, so there is nothing to outrank and
+   the only sheet-side answer is another one — the single use this file has.
+
+   The token behind it is deliberately left alone. `--bs-secondary` is not just
+   this pill: the plugin's accent picker offers it as "Gray (secondary)" and
+   paints that option's swatch from the same name, so recolouring the token
+   changes an accent a user can choose, and Current Line takes neither a dark
+   label nor a light one well enough to be one. A pill is a container for a
+   number; an accent is a surface. The two want different colours and this
+   reaches only the pill.
+
+   Current Line, where the `#fff` Bootstrap forces on top measures 9.15:1
+   against 4.68:1 on its own grey. */
+#mainContainer .list-group-item > .badge.text-bg-secondary {
+  background-color: var(--dracula-current) !important;
 }
 
 /* And the digit inside the pill, which is a second offset with its own cause.

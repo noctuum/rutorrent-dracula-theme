@@ -291,9 +291,10 @@ const IMPORTANT_BUDGET = {
 	"style.css": 34,
 	"stable.css": 2,
 	"plugins.css": 1,
-	// Nothing here needs one: this sheet is last of the three the mobile UI
-	// loads, so it already outranks the plugin's own rules.
-	"mobile.css": 0,
+	// One, and it is Bootstrap's rather than the plugin's: being last of the
+	// three sheets outranks every rule the plugin writes, but not a utility
+	// class that carries !important itself. See the filter count's pill.
+	"mobile.css": 1,
 	// Declarations only, no selectors to fight over.
 	"palette.css": 0,
 	"icons.css": 0,
