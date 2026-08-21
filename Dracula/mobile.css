@@ -206,6 +206,30 @@
   --bs-btn-focus-shadow-rgb: 189, 147, 249;
 }
 
+/* A focused field rings in Bootstrap's own blue, and for the same reason the
+   button above needs its tokens spelled out: the two rules are compiled with
+   literal hex rather than through anything. Read off the build this theme is
+   measured against —
+
+     .form-control:focus{…border-color:#86b7fe;outline:0;
+       box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+     .form-select:focus{border-color:#86b7fe;outline:0;
+       box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+
+   `--bs-focus-ring-color` exists and holds that same blue, so recolouring it
+   looks like the fix and does nothing: neither rule reads it. Nor do they read
+   `--bs-primary`, which has been this theme's purple all along.
+
+   The ring is the accent rather than a surface, and `--bs-primary` carries a
+   value in the Dark block and the Light one alike, so this is right in both
+   without a light palette. The width and the 25% are Bootstrap's own, kept so a
+   focused field looks like a focused field on the platform it borrows from. */
+#mainContainer .form-control:focus,
+#mainContainer .form-select:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
 /* The nine checkboxes and radios the plugin ships are bare `<input>`s — it
    carries no `.form-check-input` anywhere, so Bootstrap's own rules never touch
    them and the browser paints them with its own accent. `accent-color` is what
@@ -298,6 +322,24 @@
 #mainContainer #detailsNav > li > a {
   display: flex;
   align-items: center;
+}
+
+/* Chrome, not page. The plugin paints this row `var(--bs-body-bg)`
+   (`plugins/mobile/mobile.css:318`), which is the same colour as everything
+   below it, so it reads as the top of the list rather than as a bar — while the
+   bottom bar reads as one. Both take the same surface, and the border each
+   already carries is Current Line on both, so the two now mirror each other.
+
+   Three rules deep, not one: `.nav-tabs` is the list's toolbar and the details
+   tabs both, and the search bar tucks 1px under whichever is showing with a
+   surface of its own at `:375`. Leaving any of them behind puts the seam back.
+
+   Dark only, and the same pairing argument as the bottom bar: the rule this
+   replaces paints a Bootstrap token, so Light stays Bootstrap's until there is
+   a light palette to paint it from. */
+:root[data-bs-theme="dark"] #mainContainer .nav-tabs,
+:root[data-bs-theme="dark"] #mainContainer #searchBar {
+  background-color: var(--dracula-bg-darker);
 }
 
 /* The reserve the fixed row stands on: 3px of `.nav-tabs` padding, the 48px
