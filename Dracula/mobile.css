@@ -265,6 +265,52 @@
   height: auto;
 }
 
+/* The top toolbar's icons are a third smaller than the bottom bar's — 15px
+   against 20px, because the plugin sizes them through the link's font
+   (`plugins/mobile/mobile.css:316` against `:290`) — and the same font sizes the
+   filter's text, so the size has to go on the glyph rather than on the link.
+
+   Levelling them up is two changes, not one: at 20px the glyph's box grows the
+   line box and the row with it, 44.5px to 52px, while `#mainContainer` reserves
+   45px for a row that is `position: fixed`. Below are all three parts of that. */
+#mainContainer :is(#sortIcon, #searchIcon, #refreshIcon) i,
+#mainContainer #torrentsFilter > a > i {
+  font-size: 20px;
+}
+
+/* A deliberate height rather than one the font metrics happen to give. 48px is
+   the larger of the two platform minimums for a tap target, and the row was
+   40.5px — under both. It also settles the second toolbar: `#detailsNav` is a
+   `.nav-tabs` too and has no icons, so without a height its row would stay at
+   44.5px against a reserve sized for 52.
+
+   Only the three icon links are turned into flex containers. The funnel's is
+   already `inline-flex` and centred (`plugins/mobile/mobile.css:388`), and
+   deliberately so — inline is what keeps its tap target the width of the icon
+   and its text rather than the whole empty stretch of the row. */
+#mainContainer .nav-tabs > li > a {
+  height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#mainContainer :is(#sort, #search, #refresh) > a,
+#mainContainer #detailsNav > li > a {
+  display: flex;
+  align-items: center;
+}
+
+/* The reserve the fixed row stands on: 3px of `.nav-tabs` padding, the 48px
+   link, and the 1px bottom border. The plugin's own 45px
+   (`plugins/mobile/mobile.css:246`) matched its 44.5px row.
+
+   Nothing else needs telling. The search bar reads the row's height when it
+   opens and tucks itself 1px under it (`plugins/mobile/init.js:421`), and the
+   details page derives its table height the same way at `:1185`. */
+#mainContainer {
+  padding-top: 52px;
+}
+
 /* The bottom bar doubles in height the moment a transfer has a speed to report.
    With a torrent open it carries ten items — three for the app, a rule, four
    for the torrent, a rule, and the up/down readout — and the arithmetic runs
