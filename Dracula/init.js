@@ -3253,6 +3253,64 @@ function draculaMarkMobileRatios()
 	}
 }
 
+/* Where the next separator's bar sits in a status line, or -1 for none.
+
+   The plugin writes exactly two, and writes both as the literal `" | "` — one
+   before the ETA or the ratio, one before a tracker message and only when there
+   is one (`plugins/mobile/init.js:1907`). Requiring the spaces is what keeps a
+   bar the daemon put inside a state string from being read as a separator; the
+   returned index is the bar alone, so the spaces stay in the text they came
+   from. */
+function draculaMobileSeparatorAt(text, from)
+{
+	if(typeof text !== "string")
+		return -1;
+	var at = text.indexOf(" | ", from > 0 ? from : 0);
+	return at === -1 ? -1 : at + 1;
+}
+
+/* Both separators of one line, wrapped so they can take a colour of their own.
+
+   Runs after the ratio, never before: that pass reads the line's first text
+   node, and splitting the node here would leave the ratio in a later one where
+   it would not be found.
+
+   A tracker message can hold a bar of its own, but it arrives inside an `<i>`
+   (`plugins/mobile/init.js:1910`) — walking only the line's own text children
+   is what keeps this out of it. `<b>` for the same reason the ratio uses one:
+   the plugin's update line selects `span`. */
+function draculaMarkMobileSeparators()
+{
+	var lines = document.querySelectorAll("#torrentsList #list td > span");
+	for(var i = 0; i < lines.length; i++)
+	{
+		if(lines[i].querySelector(".dracula-sep"))
+			continue;
+		var texts = [];
+		for(var child = lines[i].firstChild; child; child = child.nextSibling)
+		{
+			if(child.nodeType === 3)
+				texts.push(child);
+		}
+		for(var t = 0; t < texts.length; t++)
+		{
+			var node = texts[t];
+			for(;;)
+			{
+				var at = draculaMobileSeparatorAt(node.textContent, 0);
+				if(at === -1)
+					break;
+				var bar = node.splitText(at);
+				node = bar.splitText(1);
+				var box = document.createElement("b");
+				box.className = "dracula-sep";
+				bar.parentNode.replaceChild(box, bar);
+				box.appendChild(bar);
+			}
+		}
+	}
+}
+
 /* `plugin.processTorrents` is where every row is written, created on the first
    pass and rewritten in place after (`plugins/mobile/init.js:1844`), and it
    builds them synchronously — so the marks go on as it returns. Installed from
@@ -3260,7 +3318,7 @@ function draculaMarkMobileRatios()
    and its own init has not run.
 
    Silent when the plugin is absent, which is every desktop page. */
-function draculaColourMobileRatios()
+function draculaMarkMobileLines()
 {
 	var mobile = window.thePlugins && typeof thePlugins.get === "function"
 		? thePlugins.get("mobile") : null;
@@ -3271,6 +3329,7 @@ function draculaColourMobileRatios()
 	{
 		var result = upstream.apply(this, arguments);
 		draculaMarkMobileRatios();
+		draculaMarkMobileSeparators();
 		return result;
 	};
 }
@@ -3281,7 +3340,7 @@ if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 	theWebUI.config = function()
 	{
 		draculaDarkByDefaultOnMobile();
-		draculaColourMobileRatios();
+		draculaMarkMobileLines();
 		draculaKeepPanelsOpen();
 		var tables = this.tables || {};
 		for(var name in tables)

@@ -390,9 +390,20 @@
    `flex-basis: 0` is what protects the text before it — the message asks for
    none of the row's width and takes only what is left over, so the state can
    never be pushed out by a long enough tracker. Rows without a message have no
-   second item and are unaffected. */
+   second item and are unaffected.
+
+   The gap is where every space between the line's parts comes from. A flex
+   container drops the white space at an item's edges, both of them, and raising
+   `white-space` to `pre` does not bring it back — the removal is the flex box's,
+   not the white-space rules'. Measured, the parts butt together at 0.00px
+   without this. `init.js` gives elements to the ratio and to both separators, so
+   the line is five or six items where it used to be two, and a gap holds them
+   all evenly where per-element margins would double wherever two of them meet.
+   A space in this row measures 3.13px at 12px; 0.25em tracks the font size where
+   a pixel value would not. */
 #mainContainer #torrentsList #list span {
   display: flex;
+  column-gap: 0.25em;
   white-space: nowrap;
 }
 
@@ -466,16 +477,12 @@
    verdict. `init.js` is what gives it an element, because the plugin writes the
    whole line as one string.
 
-   These two are apart because only one of them is about colour. The margins
-   replace white space rather than adding spacing: an element in this flex row is
-   a flex item, and the container drops the white space at an item's edges — both
-   of them, measured at 0.00px either side of the value without these and 3px
-   with, which is what a space is in this row. They apply in both themes or Light
-   reads `Ratio0.377|`. The colours are Dark's alone: on Bootstrap's white card
-   orange is 1.72:1 and green 1.37:1, and the palette holds no second pair that
-   would read there. */
+   The weight is reset in both themes — the element is a `<b>`, and it is one
+   because the plugin's update line selects `span` and would otherwise take it.
+   The colours are Dark's alone: on Bootstrap's white card orange is 1.72:1 and
+   green 1.37:1, and the palette holds no second pair that would read there.
+   Spacing is the row's gap, not this element's. */
 #mainContainer #torrentsList #list .dracula-ratio {
-  margin: 0 0.25em;
   font-weight: inherit;
 }
 
@@ -493,6 +500,23 @@
   color: var(--dracula-green);
 }
 
+/* The bars between the line's parts are structure, not words, and read as words
+   while they share the line's colour. Comment says separator: it measures
+   3.03:1 on the striped rows and 3.54:1 on the plain ones, above the floor for a
+   graphical divider and deliberately below the 10.90:1 the text beside it has.
+
+   Two elements per line at most, both written by the plugin as `" | "`; the
+   spaces stay in the text and the row's gap is what keeps them apart. Weight
+   reset in both themes for the same reason the ratio's is, colour on Dark alone
+   for the same reason as the rest of the line. */
+#mainContainer #torrentsList #list .dracula-sep {
+  font-weight: inherit;
+}
+
+:root[data-bs-theme="dark"] #mainContainer #torrentsList #list .dracula-sep {
+  color: var(--dracula-comment);
+}
+
 /* No scrollbar, and the mask is why. Measured on this row: the line stands 18px
    with `scrollbar-width: none`, 28px at `thin` and 33px at `auto` — any gutter
    a browser reserves hands back the second line this rule exists to remove, and
@@ -505,18 +529,10 @@
    and nothing visible is touched. `-webkit-` first for Safari, which is the
    browser most of these phones are.
 
-   The margin replaces a space the flex row eats. The plugin writes the
-   separator as `' | '` (`plugins/mobile/init.js:1911`) and the text node does
-   end `" | "`, but a flex container drops the trailing white space of an
-   anonymous item, so the message butts against the pipe: measured, the gap
-   between the text's right edge and this box's left edge is 0.00px. Raising
-   `white-space` to `pre` does not bring it back — the removal is the flex box's,
-   not the white-space rules'. A space in this row measures 3.13px at 12px, and
-   0.25em tracks the font size where a pixel value would not. */
+   The space before it is the row's gap; see the note at the line. */
 #mainContainer #torrentsList #list span > .text-danger {
   flex: 1 1 0;
   min-width: 0;
-  margin-left: 0.25em;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-mask-image: linear-gradient(
@@ -525,6 +541,30 @@
     transparent
   );
   mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent);
+}
+
+/* A torrent's General tab is 27 `Label | Value` rows in one white, so a row
+   reads as a single string. The value takes Yellow and the label keeps the body
+   colour — the same split the desktop makes at `style.css:1433`, where every
+   value is a `span.det`.
+
+   Here there is no class to key on: the plugin writes each row as
+   `<tr id="…"><td>Label</td><td>Value</td></tr>`, so position is the only
+   handle. All 27 carry exactly two cells, and `td:nth-child(2)` is the spelling
+   the plugin's own width arithmetic uses (`plugins/mobile/init.js:1100`).
+
+   Five of the values are a control rather than text — three `<select>`s, the
+   recheck button and the label editor. None of them inherit this: Bootstrap
+   gives `.form-select` and `.btn` a colour of their own, so the stencils inside
+   the two buttons stay with their button. Measured rather than assumed.
+
+   The id keeps this to the General tab. Trackers, Files and Peers are tables of
+   several columns where the second one is data, not a value.
+
+   Same striping as the list, so the figures are the list's: 12.74:1 on the plain
+   rows and 10.90:1 on the striped. Dark only — Yellow on white is 1.12:1. */
+:root[data-bs-theme="dark"] #mainContainer #detailsDetailsPage td:nth-child(2) {
+  color: var(--dracula-yellow);
 }
 
 /* Every icon in this interface is a glyph from the plugin's own webfont. The

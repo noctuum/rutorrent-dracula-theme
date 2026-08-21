@@ -385,3 +385,39 @@ test("draculaMobileRatioAt: 1.000 is met, 0.999 is not", () => {
 	// A ratio past ten still parses whole, not truncated at the dot.
 	assert.equal(value("Ratio 12.500"), 12.5);
 });
+
+test("draculaMobileSeparatorAt: points at the bar, not at its spaces", () => {
+	const at = (text, from = 0) => theme.draculaMobileSeparatorAt(text, from);
+
+	const line = "Seeding | Ratio 0.377 | ";
+	const first = at(line);
+	assert.equal(line[first], "|");
+	assert.equal(line.substr(first - 1, 3), " | ");
+
+	// Both of the plugin's separators are reachable by walking forward.
+	const second = at(line, first + 1);
+	assert.equal(line[second], "|");
+	assert.notEqual(second, first);
+	assert.equal(at(line, second + 1), -1);
+});
+
+test("draculaMobileSeparatorAt: a bar without its spaces is not one", () => {
+	const at = (text, from = 0) => theme.draculaMobileSeparatorAt(text, from);
+
+	// What the plugin writes is " | ". Anything else came from the daemon, in
+	// a state string or a speed, and is text rather than structure.
+	assert.equal(at("Seeding|Ratio 0.377"), -1);
+	assert.equal(at("Seeding |Ratio 0.377"), -1);
+	assert.equal(at("Seeding| Ratio 0.377"), -1);
+
+	// A downloading line has one separator; a bare state has none.
+	assert.equal(at("Downloading | ETA ∞") >= 0, true);
+	assert.equal(at("Hashing"), -1);
+
+	// Nothing to read.
+	assert.equal(at(""), -1);
+	assert.equal(at(null), -1);
+
+	// A negative or absent start is the beginning of the string.
+	assert.equal(at("Seeding | Ratio 1.0", -5), at("Seeding | Ratio 1.0", 0));
+});
