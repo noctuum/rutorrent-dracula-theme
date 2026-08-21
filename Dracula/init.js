@@ -3421,6 +3421,25 @@ function draculaMarkMobileLines()
 		};
 	}
 
+	/* Which of the filter page's `bi-tag` rows is the one for torrents nobody
+	   labelled. The plugin gives that glyph to two different rows — always to
+	   that one, and to every label when tracklabels is absent and there are no
+	   pictures to serve (`plugins/mobile/init.js:572`) — and the only thing that
+	   tells them apart is the filter value, which is the empty string for it and
+	   a name for the others. Nothing in the markup carries that, so it is marked
+	   here where the value is still in hand. */
+	if(typeof mobile.makeFilterItem === "function")
+	{
+		var makeItem = mobile.makeFilterItem;
+		mobile.makeFilterItem = function(text, count, isSelected, type, value)
+		{
+			var item = makeItem.apply(this, arguments);
+			if(type === "label" && value === "")
+				item.find("i.bi-tag").addClass("dracula-no-label");
+			return item;
+		};
+	}
+
 	/* The filter page is where the tracker icons are, and it is rebuilt whole
 	   every time it opens and again whenever the torrent set changes
 	   (`plugins/mobile/init.js:2035`). `#CatList` is what drives the sweep on the

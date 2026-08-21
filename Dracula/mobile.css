@@ -744,10 +744,21 @@
 #mainContainer .bi-x-lg { --dracula-glyph: var(--stencil-close); }
 #mainContainer .bi-sort-down-alt { --dracula-glyph: var(--stencil-sort-asc); }
 #mainContainer .bi-sort-down { --dracula-glyph: var(--stencil-sort-desc); }
-#mainContainer .bi-asterisk { --dracula-glyph: var(--stencil-all); }
+/* The desktop's own All, not a stencil: the three filter lists each open with
+   this row and the sidebar panels open with that icon, so the two interfaces
+   name the same thing the same way. A mask reads alpha alone, so the palette
+   colour baked into it never arrives and the row colours it like any other. */
+#mainContainer .bi-asterisk { --dracula-glyph: var(--icon-status-all); }
 #mainContainer .bi-check-lg { --dracula-glyph: var(--stencil-check); }
 #mainContainer .bi-exclamation-triangle-fill { --dracula-glyph: var(--stencil-warning); }
 #mainContainer .bi-tag { --dracula-glyph: var(--icon-tag); }
+
+/* The row for torrents nobody labelled wears the tag of the labels it is not
+   one of. The desktop draws it as a name crossed out; `init.js` marks the row,
+   because only the plugin knows which of its `bi-tag`s that is. */
+#mainContainer .bi-tag.dracula-no-label {
+  --dracula-glyph: var(--icon-no-label);
+}
 #mainContainer .bi-globe2 { --dracula-glyph: var(--icon-peer-network); }
 #mainContainer .bi-pencil-square { --dracula-glyph: var(--stencil-edit); }
 #mainContainer .bi-folder2-open { --dracula-glyph: var(--icon-dir); }
@@ -889,13 +900,22 @@
    The background sits behind the image rather than replacing it, which is only
    safe because the mark is proof: an image with ink of its own never gets one.
 
-   The same glyph the desktop's panels use for this, so a tracker without an icon
-   looks the same in both interfaces. */
-#mainContainer #torrentFilter .filter-icon[data-dracula-blank="tracker"] {
-  background-image: var(--icon-peer-network);
+   Two kinds, and the same two glyphs the desktop's panels use for them, so a
+   row without a picture looks the same in both interfaces: a tag for a label,
+   which is a name someone chose, and the peer network for a tracker, which is a
+   host that answered. */
+#mainContainer #torrentFilter .filter-icon[data-dracula-blank] {
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
+}
+
+#mainContainer #torrentFilter .filter-icon[data-dracula-blank="label"] {
+  background-image: var(--icon-tag);
+}
+
+#mainContainer #torrentFilter .filter-icon[data-dracula-blank="tracker"] {
+  background-image: var(--icon-peer-network);
 }
 
 /* The pill itself was Bootstrap's grey. `.text-bg-secondary` carries
