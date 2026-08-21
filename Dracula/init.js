@@ -3342,6 +3342,61 @@ function draculaMarkMobileSeparators()
 	}
 }
 
+var draculaRefreshSpin = { pending: false, timer: null };
+
+/* Whether the refresh arrow is turning. The glyph is painted on the
+   pseudo-element, so that is what turns; the class goes on the element it
+   inherits from. */
+function draculaSpinRefresh(on)
+{
+	var icon = document.querySelector("#refreshIcon i");
+	if(!icon)
+		return;
+	if(on)
+		icon.classList.add("dracula-refreshing");
+	else
+		icon.classList.remove("dracula-refreshing");
+}
+
+/* A list request has gone out. `now` is a press: the control has to answer the
+   finger whatever the connection is doing. Everything else is the background
+   poll, every 2500ms, and turning the arrow that often would be motion nobody
+   asked for — so it waits a second first, and a request that comes back inside
+   that second never shows at all. What is left showing is a slow answer or a
+   stalled one, which is the thing worth seeing. */
+function draculaListRequestStarted(now)
+{
+	draculaRefreshSpin.pending = true;
+	if(now)
+	{
+		draculaSpinRefresh(true);
+		return;
+	}
+	if(draculaRefreshSpin.timer !== null)
+		return;
+	draculaRefreshSpin.timer = window.setTimeout(function()
+	{
+		draculaRefreshSpin.timer = null;
+		if(draculaRefreshSpin.pending)
+			draculaSpinRefresh(true);
+	}, 1000);
+}
+
+/* Any end at all, and there are three: the list was processed, the request
+   errored, or it timed out. A flag rather than a count of requests in flight —
+   the arrow says whether the interface is waiting, not how many things it is
+   waiting for, and a count that leaks once turns forever. */
+function draculaListRequestEnded()
+{
+	draculaRefreshSpin.pending = false;
+	if(draculaRefreshSpin.timer !== null)
+	{
+		window.clearTimeout(draculaRefreshSpin.timer);
+		draculaRefreshSpin.timer = null;
+	}
+	draculaSpinRefresh(false);
+}
+
 var draculaDiskMeterWatched = false;
 
 /* The phone's disk meter, on the palette the desktop's already uses.
@@ -3408,8 +3463,50 @@ function draculaMarkMobileLines()
 		var result = upstream.apply(this, arguments);
 		draculaMarkMobileRatios();
 		draculaMarkMobileSeparators();
+		draculaListRequestEnded();
 		return result;
 	};
+
+	/* Both ends of both paths. A list arrives two ways — the core's own poll,
+	   which reaches `processTorrents` through `theWebUI.addTorrents`, and the
+	   plugin's one-shot `update` — and it fails two ways, neither of which
+	   reaches `processTorrents` at all (`js/webui.js:1591`, `:1597`). Without the
+	   failing pair the arrow would turn until the next success, which after an
+	   error is up to two minutes away. */
+	if(typeof mobile.update === "function")
+	{
+		var update = mobile.update;
+		mobile.update = function()
+		{
+			draculaListRequestStarted(false);
+			return update.apply(this, arguments);
+		};
+	}
+
+	if(typeof theWebUI.update === "function")
+	{
+		var poll = theWebUI.update;
+		theWebUI.update = function()
+		{
+			draculaListRequestStarted(false);
+			return poll.apply(this, arguments);
+		};
+	}
+
+	var stop = ["error", "timeout"];
+	for(var s = 0; s < stop.length; s++)
+	{
+		if(typeof theWebUI[stop[s]] !== "function")
+			continue;
+		theWebUI[stop[s]] = (function(name, was)
+		{
+			return function()
+			{
+				draculaListRequestEnded();
+				return was.apply(this, arguments);
+			};
+		})(stop[s], theWebUI[stop[s]]);
+	}
 
 	if(typeof mobile.showSettings === "function")
 	{
@@ -3457,16 +3554,26 @@ function draculaMarkMobileLines()
 
 	/* Refresh reloads the page — `window.location.reload(true)`
 	   (`plugins/mobile/init.js:867`) — which throws away the whole interface to
-	   re-fetch a list that polls itself every 2.5 seconds anyway, and costs the
-	   415KB of `getplugins.php` on the way back. `update(true)` asks for the
-	   same list and rebuilds every row from it, which is what the control says
-	   it does; the tracker classes are refreshed with it, the argument being
-	   what forces the full pass. */
+	   re-fetch a list, and costs the 415KB of `getplugins.php` on the way back.
+	   `update(true)` asks for the same list and rebuilds every row from it,
+	   which is what the control says it does; the tracker classes come with it,
+	   the argument being what forces the full pass.
+
+	   `resetInterval` is the other half and is what the control is actually for.
+	   The plugin runs no timer of its own — its own comment at
+	   `plugins/mobile/init.js:2589` says the periodic refreshes arrive through
+	   the core's hook — and the core's chain answers an error by waiting
+	   `webui.retry_on_error` seconds, 120 by default (`js/webui.js:1597`). A
+	   fetch alone repaints the list and leaves the chain sitting out those two
+	   minutes; this puts it back on its own interval. */
 	if(typeof mobile.refresh === "function" && typeof mobile.update === "function")
 	{
 		mobile.refresh = function()
 		{
+			draculaListRequestStarted(true);
 			this.update(true);
+			if(typeof theWebUI.resetInterval === "function")
+				theWebUI.resetInterval();
 		};
 	}
 }

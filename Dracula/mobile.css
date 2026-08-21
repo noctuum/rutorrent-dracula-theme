@@ -377,6 +377,34 @@
   align-items: center;
 }
 
+/* The refresh arrow turns while the interface is waiting for a list — always on
+   a press, and on the background poll only once it has run past a second, which
+   is set in `init.js`. The glyph is painted on the pseudo-element, so that is
+   what turns.
+
+   Under a reduced-motion preference the arrow takes the accent instead of
+   turning. The control still has to answer the finger; what it must not do is
+   turn forever in the corner of someone's eye. */
+@keyframes dracula-refreshing {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+#mainContainer #refreshIcon .dracula-refreshing::before {
+  animation: dracula-refreshing 900ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mainContainer #refreshIcon .dracula-refreshing::before {
+    animation: none;
+  }
+
+  #mainContainer #refreshIcon .dracula-refreshing {
+    color: var(--bs-primary);
+  }
+}
+
 /* Chrome, not page. The plugin paints this row `var(--bs-body-bg)`
    (`plugins/mobile/mobile.css:318`), which is the same colour as everything
    below it, so it reads as the top of the list rather than as a bar — while the
