@@ -892,9 +892,13 @@
    number; an accent is a surface. The two want different colours and this
    reaches only the pill.
 
-   Current Line, where the `#fff` Bootstrap forces on top measures 9.15:1
-   against 4.68:1 on its own grey. */
+   Current Line for the pill, and Cyan for the number on it at 6.61:1. Cyan is
+   what this theme already gives a count elsewhere in the same interface — the
+   percentage on a progress bar — and it is the reason for the second
+   `!important`: the utility forces `#fff` with one, so a colour here needs one
+   to be seen at all. */
 #mainContainer .list-group-item > .badge.text-bg-secondary {
+  color: var(--dracula-cyan) !important;
   background-color: var(--dracula-current) !important;
 }
 
