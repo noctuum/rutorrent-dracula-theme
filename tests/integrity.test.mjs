@@ -212,6 +212,65 @@ test("the exemption list has not gone stale", () => {
 	);
 });
 
+// --- 2b. The decimal copies of palette colours ------------------------------
+//
+// Bootstrap's utilities take a bare `r, g, b` triple rather than a colour —
+// `.text-danger` resolves to `rgba(var(--bs-danger-rgb), var(--bs-text-opacity))`
+// — and CSS cannot derive one from a hex custom property. So each triple is a
+// second, decimal copy of a colour that palette.css already holds, and nothing
+// but this test keeps the two in step when a palette value moves.
+
+const paletteHex = new Map(
+	[
+		...css
+			.find(({ name }) => name === "palette.css")
+			.text.matchAll(/(--dracula-[a-z-]+)\s*:\s*#([0-9a-fA-F]{6})/g),
+	].map(([, name, hex]) => [name, hex.toLowerCase()]),
+);
+
+const asTriple = (hex) =>
+	[0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ");
+
+test("every --*-rgb triple still spells out the palette colour it stands for", () => {
+	const wrong = [];
+	for (const { name, text } of css) {
+		for (const m of text.matchAll(
+			/(--[a-zA-Z0-9-]+)-rgb\s*:\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*;/g,
+		)) {
+			const [, base, r, g, b] = m;
+			const written = [r, g, b].map(Number).join(", ");
+			// Most triples are written directly under the name they belong to,
+			// which says exactly which colour they should spell. The nearest one
+			// above and not the first in the file: `--bs-primary` is set once for
+			// Dark and again for Light, to two different colours, and each block's
+			// triple belongs to its own.
+			//
+			// `--bs-btn-focus-shadow-rgb` has no such partner — Bootstrap exposes
+			// only the triple — so all it can be held to is being some colour the
+			// palette publishes.
+			const beside = [
+				...text
+					.slice(0, m.index)
+					.matchAll(
+						new RegExp(
+							`${base}\\s*:\\s*var\\(\\s*(--dracula-[a-z-]+)\\s*\\)`,
+							"g",
+						),
+					),
+			].pop();
+			const candidates = beside ? [beside[1]] : [...paletteHex.keys()];
+			if (candidates.some((n) => asTriple(paletteHex.get(n)) === written))
+				continue;
+			wrong.push(
+				beside
+					? `${name}: ${base}-rgb is ${written}, but ${beside[1]} is #${paletteHex.get(beside[1])}`
+					: `${name}: ${base}-rgb is ${written}, which is no colour in palette.css`,
+			);
+		}
+	}
+	assert.deepEqual(wrong, [], `\n${wrong.join("\n")}`);
+});
+
 // --- 3. !important does not creep ------------------------------------------
 //
 // stylelint's declaration-no-important is switched off in stylelint.config.mjs,

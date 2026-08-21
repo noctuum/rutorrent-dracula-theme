@@ -57,32 +57,79 @@
   --bs-primary-rgb: 189, 147, 249;
 
   /* The progress label is one string laid across two surfaces: `min-width:
-     max-content` lets it overhang the fill onto the track, so no single colour
-     is right for all of it — light reads on the track and dies on the purple
-     at 2.41:1, dark does the reverse. The plugin's answer is a halo, and these
-     two are the pair it exposes for it; only their values are the theme's.
-     `applyAccentColor` overwrites both for a near-white accent, which is its
-     business to get right and is left alone. */
-  --mobile-progress-label: var(--dracula-fg);
+     max-content` lets it overhang the fill onto the track, so whatever colour
+     it takes has to hold on both — and the fill is mixed from whichever accent
+     the user picked, which is not knowable here. The halo is what carries one
+     colour across the pair, and these two names are what the plugin exposes for
+     it; only their values are the theme's. `applyAccentColor` overwrites both
+     for a near-white accent, which is its business to get right and is left
+     alone.
+
+     Cyan rather than the body colour: the label is the one number in a row, and
+     in white it read as a third line of the same text. On this theme's own fill
+     it measures 5.32:1, and 8.52:1 where it overhangs onto the track. */
+  --mobile-progress-label: var(--dracula-cyan);
   --mobile-progress-halo: var(--dracula-bg);
 
+  /* Both halves of each name are needed. Bootstrap's text utilities never read
+     the colour — `.text-danger` resolves to `rgba(var(--bs-danger-rgb),
+     var(--bs-text-opacity))` — and its own dark block leaves the triples at
+     their light values, so the tracker message on a list row paints Bootstrap's
+     #dc3545 at 2.69:1 over a striped surface while `--bs-danger` beside it goes
+     unread. The palette's own red measures 3.88:1 there. */
   --bs-danger: var(--dracula-red);
+  --bs-danger-rgb: 255, 85, 85;
   --bs-success: var(--dracula-green);
+  --bs-success-rgb: 80, 250, 123;
   --bs-warning: var(--dracula-orange);
+  --bs-warning-rgb: 255, 184, 108;
   --bs-info: var(--dracula-cyan);
+  --bs-info-rgb: 139, 233, 253;
 }
 
-/* On a white surface the bright half of the palette is unreadable — measured
-   against #FFF, purple is 2.41:1, pink 2.39, cyan 1.38, green 1.37, yellow
-   1.12, and 4.5:1 is what text needs. Comment is the one accent the palette can
-   spare here at 4.71:1, and being a blue-purple it still reads as this theme
-   rather than as Bootstrap's blue.
+/* The plugin runs its whole interface off one accent, and on a white surface no
+   single colour can do both jobs: measured against #FFF, purple is 2.41:1,
+   pink 2.39, cyan 1.38, green 1.37, yellow 1.12, where text needs 4.5. So on
+   Light the accent splits by role, and the split is what a thing has to be
+   legible against.
+
+   A solid area carries its own label, so the constraint is the label against
+   the fill, not the fill against the page: those stay Dracula's purple, which
+   takes a dark label at 5.90:1. Text and thin lines have only the page behind
+   them, and take Comment at 4.71:1 — the one accent the palette can spare
+   there, and being a blue-purple it still reads as this theme rather than as
+   Bootstrap's blue.
 
    The semantic four are left to Bootstrap on Light for the same reason: Dracula
    tunes them for a dark background, and red at 3.14:1 is the best of them. */
 :root:not([data-bs-theme="dark"]):has(#mainNavbar) {
-  --bs-primary: var(--dracula-comment);
-  --bs-primary-rgb: 98, 114, 164;
+  --bs-primary: var(--dracula-purple);
+  --bs-primary-rgb: 189, 147, 249;
+
+  /* Purple takes a dark label; the plugin's Light default is a white one at
+     2.41:1. Where the string overhangs onto Bootstrap's light track a dark
+     label reads at 12.01:1, so the halo turns light and only has to sharpen
+     the edge rather than rescue it. */
+  --mobile-progress-label: var(--dracula-bg);
+  --mobile-progress-halo: var(--dracula-fg);
+}
+
+/* The accent's text and border uses, taken back to Comment. The plugin paints
+   every one of them straight from `--mobile-accent` — `a` at mobile.css:97, the
+   tab links at :331, the active tab's underline at :335, the toolbar icons at
+   :363 and the filter's funnel at :406 — so there is no token to intercept and
+   the selectors have to be met. Two of them carry two ids, which `#mainContainer`
+   on its own does not outrank. */
+:root:not([data-bs-theme="dark"]) #mainContainer a,
+:root:not([data-bs-theme="dark"]) #mainContainer #sortIcon i,
+:root:not([data-bs-theme="dark"]) #mainContainer #refreshIcon i,
+:root:not([data-bs-theme="dark"]) #mainContainer #searchIcon i,
+:root:not([data-bs-theme="dark"]) #mainContainer #torrentsFilter > a > i {
+  color: var(--dracula-comment);
+}
+
+:root:not([data-bs-theme="dark"]) #mainContainer .nav-tabs > li.active > a {
+  border-bottom-color: var(--dracula-comment);
 }
 
 /* Bootstrap compiles its variants with literal hex rather than through
@@ -224,6 +271,29 @@
   white-space: nowrap;
 }
 
+/* The three lines of a row say three different things and are read at three
+   different moments. The name keeps the body colour, being what a scrolling eye
+   looks for; the state and its numbers step back to yellow, which measures
+   10.90:1 on the striped rows and 12.74:1 on the plain ones. Striping is a 5%
+   white layer Bootstrap paints through `--bs-table-bg-type`, not a background
+   colour, so those two surfaces are #333540 and #282a36.
+
+   `td > span` rather than `span`: the bar's own label is a span in this subtree
+   too, and takes its colour from `--mobile-progress-label` instead.
+
+   Dark only, and by selector rather than by a custom property, because Light
+   has no counterpart to fall back to: yellow on Bootstrap's white row measures
+   1.12:1. Light keeps the body colour for the same reason the semantic four
+   stay Bootstrap's there.
+
+   The tracker message inside the line needs no exemption. Bootstrap's text
+   utilities carry `!important` — `.text-danger` resolves to
+   `color: rgba(var(--bs-danger-rgb), var(--bs-text-opacity)) !important` — so
+   nothing set on the parent reaches it. */
+:root[data-bs-theme="dark"] #mainContainer #torrentsList #list td > span {
+  color: var(--dracula-yellow);
+}
+
 /* A row spends 111px on three lines of content. Broken down: 16 of cell
    padding, 17 of name inside 20 of margin, 18 of status, and a 20px bar
    trailing 20px of `margin-bottom` (`plugins/mobile/mobile.css:148`) directly
@@ -236,14 +306,20 @@
    4px between the status and the bar, and the cell's own 8px around the lot.
    That reads as one grouped card rather than three loose lines, which 20px of
    trailing margin was never doing. */
-/* The bar carries its own label, so its fill cannot be the accent at full
-   strength: the desktop hit this first and the answer is recorded beside the
-   torrent table — the accent mixed 35% over the background, which keeps the hue
-   recognisable while the label clears 5:1 at every fill level. The same mix
-   applies here, taken from `--mobile-accent` rather than from the palette
-   directly so that a user who picks another accent gets their own colour
-   mixed rather than this one. */
-#mainContainer .progress-bar {
+/* The bar carries its own label, so on Dark its fill cannot be the accent at
+   full strength: the desktop hit this first and the answer is recorded beside
+   the torrent table — the accent mixed 35% over the background, which keeps the
+   hue recognisable while the label clears 5:1 at every fill level. The mix
+   takes `--mobile-accent` rather than the palette directly, so a user who picks
+   another accent gets their own colour mixed rather than this one.
+
+   Dark only, because the second half of the mix is this theme's background and
+   there is no light one to swap in: on Light the same mix drags Bootstrap's
+   white card down to #3C435C, which is neither the accent nor any colour the
+   palette publishes. Light keeps the plugin's own bar — the accent at full
+   strength, which is purple there and carries the dark label set with it at
+   5.90:1. */
+:root[data-bs-theme="dark"] #mainContainer .progress-bar {
   background-color: color-mix(
     in srgb,
     var(--mobile-accent) 35%,
