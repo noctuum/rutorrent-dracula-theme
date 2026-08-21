@@ -3162,11 +3162,41 @@ function draculaKeepPanelsOpen()
 	};
 }
 
+/* The mobile plugin defaults to its light theme, which is the wrong default
+   under a theme that only has a dark one. It reads that default late and only
+   as a fallback:
+
+     plugin.applyTheme(plugin.storedSetting('theme', validator, plugin.theme))
+
+   so writing `plugin.theme` changes what a user who has never opened the
+   setting sees, and changes nothing for one who has — the stored value wins.
+   Never write the stored setting itself: that is the user's, and this is only
+   the default behind it.
+
+   The moment is available because of how the two plugins nest. Both wrap
+   `theWebUI.config`; this theme is runlevel 5 and the mobile plugin 15, so the
+   mobile plugin wraps the wrapper installed here, and its own wrapper reads
+
+     plugin.config.call(this, data);   // this wrapper runs inside that call
+     plugin.init();                    // and the default is read here
+
+   which puts this call before the read with nothing to race against.
+
+   Silent when the plugin is absent, which is every desktop page. */
+function draculaDarkByDefaultOnMobile()
+{
+	var mobile = window.thePlugins && typeof thePlugins.get === "function"
+		? thePlugins.get("mobile") : null;
+	if(mobile && mobile.theme === "light")
+		mobile.theme = "dark";
+}
+
 if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 {
 	plugin.draculaConfig = theWebUI.config;
 	theWebUI.config = function()
 	{
+		draculaDarkByDefaultOnMobile();
 		draculaKeepPanelsOpen();
 		var tables = this.tables || {};
 		for(var name in tables)
