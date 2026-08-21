@@ -506,3 +506,34 @@
 #mainContainer .bi-folder2-open { --dracula-glyph: var(--icon-dir); }
 #mainContainer .bi-file-earmark { --dracula-glyph: var(--icon-file); }
 #mainContainer .bi-list-ul { --dracula-glyph: var(--icon-list); }
+
+/* A filter row is a block with the count floated right
+   (`plugins/mobile/mobile.css:150`), so the count sits at the top of the line
+   rather than beside the label: measured, 8px above it and 12.16px below in a
+   38px row. Laying the row out as a flex line centres it, and a float is inert
+   on a flex item, so the plugin's rule stops applying rather than being fought.
+
+   The count is first in the markup and the float was what moved it right, so it
+   needs `order` once the float stops counting. Nothing is lost to the flex
+   boxing: the gap before the label is `margin-right` on the icon, not white
+   space. */
+#mainContainer .list-group-item {
+  display: flex;
+  align-items: center;
+}
+
+/* And the digit inside the pill, which is a second offset with its own cause.
+   Counted off the painted pixels rather than the font's metrics: the pill
+   stands 17 rows, the digit's ink 8 of them, with 4 rows above and 5 below. A
+   digit has no descender, so a box centred on the font's ascent-and-descent
+   leaves its empty descent space at the bottom and the ink rides half a pixel
+   high. At the phone's pixel ratio that is the pixel and a half you can see.
+
+   0.048em is that half pixel at the badge's 10.5px, written against Bootstrap's
+   own token so it holds if the padding or the size moves. */
+#mainContainer .list-group-item > .badge {
+  order: 1;
+  margin-left: auto;
+  padding-top: calc(var(--bs-badge-padding-y) + 0.048em);
+  padding-bottom: calc(var(--bs-badge-padding-y) - 0.048em);
+}
