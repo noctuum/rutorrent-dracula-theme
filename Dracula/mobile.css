@@ -13,8 +13,9 @@
  * properties: `--mobile-accent` reads `--bs-primary`, and `applyAccentColor`
  * only writes an inline `--mobile-accent` when the user picks an accent that is
  * not `primary`. Recolouring Bootstrap's token rather than the plugin's leaves
- * that logic intact and the user's own pick still winning, which is why nothing
- * here writes `--mobile-*`.
+ * that logic intact and the user's own pick still winning, which is why the
+ * accent is never written here directly. The two `--mobile-progress-*` names
+ * are, having no Bootstrap counterpart to go through — see the note at them.
  *
  * Scope: plugins.css loads on the desktop too, and the classes below —
  * `.progress`, `.form-control`, `.btn` — exist in both UIs. `#mainNavbar` is
@@ -54,6 +55,16 @@
      `primary`, which is when this shows through. */
   --bs-primary: var(--dracula-purple);
   --bs-primary-rgb: 189, 147, 249;
+
+  /* The progress label is one string laid across two surfaces: `min-width:
+     max-content` lets it overhang the fill onto the track, so no single colour
+     is right for all of it — light reads on the track and dies on the purple
+     at 2.41:1, dark does the reverse. The plugin's answer is a halo, and these
+     two are the pair it exposes for it; only their values are the theme's.
+     `applyAccentColor` overwrites both for a near-white accent, which is its
+     business to get right and is left alone. */
+  --mobile-progress-label: var(--dracula-fg);
+  --mobile-progress-halo: var(--dracula-bg);
 
   --bs-danger: var(--dracula-red);
   --bs-success: var(--dracula-green);
@@ -211,6 +222,41 @@
 #mainContainer #torrentsList #list span {
   display: flex;
   white-space: nowrap;
+}
+
+/* A row spends 111px on three lines of content. Broken down: 16 of cell
+   padding, 17 of name inside 20 of margin, 18 of status, and a 20px bar
+   trailing 20px of `margin-bottom` (`plugins/mobile/mobile.css:148`) directly
+   above the next row's padding. Forty of those pixels are gaps that separate
+   nothing — the cell padding and the row border already do that work — and on
+   an 844px screen they cost three of the nine torrents that would otherwise be
+   on it.
+
+   The gaps are not removed, only sized: 4px between the name and its status,
+   4px between the status and the bar, and the cell's own 8px around the lot.
+   That reads as one grouped card rather than three loose lines, which 20px of
+   trailing margin was never doing. */
+/* The bar carries its own label, so its fill cannot be the accent at full
+   strength: the desktop hit this first and the answer is recorded beside the
+   torrent table — the accent mixed 35% over the background, which keeps the hue
+   recognisable while the label clears 5:1 at every fill level. The same mix
+   applies here, taken from `--mobile-accent` rather than from the palette
+   directly so that a user who picks another accent gets their own colour
+   mixed rather than this one. */
+#mainContainer .progress-bar {
+  background-color: color-mix(
+    in srgb,
+    var(--mobile-accent) 35%,
+    var(--dracula-bg)
+  );
+}
+
+#mainContainer #torrentsList #list h5 {
+  margin: 0 0 4px;
+}
+
+#mainContainer #torrentsList #list .progress {
+  margin: 4px 0 0;
 }
 
 /* No scrollbar, and the mask is why. Measured on this row: the line stands 18px
