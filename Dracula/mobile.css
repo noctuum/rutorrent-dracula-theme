@@ -134,12 +134,34 @@
   --mobile-progress-halo: var(--dracula-fg);
 }
 
+/* Two surfaces have no Light half in this file, and both are left to the plugin
+   whole rather than half-painted: the bottom bar, and the state colours in the
+   filter list.
+
+   The bar is #222 under white icons and a white readout
+   (`plugins/mobile/mobile.css:256`, `:186`, `:295`); the filter icons take the
+   row's own colour. Each is a pairing, and half of one — this theme's bar under
+   the plugin's white icons, or the theme's state colours on Bootstrap's white
+   list — reads worse than either whole.
+
+   What is missing is a light palette, not a decision. Dracula Classic is tuned
+   for a dark background: measured on white its six state colours run from
+   1.12:1 to 3.14:1. The specification's light variant, Alucard Classic, has
+   twelve tokens and five UI surfaces of its own for exactly this
+   (https://draculatheme.com/spec); both surfaces above are for it to paint. */
+
 /* The accent's text and border uses, taken back to Comment. The plugin paints
    every one of them straight from `--mobile-accent` — `a` at mobile.css:97, the
    tab links at :331, the active tab's underline at :335, the toolbar icons at
    :363 and the filter's funnel at :406 — so there is no token to intercept and
    the selectors have to be met. Two of them carry two ids, which `#mainContainer`
-   on its own does not outrank. */
+   on its own does not outrank.
+
+   `#mainContainer a` reaches further than the links it is aimed at: a filter row
+   is an `<a class="list-group-item">`, so a selected one takes Comment on the
+   accent fill at 1.95:1 instead of the `--mobile-accent-contrast` the plugin
+   puts there, which measures 5.90:1. Narrowing the selector is not the fix —
+   the row is a link and Comment is what Light has for links. */
 :root:not([data-bs-theme="dark"]) #mainContainer a,
 :root:not([data-bs-theme="dark"]) #mainContainer #sortIcon i,
 :root:not([data-bs-theme="dark"]) #mainContainer #refreshIcon i,
@@ -268,6 +290,43 @@
    `margin: 0 15px 0 0`, and both are class-weight. */
 #mainContainer #mainNavbar .nav > li {
   margin-right: 10px;
+}
+
+/* The bottom bar, on Dark. The plugin builds it as one fixed surface for both
+   themes — #222 with white icons and a white readout
+   (`plugins/mobile/mobile.css:256`, `:186`, `:295`) — and that pairing is
+   internally consistent, so it is taken or left whole. Dark takes it; Light
+   keeps the plugin's until a light palette is carried, at which point the bar
+   is one of the surfaces the two variants part company over.
+
+   Current Line above it is what separates it from the page: `.navbar` sets
+   `border: none` at :252 and the plugin relies on #222 being darker than
+   whatever sits above.
+
+   `.navbar-inverse` is on the `<nav>` and again on the `<ul>` inside it
+   (`plugins/mobile/mobile.html:3`, `:5`). Measured, the two are not the same
+   box — the list is 263px of the bar's 375 and starts 8px below its top edge,
+   Bootstrap's `--bs-navbar-padding-y` holding it off — so a surface on the
+   `<nav>` alone leaves the inner one painting a rectangle over it. */
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar {
+  border-top: 1px solid var(--dracula-current);
+  background-color: var(--dracula-bg-darker);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .navbar-inverse {
+  background-color: transparent;
+}
+
+/* One line rather than two. The plugin draws the rule as a bevel — #111111 on
+   the left, #323232 on the right (`plugins/mobile/mobile.css:305`) — which is
+   a groove cut into its own #222 and, on any other surface, 2px of noise. */
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .divider-vertical {
+  border-right: 1px solid var(--dracula-current);
+  border-left: none;
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .nav > li > div > span {
+  color: var(--dracula-fg);
 }
 
 /* A tracker message is the longest thing a list row ever holds — "Tracker: [No
@@ -513,6 +572,117 @@
 #mainContainer .bi-folder2-open { --dracula-glyph: var(--icon-dir); }
 #mainContainer .bi-file-earmark { --dracula-glyph: var(--icon-file); }
 #mainContainer .bi-list-ul { --dracula-glyph: var(--icon-list); }
+
+/* The stencils take `currentColor`, and the plugin gives every icon in the bar
+   the same white (`.icon-white`, `plugins/mobile/mobile.css:186`). The colours
+   below are not new: each is the one the desktop already paints into the icon
+   for that same action — `--icon-add` and `--icon-start` green, `--icon-stop`
+   and `--icon-remove` red, `--icon-pause` orange, `--icon-settings` comment,
+   `--icon-upload-speed` green against `--icon-download-speed` cyan. Home has no
+   desktop counterpart; it returns to the unfiltered list, which is what
+   `--icon-status-all` means, and takes its purple.
+
+   Keyed by class, not by the ids the bar's links carry, because the two speed
+   glyphs have no id to key on. All nine classes are distinct within the bar.
+
+   Dark only, with the surface they are measured against: white on #222 is the
+   plugin's own pairing and Light keeps both halves of it. Measured here: green
+   11.51:1, cyan 11.41:1, orange 9.27:1, purple 6.55:1, red 5.03:1, comment
+   3.36:1 — the gear is the quiet one exactly as it is on the desktop, where it
+   measures 3.03:1. */
+:root[data-bs-theme="dark"]
+  #mainContainer
+  #mainNavbar
+  :is(.bi-plus-lg, .bi-play-fill, .bi-upload) {
+  color: var(--dracula-green);
+}
+
+:root[data-bs-theme="dark"]
+  #mainContainer
+  #mainNavbar
+  :is(.bi-stop-fill, .bi-trash) {
+  color: var(--dracula-red);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-pause-fill {
+  color: var(--dracula-orange);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-download {
+  color: var(--dracula-cyan);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-house {
+  color: var(--dracula-purple);
+}
+
+:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-gear {
+  color: var(--dracula-comment);
+}
+
+/* The same seven states the desktop's panel colours, in the list that offers
+   them as filters, from the same `--icon-status-*` icons: All and Active
+   purple, Downloading cyan, Completed green, Stopped orange, Inactive comment,
+   Error red. The label and tracker rows fall back to a tag or a globe when
+   tracklabels has no icon for them (`plugins/mobile/init.js:572`, `:579`), and
+   those two take the colour of the desktop icon they stand in for.
+
+   Three of these classes also appear in the bar above and mean something else
+   there — `bi-stop-fill` is the Stop action, `bi-pause-fill` is Pause,
+   `bi-download` is the download speed — so the scope is the filter page rather
+   than the class alone.
+
+   On the list's own surface these measure green 10.38:1, cyan 10.29:1, orange
+   8.36:1, purple 5.90:1, red 4.53:1, comment 3.03:1.
+
+   Not on a selected row: it is filled with the accent, and a state colour on
+   purple measures 1.30:1 for red and 1.95:1 for comment. Those rows keep
+   `--mobile-accent-contrast`, which is what the plugin already puts there and
+   what measures 5.90:1.
+
+   Dark only. On Light the list sits on white, where the same six measure
+   between 1.12:1 and 3.14:1. */
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > :is(.bi-asterisk, .bi-arrow-down-up, .bi-tag) {
+  color: var(--dracula-purple);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-download {
+  color: var(--dracula-cyan);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-check-lg {
+  color: var(--dracula-green);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-stop-fill {
+  color: var(--dracula-orange);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > :is(.bi-pause-fill, .bi-globe2) {
+  color: var(--dracula-comment);
+}
+
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-exclamation-triangle-fill {
+  color: var(--dracula-red);
+}
 
 /* A filter row is a block with the count floated right
    (`plugins/mobile/mobile.css:150`), so the count sits at the top of the line
