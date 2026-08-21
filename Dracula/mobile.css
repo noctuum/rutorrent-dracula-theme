@@ -796,6 +796,20 @@
   margin: 4px 0 0;
 }
 
+/* Air around the label. It is a box the width of the fill, centring its text
+   (`plugins/mobile/mobile.css:216`), with `min-width: max-content` so a short
+   fill cannot cut the reading off — and at a low percentage that minimum is what
+   sizes it, which put the text hard against the bar's left edge. Padding goes
+   into the minimum, so the box asks for the text plus this and the text sits off
+   the edge at every fill.
+
+   Both sides, because the same box is centred at a middling fill and overhangs
+   to the right at none: symmetric padding is the only kind that cannot be seen
+   moving as the bar grows. */
+#mainContainer .progress .progress-label {
+  padding: 0 6px;
+}
+
 /* The ratio is the one number in the line that says whether a torrent has paid
    back, so it answers by colour: orange below 1, green at 1 and above. The word
    beside it stays with the rest of the line — only the value carries the
