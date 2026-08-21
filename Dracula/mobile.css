@@ -454,7 +454,22 @@
   display: flex;
   flex: 1;
   flex-wrap: nowrap;
-  column-gap: 10px;
+  column-gap: 8px;
+}
+
+/* Room for the three groups to stand apart. With a torrent open the bar carries
+   seven 20px icons, two rules and the 110px the readout reserves — 252px of
+   content — and the plugin's 20px of padding a side left 335 to put it in.
+   Eight gaps of ten and it was 7px over, which is what pushed the readout past
+   the edge and moved it between the two pages. Twelve a side and a gap of eight
+   leaves 27 to spread, so the rules have air on both sides instead of standing
+   against a group.
+
+   Twelve rather than nothing: the bar's outermost icons then sit close to where
+   the list's own rows begin, which is 3px of padding plus a row's own inset. */
+#mainContainer #mainNavbar .container {
+  padding-right: 12px;
+  padding-left: 12px;
 }
 
 /* A gap rather than a margin on each item, which is what lets the rules carry an
@@ -532,15 +547,23 @@
    for the unit, which is the widest of the ones seen and is localised, 17 for
    the icon, and the two gaps. Under that the rows are held right by
    `justify-content`, so the icons stay against the edge whether a rate is
-   showing or not, and nothing outside this item ever moves. */
+   showing or not, and nothing outside this item ever moves.
+
+   The two rows are a pair, not two halves of the bar's height. Left to stretch
+   they filled the 65px this item stands in, 32.5px apart, which put the upper
+   one near the bar's top edge and the pair's centre 3.4px above the action icons
+   beside it. Centring the content and spacing the rows by 6px keeps them
+   together and puts that centre where the icons are. */
 #mainContainer #mainNavbar .nav > li:last-child {
   display: grid;
   grid-template-columns: auto auto auto;
   min-width: 110px;
   margin-right: 0;
-  column-gap: 5px;
+  align-content: center;
   justify-content: end;
   justify-items: end;
+  column-gap: 5px;
+  row-gap: 6px;
 }
 
 #mainContainer #mainNavbar .nav > li:last-child > div {
@@ -559,13 +582,26 @@
    Centred rather than on a shared baseline. The two are the same size, so
    centring puts them on one line anyway — and it puts the icon there too, where
    baseline alignment drops it 5.8px, its box carrying the line's leading around
-   a glyph that has none. */
+   a glyph that has none.
+
+   Each part is named to its own cell, row and column both, and both halves
+   matter. Without the column, a row whose rate is empty — one direction silent
+   while the other works, which is most of the time — put its icon in the middle
+   track and stood 22px out of line with the row below it. Without the row, the
+   icon comes first in the markup and takes the third column of the first line,
+   after which the grid will not go back for the number: it lands a line lower,
+   17px under the icon it belongs to. Named, the cells hold whatever the rate is
+   doing. */
 #mainContainer #mainNavbar .nav > li:last-child > div > span {
+  grid-row: 1;
+  grid-column: 1;
   top: 0;
+  line-height: 17px;
 }
 
 #mainContainer #mainNavbar .nav > li:last-child .bi {
-  order: 3;
+  grid-row: 1;
+  grid-column: 3;
   margin-right: 0;
 }
 
@@ -586,15 +622,20 @@
    unit lines up on its left, so "B/s" and "KiB/s" begin together instead of
    ending together.
 
-   The line height matches the number's, which the plugin sets to zero
-   (`plugins/mobile/mobile.css:298`). Centring an item centres its box, and a box
-   of no height is centred on its own ink where a 21px one is centred on a line
-   whose ascent and descent are not equal — measured, that alone left the number
-   half a pixel above its unit. Zero on both puts the two on the same footing. */
+   Both take the icon's own height for their line, and that is what puts all
+   three on one line. The plugin gives the number `line-height: 0`
+   (`plugins/mobile/mobile.css:298`), which leaves a box of no height — and
+   measured, a box of no height does not centre in a grid row, it lands on the
+   row's bottom edge, 8px under the icon beside it. Given a height they behave
+   like the icon does; equal to each other, the number and the unit also land on
+   the same line as each other. 17px is what the icon measures, its glyph being
+   one em of the 17px the plugin sets on these two rows. */
 #mainContainer #mainNavbar .nav > li:last-child .dracula-unit {
+  grid-row: 1;
+  grid-column: 2;
   justify-self: start;
   font-weight: inherit;
-  line-height: 0;
+  line-height: 17px;
 }
 
 /* The bottom bar, on Dark. The plugin builds it as one fixed surface for both
@@ -616,6 +657,31 @@
 :root[data-bs-theme="dark"] #mainContainer #mainNavbar {
   border-top: 1px solid var(--dracula-current);
   background-color: var(--dracula-bg-darker);
+}
+
+/* The bar's content sat low in it, and by an even 8px: Bootstrap pads a navbar
+   `--bs-navbar-padding-y` top and bottom, and the plugin then replaces the
+   bottom one with the safe-area inset (`plugins/mobile/mobile.css:262`), which
+   is nothing on a device that has no notch. Everything rode 4px below the
+   middle.
+
+   Split evenly instead, and the bar keeps the height it had: 1 of border, 4, the
+   65px row, 4, and whatever inset the device asks for — the same 74 plus inset
+   as 8 and nothing gave. */
+#mainContainer #mainNavbar {
+  padding-top: 4px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+}
+
+/* A page that scrolls took 15px for its scrollbar and a page that does not took
+   none, so the bar — fixed to both edges — was 375px wide on a torrent's details
+   and 390px on the list, and everything anchored right moved with it. Measured
+   on both. Holding the gutter open makes the two the same page.
+
+   `:has(#mainNavbar)` because this sheet loads on the desktop too, where the
+   layout is the theme's own and this would be a change nobody asked for. */
+:root:has(#mainNavbar) {
+  scrollbar-gutter: stable;
 }
 
 :root[data-bs-theme="dark"] #mainContainer #mainNavbar .navbar-inverse {
