@@ -401,6 +401,37 @@ test("draculaMobileSeparatorAt: points at the bar, not at its spaces", () => {
 	assert.equal(at(line, second + 1), -1);
 });
 
+test("draculaSpeedUnitAt: the seam is the one space the converter writes", () => {
+	const at = (text) => theme.draculaSpeedUnitAt(text);
+
+	const rate = "1.2 MiB/s";
+	assert.equal(rate.slice(0, at(rate) - 1), "1.2");
+	assert.equal(rate.slice(at(rate)), "MiB/s");
+
+	// The unit is whatever the user's language calls it, and "/s" rides with it.
+	const russian = "340.0 КиБ/с";
+	assert.equal(russian.slice(at(russian)), "КиБ/с");
+
+	// A whole number and a long one both split at the same seam.
+	assert.equal("15 B/s".slice(at("15 B/s")), "B/s");
+	assert.equal("1024.75 GiB/s".slice(at("1024.75 GiB/s")), "GiB/s");
+});
+
+test("draculaSpeedUnitAt: anything that is not a rate splits nowhere", () => {
+	const at = (text) => theme.draculaSpeedUnitAt(text);
+
+	// A rate of zero is the empty string, not "0 B/s".
+	assert.equal(at(""), -1);
+	assert.equal(at(null), -1);
+	assert.equal(at(undefined), -1);
+	// No seam at all.
+	assert.equal(at("1.2MiB/s"), -1);
+	// Something that is not a number in front of it.
+	assert.equal(at("about 1.2 MiB/s"), -1);
+	assert.equal(at(" 1.2 MiB/s"), -1);
+	assert.equal(at("- MiB/s"), -1);
+});
+
 test("draculaMobileSeparatorAt: a bar without its spaces is not one", () => {
 	const at = (text, from = 0) => theme.draculaMobileSeparatorAt(text, from);
 

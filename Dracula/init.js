@@ -3474,6 +3474,61 @@ function draculaColourMobileDiskMeter()
 	observer.observe(bar, watch);
 }
 
+/* Where the unit begins in a rate the converter built, or -1 when the string is
+   not one.
+
+   `theConverter.speed` is `bytes()` with "/" and the localised second appended,
+   and `bytes()` is the rounded number, one space, and the localised unit
+   (`js/common.js:429`, `:433`) — so the one space is the seam and everything
+   past it is the unit, "/s" included. Both halves are localised and neither is
+   written here.
+
+   A rate of zero is the empty string, not "0 B/s", so nothing to split; and the
+   number is built by `theConverter.round` as `v + ""`, which is a full stop in
+   every locale. */
+function draculaSpeedUnitAt(text)
+{
+	if(typeof text !== "string")
+		return -1;
+	var at = text.indexOf(" ");
+	if(at <= 0)
+		return -1;
+	if(!/^[0-9]+(\.[0-9]+)?$/.test(text.slice(0, at)))
+		return -1;
+	return at + 1;
+}
+
+/* The unit as an element beside the rate, so the bar's readout can lay the two
+   out in columns of their own.
+
+   Beside rather than inside: the plugin sets the span's text whole on every
+   pass (`plugins/mobile/init.js:2096`), which would take a child with it, and
+   the grid needs the two as separate items in any case. The old element is
+   dropped first — the span is refilled each pass and a stale unit would
+   otherwise stand next to a fresh number. */
+function draculaMarkMobileSpeeds()
+{
+	var ids = ["upspeed", "downspeed"];
+	for(var i = 0; i < ids.length; i++)
+	{
+		var span = document.getElementById(ids[i]);
+		if(!span)
+			continue;
+		var stale = span.nextElementSibling;
+		if(stale && stale.className === "dracula-unit")
+			stale.parentNode.removeChild(stale);
+		var text = span.textContent;
+		var at = draculaSpeedUnitAt(text);
+		if(at === -1)
+			continue;
+		var unit = document.createElement("b");
+		unit.className = "dracula-unit";
+		unit.textContent = text.slice(at);
+		span.textContent = text.slice(0, at - 1);
+		span.parentNode.insertBefore(unit, span.nextSibling);
+	}
+}
+
 /* `plugin.processTorrents` is where every row is written, created on the first
    pass and rewritten in place after (`plugins/mobile/init.js:1844`), and it
    builds them synchronously — so the marks go on as it returns. Installed from
@@ -3493,6 +3548,7 @@ function draculaMarkMobileLines()
 		var result = upstream.apply(this, arguments);
 		draculaMarkMobileRatios();
 		draculaMarkMobileSeparators();
+		draculaMarkMobileSpeeds();
 		draculaListRequestEnded();
 		return result;
 	};

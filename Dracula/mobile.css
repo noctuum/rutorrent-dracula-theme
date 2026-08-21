@@ -451,6 +451,7 @@
    input groups above. It is already inert, the list being a flex container, and
    is left alone rather than tidied. */
 #mainContainer #mainNavbar .nav {
+  flex: 1;
   flex-wrap: nowrap;
 }
 
@@ -459,6 +460,70 @@
    `margin: 0 15px 0 0`, and both are class-weight. */
 #mainContainer #mainNavbar .nav > li {
   margin-right: 10px;
+}
+
+/* The bar carries three groups — the app, the torrent, the readout — and packed
+   left they left a third of it empty. Measured before this: the list ran 261px
+   of the 335 it had, and everything sat against the left edge.
+
+   `flex: 1` on the list is what fills the bar. The list is a flex item of
+   `.container`, which the plugin makes a flex row, so it was shrink-wrapped to
+   its content rather than block-level.
+
+   The rules do the spreading. An auto margin on each of them takes an equal
+   share of what is left over, which puts equal air on both sides of the torrent
+   actions — equal gaps rather than a centre measured from the bar's midpoint,
+   because the groups either side are not the same width and matching the gaps is
+   what the eye reads as balanced. Nothing is positioned and nothing is measured
+   in script: with no torrent open the first rule and the actions are hidden, the
+   remaining rule takes all the slack, and the readout is still against the right
+   edge. */
+#mainContainer #mainNavbar .nav > li.divider-vertical {
+  margin-left: auto;
+}
+
+/* The readout, as three columns rather than two lines of running text. Reading
+   inward from the edge: the icon, the unit, then the rate itself — so the
+   numbers line up under each other whatever their length, which two centred
+   strings never do.
+
+   Subgrid is what shares the columns without touching the plugin's markup: the
+   list item owns the three tracks and each `<div>` adopts them, so the up row
+   and the down row measure their columns together. `display: contents` would
+   flatten both rows into one item stream instead, where `order` is global and
+   would gather the two icons at the end rather than one per row.
+
+   The rate and its unit are one string in one span; `init.js` gives the unit an
+   element of its own, which is what there is to put in the middle track. Where
+   there is no rate the plugin writes an empty string, the unit never appears,
+   and the row is the icon alone. */
+#mainContainer #mainNavbar .nav > li:last-child {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  margin-right: 0;
+  column-gap: 0.35em;
+  justify-items: end;
+}
+
+#mainContainer #mainNavbar .nav > li:last-child > div {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  justify-items: end;
+}
+
+#mainContainer #mainNavbar .nav > li:last-child .bi {
+  order: 3;
+  margin-right: 0;
+}
+
+/* Digits line up on their right, so a rate reads against the one above it; the
+   unit lines up on its left, so "B/s" and "KiB/s" begin together instead of
+   ending together. */
+#mainContainer #mainNavbar .nav > li:last-child .dracula-unit {
+  justify-self: start;
+  font-weight: inherit;
 }
 
 /* The bottom bar, on Dark. The plugin builds it as one fixed surface for both
