@@ -71,6 +71,19 @@
   --mobile-progress-label: var(--dracula-cyan);
   --mobile-progress-halo: var(--dracula-bg);
 
+  /* What sits on a solid accent fill — the selected row of a filter list, and
+     its icon. The plugin's default is #fff and it flips to dark only for an
+     accent it judges near-white, which Dracula's purple is not; white on it
+     measures 2.41:1, the theme's background 5.90:1.
+
+     Right for six of the seven accents the plugin offers, because the palette's
+     hues are all light ones: purple, green, red, orange and cyan all want a
+     dark label, and `dark` resolves to `light` here, which the plugin already
+     handles. The seventh, `secondary`, stays Bootstrap's grey #6C757D, where
+     this reads 3.03:1 against 4.68:1 for white — a trade taken knowingly for
+     the accent nobody is given by default. */
+  --mobile-accent-contrast: var(--dracula-bg);
+
   /* Both halves of each name are needed. Bootstrap's text utilities never read
      the colour — `.text-danger` resolves to `rgba(var(--bs-danger-rgb),
      var(--bs-text-opacity))` — and its own dark block leaves the triples at
@@ -401,3 +414,95 @@
   );
   mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent);
 }
+
+/* Every icon in this interface is a glyph from the plugin's own webfont. The
+   theme replaces all 25 of them, and the swap happens on the pseudo-element
+   rather than on the `<i>`: the element's box is inline and takes its height
+   from the line box, while `.bi::before` is already `inline-block` with
+   `line-height: 1` and `vertical-align: -.125em` (`plugins/mobile/mobile.css:7`).
+   Painting there keeps the geometry the font had. Measured: the glyph's box is
+   exactly square at the element's font size — 20px in the bottom bar, 15px in
+   the toolbar, 17px on the speed counters — which is why the size is `1em`.
+
+   `content` is the plugin's only hold on the glyph and it carries no
+   `!important`, so one id outranks it.
+
+   The list is spelled out rather than matching `.bi` as a whole: an icon this
+   theme has no answer for keeps the plugin's own glyph instead of turning into
+   a blank square. */
+#mainContainer
+  :is(
+    .bi-house,
+    .bi-gear,
+    .bi-plus-lg,
+    .bi-play-fill,
+    .bi-stop-fill,
+    .bi-pause-fill,
+    .bi-trash,
+    .bi-upload,
+    .bi-download,
+    .bi-arrow-down-up,
+    .bi-search,
+    .bi-arrow-clockwise,
+    .bi-funnel,
+    .bi-x-lg,
+    .bi-sort-down-alt,
+    .bi-sort-down,
+    .bi-asterisk,
+    .bi-check-lg,
+    .bi-exclamation-triangle-fill,
+    .bi-tag,
+    .bi-globe2,
+    .bi-pencil-square,
+    .bi-folder2-open,
+    .bi-file-earmark,
+    .bi-list-ul
+  )::before {
+  content: "";
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask-image: var(--dracula-glyph);
+  mask-image: var(--dracula-glyph);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* Which stencil each class gets. Set on the element, read by the pseudo-element
+   above, because custom properties inherit and `::before` inherits from its
+   originating element.
+
+   Seven of these are the desktop's own icons rather than stencils. A mask reads
+   only the alpha channel, so the palette colours baked into them never arrive
+   and the `opacity="0.2"` backdrop still gives the second tone — they behave as
+   stencils here without being duplicated as ones. The rest are flat by design;
+   see the header of icons.css. */
+#mainContainer .bi-house { --dracula-glyph: var(--stencil-home); }
+#mainContainer .bi-gear { --dracula-glyph: var(--icon-settings); }
+#mainContainer .bi-plus-lg { --dracula-glyph: var(--stencil-add); }
+#mainContainer .bi-play-fill { --dracula-glyph: var(--stencil-start); }
+#mainContainer .bi-stop-fill { --dracula-glyph: var(--stencil-stop); }
+#mainContainer .bi-pause-fill { --dracula-glyph: var(--stencil-pause); }
+#mainContainer .bi-trash { --dracula-glyph: var(--stencil-remove); }
+#mainContainer .bi-upload { --dracula-glyph: var(--stencil-upload); }
+#mainContainer .bi-download { --dracula-glyph: var(--stencil-download); }
+#mainContainer .bi-arrow-down-up { --dracula-glyph: var(--stencil-sort); }
+#mainContainer .bi-search { --dracula-glyph: var(--icon-search); }
+#mainContainer .bi-arrow-clockwise { --dracula-glyph: var(--stencil-refresh); }
+#mainContainer .bi-funnel { --dracula-glyph: var(--stencil-filter); }
+#mainContainer .bi-x-lg { --dracula-glyph: var(--stencil-close); }
+#mainContainer .bi-sort-down-alt { --dracula-glyph: var(--stencil-sort-asc); }
+#mainContainer .bi-sort-down { --dracula-glyph: var(--stencil-sort-desc); }
+#mainContainer .bi-asterisk { --dracula-glyph: var(--stencil-all); }
+#mainContainer .bi-check-lg { --dracula-glyph: var(--stencil-check); }
+#mainContainer .bi-exclamation-triangle-fill { --dracula-glyph: var(--stencil-warning); }
+#mainContainer .bi-tag { --dracula-glyph: var(--icon-tag); }
+#mainContainer .bi-globe2 { --dracula-glyph: var(--icon-peer-network); }
+#mainContainer .bi-pencil-square { --dracula-glyph: var(--stencil-edit); }
+#mainContainer .bi-folder2-open { --dracula-glyph: var(--icon-dir); }
+#mainContainer .bi-file-earmark { --dracula-glyph: var(--icon-file); }
+#mainContainer .bi-list-ul { --dracula-glyph: var(--icon-list); }

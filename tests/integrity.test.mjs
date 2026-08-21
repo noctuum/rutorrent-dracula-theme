@@ -22,6 +22,7 @@ const SHEETS = [
 	"stable.css",
 	"plugins.css",
 	"palette.css",
+	"icons.css",
 	"mobile.css",
 ];
 const FILES = [...SHEETS, "init.js"];
@@ -112,29 +113,34 @@ test("every @import asks for the version the theme is on", () => {
 			);
 		}
 	}
-	// Exact, not a floor: a fourth import is a decision, and it should cost
-	// whoever makes it a look at this test.
+	// Exact, not a floor: another import is a decision, and it should cost
+	// whoever makes it a look at this test. Five of them — the palette and the
+	// icons into style.css, and the palette, the icons and the mobile rules into
+	// plugins.css, which is the only sheet the mobile plugin's UI ever loads.
+	// icons.css is named twice on purpose: same URL, fetched once, and the
+	// desktop would otherwise wait for config time to get its icons.
 	assert.equal(
 		found,
-		3,
-		`expected 3 @imports across the sheets, found ${found}`,
+		5,
+		`expected 5 @imports across the sheets, found ${found}`,
 	);
 });
 
-// The imports are the only way palette.css and mobile.css reach a page: nothing
-// links them, and the mobile UI loads no sheet of the theme's but plugins.css.
+// The imports are the only way palette.css, icons.css and mobile.css reach a
+// page: nothing links them, and the mobile UI loads no sheet of the theme's but
+// plugins.css. Losing one costs the colours or the icons everywhere at once,
+// and nothing else in this suite would notice.
 test("the sheets that carry the imports still carry them", () => {
-	assert.match(
-		read("style.css"),
-		/@import\s+url\("palette\.css/,
-		"style.css no longer imports the palette; the desktop would lose its colours",
-	);
-	for (const target of ["palette.css", "mobile.css"])
+	const carries = (sheet, target) =>
 		assert.match(
-			read("plugins.css"),
+			read(sheet),
 			new RegExp(`@import\\s+url\\("${target.replace(".", "\\.")}`),
-			`plugins.css no longer imports ${target}; the mobile UI would lose it`,
+			`${sheet} no longer imports ${target}`,
 		);
+	for (const target of ["palette.css", "icons.css"])
+		carries("style.css", target);
+	for (const target of ["palette.css", "icons.css", "mobile.css"])
+		carries("plugins.css", target);
 });
 
 // --- 2. Theme-owned custom properties resolve ------------------------------
@@ -288,7 +294,9 @@ const IMPORTANT_BUDGET = {
 	// Nothing here needs one: this sheet is last of the three the mobile UI
 	// loads, so it already outranks the plugin's own rules.
 	"mobile.css": 0,
+	// Declarations only, no selectors to fight over.
 	"palette.css": 0,
+	"icons.css": 0,
 };
 
 // Comments are stripped before counting. Counting the raw text instead makes
