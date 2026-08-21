@@ -73,3 +73,51 @@
   --bs-primary: var(--dracula-comment);
   --bs-primary-rgb: 98, 114, 164;
 }
+
+/* A field with a button on its end — the directory pickers on the Add and Save
+   pages, and Add Peer — is marked `.input-append`, which is Bootstrap 3's name
+   for it. Bootstrap 5 renamed the whole construct to `.input-group` and defines
+   nothing under the old name, so the wrapper stays a block and the field keeps
+   `.form-control`'s full width. What holds the two on one line instead is
+   `float: left` from the plugin's own compat shim plus a width measured in
+   script:
+
+     var used = (outer - inner) + $('#showGetDir').outerWidth(true) + 1;
+     $('#dir_edit').width($('#addTorrentFile').outerWidth(true) - used);
+
+   That `+ 1` is the whole gap between them, and the button, being `.btn-sm`,
+   ends up 4px shorter than the field beside it.
+
+   Making the wrapper a flex row settles both. Floats do not apply to flex
+   items, so the shim's `float` stops mattering without being overridden, and
+   `flex-basis: 0` takes the main size out of `width`, so the inline value the
+   script writes is ignored rather than fought — no `!important` for either.
+   `align-items: stretch` is what levels the button with the field. */
+#mainContainer .input-append {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#mainContainer .input-append > .form-control {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+#mainContainer .input-append > .btn {
+  flex: 0 0 auto;
+}
+
+/* The two browse buttons carry a hard `height: 34px`
+   (`plugins/mobile/mobile.css:469`), four short of the field they sit beside,
+   and an explicit cross size is also what makes a flex item ineligible to
+   stretch — which is why neither `align-self`, nor the button's padding, nor
+   Bootstrap's own `--bs-btn-*` tokens moved it. Releasing the height is the
+   whole fix: at `auto` the row stretches it to the field's 38px.
+
+   Three ids to clear two, because the plugin's own selectors are already at
+   two and the later sheet still has to outrank them. */
+#mainContainer #addTorrent #showGetDir,
+#mainContainer #torrentDataDir #showGetDirDataDir {
+  height: auto;
+}
