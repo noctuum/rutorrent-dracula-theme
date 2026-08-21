@@ -30,10 +30,11 @@
    down to `data-bs-theme` on the root element. Keying the surfaces off that
    attribute honours the switch, System included, without reading the setting.
 
-   Dracula is published as a dark palette only. Its light counterpart, Alucard,
-   belongs to Dracula PRO and is not in the free spec, so there is no light
-   Dracula to paint here and none is invented: on Light the plugin keeps
-   Bootstrap's own surfaces and only the accent comes from the palette. */
+   Only the dark half is painted from the palette. The specification publishes a
+   light one too — Alucard Classic, its own background, foreground and twelve
+   tokens — and this theme does not carry it yet, so Light keeps Bootstrap's own
+   surfaces here and takes only the accent from Dracula. That is a gap, not a
+   decision about what Light should look like. */
 :root[data-bs-theme="dark"]:has(#mainNavbar) {
   --bs-body-bg: var(--dracula-bg);
   --bs-body-bg-rgb: 40, 42, 54;
@@ -114,7 +115,13 @@
    Bootstrap's blue.
 
    The semantic four are left to Bootstrap on Light for the same reason: Dracula
-   tunes them for a dark background, and red at 3.14:1 is the best of them. */
+   Classic tunes them for a dark background, and red at 3.14:1 is the best of
+   them.
+
+   Every figure above is Dracula Classic measured on white, which is the wrong
+   pairing and the reason the accent has to be split at all. The specification's
+   light variant, Alucard Classic, has its own twelve tokens for exactly this
+   surface; carrying it would replace this whole block rather than refine it. */
 :root:not([data-bs-theme="dark"]):has(#mainNavbar) {
   --bs-primary: var(--dracula-purple);
   --bs-primary-rgb: 189, 147, 249;
@@ -327,11 +334,11 @@
    another accent gets their own colour mixed rather than this one.
 
    Dark only, because the second half of the mix is this theme's background and
-   there is no light one to swap in: on Light the same mix drags Bootstrap's
-   white card down to #3C435C, which is neither the accent nor any colour the
-   palette publishes. Light keeps the plugin's own bar — the accent at full
-   strength, which is purple there and carries the dark label set with it at
-   5.90:1. */
+   the sheet carries no light one to swap in yet: applied on Light, the same mix
+   drags Bootstrap's white card down to #3C435C, which is neither the accent nor
+   any colour of Dracula's. Light keeps the plugin's own bar — the accent at
+   full strength, which is purple there and carries the dark label set with it
+   at 5.90:1. */
 :root[data-bs-theme="dark"] #mainContainer .progress-bar {
   background-color: color-mix(
     in srgb,
