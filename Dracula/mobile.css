@@ -1071,6 +1071,19 @@
   color: var(--dracula-purple);
 }
 
+/* Not one of the labels, and not their colour either. The row wears a tag
+   because the plugin has one glyph for that list, but it stands for the torrents
+   nobody named — the desktop draws it as a crossed-out name in Comment, and it
+   reads here for the same reason the Inactive row does: a row that counts what
+   is missing should not sit at the same weight as the rows that count what is
+   there. */
+:root[data-bs-theme="dark"]
+  #torrentFilter
+  .list-group-item:not(.active)
+  > .bi-tag.dracula-no-label {
+  color: var(--dracula-comment);
+}
+
 :root[data-bs-theme="dark"]
   #torrentFilter
   .list-group-item:not(.active)
