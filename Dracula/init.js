@@ -2218,10 +2218,41 @@ function draculaMarkIcon(label)
 		label.removeAttribute("data-dracula-blank");
 }
 
+/* The phone's filter list paints the same icons somewhere else again: an
+   `img.filter-icon` with the URL in its src (`plugins/mobile/init.js:579`),
+   where the panels carry it in an attribute. The probe above answers for both,
+   being keyed by the URL rather than by the element.
+
+   Marking is all that is needed. The image tracklabels serves is transparent,
+   not missing, so a background behind it shows through — and only a row proved
+   blank is ever given one, which is why a real favicon can never be covered. */
+function draculaMarkFilterIcons()
+{
+	var icons = document.querySelectorAll("#torrentFilter img.filter-icon");
+	for(var i = 0; i < icons.length; i++)
+	{
+		var url = icons[i].getAttribute("src") || "";
+		var kind = draculaIconKind(url);
+		if(!kind)
+		{
+			icons[i].removeAttribute("data-dracula-blank");
+			continue;
+		}
+		var state = draculaIconInk[url];
+		if(state === undefined)
+			draculaProbeIcon(url);
+		else if(state === "blank")
+			icons[i].setAttribute("data-dracula-blank", kind);
+		else if(state === "inked")
+			icons[i].removeAttribute("data-dracula-blank");
+	}
+}
+
 function draculaSweepIcons()
 {
 	var rows = document.querySelectorAll("panel-label[icon^='url:']");
 	Array.prototype.forEach.call(rows, draculaMarkIcon);
+	draculaMarkFilterIcons();
 }
 
 /* The panels are rebuilt as labels and trackers come and go, and a row can keep
@@ -3387,6 +3418,36 @@ function draculaMarkMobileLines()
 		{
 			draculaColourMobileDiskMeter();
 			return settings.apply(this, arguments);
+		};
+	}
+
+	/* The filter page is where the tracker icons are, and it is rebuilt whole
+	   every time it opens and again whenever the torrent set changes
+	   (`plugins/mobile/init.js:2035`). `#CatList` is what drives the sweep on the
+	   desktop and does not exist here, so this is its trigger. */
+	if(typeof mobile.renderFilterPage === "function")
+	{
+		var render = mobile.renderFilterPage;
+		mobile.renderFilterPage = function()
+		{
+			var result = render.apply(this, arguments);
+			draculaMarkFilterIcons();
+			return result;
+		};
+	}
+
+	/* Refresh reloads the page — `window.location.reload(true)`
+	   (`plugins/mobile/init.js:867`) — which throws away the whole interface to
+	   re-fetch a list that polls itself every 2.5 seconds anyway, and costs the
+	   415KB of `getplugins.php` on the way back. `update(true)` asks for the
+	   same list and rebuilds every row from it, which is what the control says
+	   it does; the tracker classes are refreshed with it, the argument being
+	   what forces the full pass. */
+	if(typeof mobile.refresh === "function" && typeof mobile.update === "function")
+	{
+		mobile.refresh = function()
+		{
+			this.update(true);
 		};
 	}
 }

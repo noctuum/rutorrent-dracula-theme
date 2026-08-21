@@ -880,6 +880,24 @@
   align-items: center;
 }
 
+/* A tracker tracklabels has no favicon for. It answers for every tracker rather
+   than 404ing, falling back to a 16x16 PNG whose every pixel is transparent
+   (`plugins/tracklabels/action.php`, last line), so the row is blank rather than
+   broken and nothing in the markup says which it is. `init.js` loads the image,
+   counts opaque pixels and marks the ones that have none.
+
+   The background sits behind the image rather than replacing it, which is only
+   safe because the mark is proof: an image with ink of its own never gets one.
+
+   The same glyph the desktop's panels use for this, so a tracker without an icon
+   looks the same in both interfaces. */
+#mainContainer #torrentFilter .filter-icon[data-dracula-blank="tracker"] {
+  background-image: var(--icon-peer-network);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
 /* The pill itself was Bootstrap's grey. `.text-bg-secondary` carries
    `!important` on both of its declarations, so there is nothing to outrank and
    the only sheet-side answer is another one — the single use this file has.
