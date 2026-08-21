@@ -121,3 +121,30 @@
 #mainContainer #torrentDataDir #showGetDirDataDir {
   height: auto;
 }
+
+/* The bottom bar doubles in height the moment a transfer has a speed to report.
+   With a torrent open it carries ten items — three for the app, a rule, four
+   for the torrent, a rule, and the up/down readout — and the arithmetic runs
+   out: the bar is 390px with 20px of padding a side, so 350px hold 228px of
+   content and `margin-right: 15px` on nine of the ten
+   (`plugins/mobile/mobile.css:275`) adds 135px. 363 into 350 does not go, the
+   readout wraps, and the bar stands 138px instead of 73.
+
+   The margin is what gives, not the content: at 10px the same row measures 308
+   and still fits with a speed twice as long as the ones seen here. `nowrap` is
+   the guarantee behind that — the height of this bar should not depend on how
+   many digits a transfer rate happens to have.
+
+   `float: left` sits on those items too, from the same Bootstrap 3 shim as the
+   input groups above. It is already inert, the list being a flex container, and
+   is left alone rather than tidied. */
+#mainContainer #mainNavbar .nav {
+  flex-wrap: nowrap;
+}
+
+/* Two ids outrank both of the plugin's rules at once: the items carry
+   `margin-right` from `.navbar .nav > li` and the rules their own
+   `margin: 0 15px 0 0`, and both are class-weight. */
+#mainContainer #mainNavbar .nav > li {
+  margin-right: 10px;
+}
