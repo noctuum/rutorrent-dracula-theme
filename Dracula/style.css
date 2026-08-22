@@ -657,11 +657,12 @@ body.compact panel-label {
 /* Individual sidebar status icons — Phosphor Duotone */
 panel-label[icon="down"]     { --status-image: var(--icon-status-down); }
 panel-label[icon="completed"]{ --status-image: var(--icon-status-completed); }
-/* ruTorrent labels the sidebar's *Stopped* row icon="inactive" and its
-   *Inactive* row icon="paused" — the two attribute names read backwards, so
-   the mapping below is deliberate rather than a mix-up. */
-panel-label[icon="inactive"] { --status-image: var(--icon-status-stopped); }
-panel-label[icon="paused"]   { --status-image: var(--icon-status-inactive); }
+/* These two are keyed to the id, because the `icon` names are reversed below
+   ruTorrent 5.2.2: there `icon="inactive"` is the Inactive row rather than
+   Stopped. The ids are the core's own state keys and its filtering depends on
+   them (`js/category-list.js`). 5.2.0 has no Stopped row at all. */
+panel-label#-_-_-wfa-_-_- { --status-image: var(--icon-status-stopped); }
+panel-label#-_-_-iac-_-_- { --status-image: var(--icon-status-inactive); }
 panel-label[icon="error"]    { --status-image: var(--icon-status-error); }
 panel-label[icon="up-down"]  { --status-image: var(--icon-status-active); }
 panel-label[icon="all"]      { --status-image: var(--icon-status-all); }
