@@ -2395,10 +2395,24 @@ plugin.allDone = function()
 	   page. When another UI has switched the theme off — the mobile plugin
 	   disables it (`plugins/mobile/init.js:2138`) — none of that holds, and this
 	   file keeps running anyway because ruTorrent splices it into the response.
-	   The version check is the one thing still worth running: it decides for
-	   itself whether there is anything to report. */
+
+	   Three do hold, for reasons of their own:
+
+	   `draculaSetFavicon` touches nothing but `<head>`, so which interface
+	   paints the body is beside the point.
+
+	   `draculaStatusOverride` wraps `theWebUI.getStatusIcon`, which the mobile
+	   plugin calls for a list row's status (`plugins/mobile/init.js:1880`) and
+	   for the details Status field (`:942`). It takes element `[1]` and never
+	   `[0]`, computing its own icon class at `:1898`, so the wrap changes the
+	   words there and nothing else.
+
+	   `draculaCheckVersions` decides for itself whether there is anything to
+	   report. */
 	if(draculaThemeSwitchedOff())
 	{
+		draculaSetFavicon();
+		draculaStatusOverride();
 		draculaCheckVersions();
 		return;
 	}

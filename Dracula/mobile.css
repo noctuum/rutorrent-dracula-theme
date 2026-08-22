@@ -89,6 +89,19 @@
   --mobile-progress-label: var(--variant-progress-label);
   --mobile-progress-halo: var(--variant-progress-halo);
   --mobile-accent-contrast: var(--variant-accent-contrast);
+
+  /* The diagonal overlay on a striped bar, drawn on the fill and not on the
+     track. One value for both variants because the fill is a mix of the accent
+     with the page rather than the accent itself: #5C4F7A under Dracula and
+     #C9BDDF under Alucard, mid and pale, where the plugin's white is built for
+     Bootstrap's saturated blue. Measured on those two, white reads 1.46:1 and
+     1.10:1 against 1.23:1 and 1.38:1 for this — the light half is where white
+     disappears.
+
+     `applyAccentColor` darkens the overlay itself for an accent it judges
+     near-white and writes that inline (`plugins/mobile/init.js:710`), so its
+     own switch still outranks this. */
+  --mobile-stripe: rgb(0 0 0 / 15%);
 }
 
 /* The plugin offers Light, Dark and System, and `applyTheme` resolves all three
