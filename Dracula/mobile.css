@@ -26,6 +26,26 @@
  * the page background is painted above that wrapper.
  */
 
+/* What the root element carries in either theme. `:has(#mainNavbar)` because
+   this sheet loads on the desktop too, where the layout and the typeface are
+   already the theme's own and either of these would be a change nobody asked
+   for. */
+:root:has(#mainNavbar) {
+  /* A page that scrolls took 15px for its scrollbar and a page that does not
+     took none, so the bar — fixed to both edges — was 375px wide on a torrent's
+     details and 390px on the list, and everything anchored right moved with it.
+     Measured on both. Holding the gutter open makes the two the same page. */
+  scrollbar-gutter: stable;
+
+  /* Bootstrap derives `--bs-body-font-family` from this token and also reads it
+     directly for `.tooltip` and `.popover`, so this one name covers all three;
+     overriding `--bs-body-font-family` instead would leave both of those on the
+     system stack. The faces arrive with fonts.css, which plugins.css imports —
+     style.css, which carries the rest of the theme's typography, does not load
+     in this interface. */
+  --bs-font-sans-serif: var(--font-sans);
+}
+
 /* The plugin offers Light, Dark and System, and `applyTheme` resolves all three
    down to `data-bs-theme` on the root element. Keying the surfaces off that
    attribute honours the switch, System included, without reading the setting.
@@ -671,17 +691,6 @@
 #mainContainer #mainNavbar {
   padding-top: 4px;
   padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
-}
-
-/* A page that scrolls took 15px for its scrollbar and a page that does not took
-   none, so the bar — fixed to both edges — was 375px wide on a torrent's details
-   and 390px on the list, and everything anchored right moved with it. Measured
-   on both. Holding the gutter open makes the two the same page.
-
-   `:has(#mainNavbar)` because this sheet loads on the desktop too, where the
-   layout is the theme's own and this would be a change nobody asked for. */
-:root:has(#mainNavbar) {
-  scrollbar-gutter: stable;
 }
 
 :root[data-bs-theme="dark"] #mainContainer #mainNavbar .navbar-inverse {
