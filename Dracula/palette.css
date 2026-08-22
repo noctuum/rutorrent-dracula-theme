@@ -7,10 +7,9 @@
  *
  * A file of its own because the two UIs load different sheets. When the mobile
  * plugin takes the page over it disables the theme plugin
- * (`plugins/mobile/init.js:2138`), and style.css — where these used to live —
- * never arrives; plugins.css does, and imports this. On the desktop style.css
- * imports it directly, so the palette lands with the first sheet rather than at
- * config time.
+ * (`plugins/mobile/init.js:2138`) and style.css never arrives; plugins.css
+ * does, and imports this. On the desktop style.css imports it directly, so the
+ * palette lands with the first sheet rather than at config time.
  *
  * No version stamp on :root here, and none in mobile.css: those stamps exist
  * because ruTorrent serves its sheets under `?v=<its own version>`, which does
@@ -18,12 +17,32 @@
  * version instead, written into the @import URLs, so they cannot go stale
  * without the sheet that imports them going stale first — which the stamp on
  * that sheet already catches.
+ *
+ * Every value here is the specification's, at a fixed point:
+ *
+ *     github.com/dracula/draculatheme.com
+ *     content/spec.mdx
+ *     ab9840fc416836e1474b9a7d21522234af1eaddd  (2026-08-14)
+ *
+ * A commit, not draculatheme.com/spec: that page is generated from this file
+ * and moves without notice. tests/integrity.test.mjs holds the same table, so
+ * an edit away from it fails; raising the pin means raising it in both places.
+ *
+ * The ANSI palettes are left out. The specification assigns them to terminal
+ * applications, and this interface has no terminal.
+ *
+ * One :root: stylelint counts several as the same rule.
  */
 
 :root {
+  /* ── Dracula Classic ──────────────────────────────────────────────────────
+     Current Line and Comment hold the same value, and the specification says
+     so outright: they "intentionally share the same semantic color". Both
+     names are kept because the record is of the specification, not of the
+     hexes. */
   --dracula-bg: #282a36;
   --dracula-fg: #f8f8f2;
-  --dracula-current: #44475a;
+  --dracula-current-line: #6272a4;
   --dracula-selection: #44475a;
   --dracula-comment: #6272a4;
   --dracula-red: #ff5555;
@@ -34,7 +53,77 @@
   --dracula-purple: #bd93f9;
   --dracula-pink: #ff79c6;
 
-  /* Derived colors */
-  --dracula-bg-darker: #21222c;
-  --dracula-bg-lighter: #343746;
+  /* The interface surfaces, named as the specification names them. Light and
+     Floating are one value there — a floating element is drawn on the light
+     surface — and both names are kept for the same reason as Current Line. */
+  --dracula-floating: #343746;
+  --dracula-bg-lighter: #424450;
+  --dracula-bg-light: #343746;
+  --dracula-bg-dark: #21222c;
+  --dracula-bg-darker: #191a21;
+
+  /* What a line highlight falls back to where it cannot be drawn as a
+     translucent layer over the background. */
+  --dracula-line-highlight: #353747;
+
+  /* ── Alucard Classic ──────────────────────────────────────────────────────
+     The specification's light variant. Dracula Classic's accents are unusable
+     on #FFFBEB — Green measures 1.32:1 and Cyan 1.33:1 where text needs 4.5 —
+     while Alucard's own run 4.80:1 to 7.33:1 on it. */
+  --alucard-bg: #fffbeb;
+  --alucard-fg: #1f1f1f;
+  --alucard-current-line: #6c664b;
+  --alucard-selection: #cfcfde;
+  --alucard-comment: #6c664b;
+  --alucard-red: #cb3a2a;
+  --alucard-orange: #a34d14;
+  --alucard-yellow: #846e15;
+  --alucard-green: #14710a;
+  --alucard-cyan: #036a96;
+  --alucard-purple: #644ac9;
+  --alucard-pink: #a3144d;
+
+  --alucard-floating: #efeddc;
+  --alucard-bg-lighter: #ece9df;
+  --alucard-bg-light: #dedccf;
+  --alucard-bg-dark: #ceccc0;
+  --alucard-bg-darker: #bcbab3;
+
+  --alucard-line-highlight: #e2deca;
+
+  /* ── Functional ───────────────────────────────────────────────────────────
+     One set for both variants, and the specification is explicit that these
+     are for interface chrome and must not be used in an editor or a terminal.
+     Recorded rather than used: measured against this theme's own surfaces they
+     carry 3.01:1 to 4.66:1 on #282A36 and 2.95:1 to 4.57:1 on #FFFBEB, so they
+     clear the 3:1 a graphical element needs and miss the 4.5:1 text needs
+     almost everywhere. The variant accents do that job here. */
+  --functional-red: #de5735;
+  --functional-orange: #a39514;
+  --functional-green: #089108;
+  --functional-cyan: #0081d6;
+  --functional-purple: #815cd6;
+
+  /* ── Decimal copies ───────────────────────────────────────────────────────
+     Bootstrap's utilities take a bare `r, g, b` rather than a colour —
+     `.text-danger` resolves to
+     `rgba(var(--bs-danger-rgb), var(--bs-text-opacity))` — and CSS cannot
+     derive one from a hex custom property. Each triple is a second copy of the
+     colour named beside it; integrity.test.mjs holds it to that name's hex, and
+     refuses a triple written anywhere but here. */
+  --dracula-rgb-bg: 40, 42, 54;
+  --dracula-rgb-fg: 248, 248, 242;
+  --dracula-rgb-red: 255, 85, 85;
+  --dracula-rgb-orange: 255, 184, 108;
+  --dracula-rgb-green: 80, 250, 123;
+  --dracula-rgb-cyan: 139, 233, 253;
+  --dracula-rgb-purple: 189, 147, 249;
+
+  --alucard-rgb-bg: 255, 251, 235;
+  --alucard-rgb-fg: 31, 31, 31;
+  --alucard-rgb-red: 203, 58, 42;
+  --alucard-rgb-orange: 163, 77, 20;
+  --alucard-rgb-green: 20, 113, 10;
+  --alucard-rgb-cyan: 3, 106, 150;
+  --alucard-rgb-purple: 100, 74, 201;
 }

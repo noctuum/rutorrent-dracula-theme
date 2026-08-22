@@ -44,154 +44,129 @@
      style.css, which carries the rest of the theme's typography, does not load
      in this interface. */
   --bs-font-sans-serif: var(--font-sans);
+
+  /* What Bootstrap and the plugin read, mapped once from whichever variant is
+     on. Written here rather than inside each variant block below, so that
+     adding a Bootstrap token is one edit and cannot land in one theme and not
+     the other.
+
+     Both halves of each semantic name are needed. Bootstrap's utilities never
+     read the colour — `.text-danger` resolves to
+     `rgba(var(--bs-danger-rgb), var(--bs-text-opacity))` — and its own dark
+     block leaves every triple at its light value, so a tracker message on a
+     list row paints Bootstrap's #dc3545 while `--bs-danger` beside it goes
+     unread.
+
+     The accent goes through `--bs-primary` rather than the plugin's
+     `--mobile-accent`: `applyAccentColor` writes an inline `--mobile-accent`
+     for every accent except `primary` and removes it for `primary`, so
+     recolouring Bootstrap's token leaves the user's own pick winning and shows
+     through only when they have not chosen. */
+  --bs-body-bg: var(--variant-bg);
+  --bs-body-bg-rgb: var(--variant-rgb-bg);
+  --bs-body-color: var(--variant-fg);
+  --bs-body-color-rgb: var(--variant-rgb-fg);
+  --bs-emphasis-color: var(--variant-fg);
+  --bs-border-color: var(--variant-selection);
+
+  /* The surfaces Bootstrap layers over the body: cards, striped rows, and the
+     track a progress bar is drawn on. */
+  --bs-secondary-bg: var(--variant-bg-light);
+  --bs-tertiary-bg: var(--variant-bg-dark);
+
+  --bs-primary: var(--variant-purple);
+  --bs-primary-rgb: var(--variant-rgb-purple);
+
+  --bs-danger: var(--variant-red);
+  --bs-danger-rgb: var(--variant-rgb-red);
+  --bs-success: var(--variant-green);
+  --bs-success-rgb: var(--variant-rgb-green);
+  --bs-warning: var(--variant-orange);
+  --bs-warning-rgb: var(--variant-rgb-orange);
+  --bs-info: var(--variant-cyan);
+  --bs-info-rgb: var(--variant-rgb-cyan);
+
+  --mobile-progress-label: var(--variant-progress-label);
+  --mobile-progress-halo: var(--variant-progress-halo);
+  --mobile-accent-contrast: var(--variant-accent-contrast);
 }
 
 /* The plugin offers Light, Dark and System, and `applyTheme` resolves all three
    down to `data-bs-theme` on the root element. Keying the surfaces off that
    attribute honours the switch, System included, without reading the setting.
 
-   Only the dark half is painted from the palette. The specification publishes a
-   light one too — Alucard Classic, its own background, foreground and twelve
-   tokens — and this theme does not carry it yet, so Light keeps Bootstrap's own
-   surfaces here and takes only the accent from Dracula. That is a gap, not a
-   decision about what Light should look like. */
+   Both variants are the specification's: Dracula Classic and Alucard Classic,
+   recorded in palette.css against the commit named there. The two blocks below
+   are the only place in this sheet that knows which one is on — every rule
+   under them reads `--variant-*` and says what a thing is rather than which
+   theme is showing.
+
+   A name added to one block has to be added to the other. A custom property
+   that resolves to nothing does not fall back: the declaration reading it is
+   dropped, and the element keeps whatever the plugin gave it, which looks like
+   a rule that was never written. */
 :root[data-bs-theme="dark"]:has(#mainNavbar) {
-  --bs-body-bg: var(--dracula-bg);
-  --bs-body-bg-rgb: 40, 42, 54;
-  --bs-body-color: var(--dracula-fg);
-  --bs-body-color-rgb: 248, 248, 242;
-  --bs-emphasis-color: var(--dracula-fg);
-  --bs-border-color: var(--dracula-current);
+  --variant-bg: var(--dracula-bg);
+  --variant-rgb-bg: var(--dracula-rgb-bg);
+  --variant-fg: var(--dracula-fg);
+  --variant-rgb-fg: var(--dracula-rgb-fg);
+  --variant-selection: var(--dracula-selection);
+  --variant-comment: var(--dracula-comment);
+  --variant-bg-light: var(--dracula-bg-light);
+  --variant-bg-dark: var(--dracula-bg-dark);
 
-  /* The surfaces Bootstrap layers over the body: cards, striped rows, and the
-     track a progress bar is drawn on. */
-  --bs-secondary-bg: var(--dracula-bg-lighter);
-  --bs-tertiary-bg: var(--dracula-bg-darker);
+  --variant-red: var(--dracula-red);
+  --variant-rgb-red: var(--dracula-rgb-red);
+  --variant-orange: var(--dracula-orange);
+  --variant-rgb-orange: var(--dracula-rgb-orange);
+  --variant-yellow: var(--dracula-yellow);
+  --variant-green: var(--dracula-green);
+  --variant-rgb-green: var(--dracula-rgb-green);
+  --variant-cyan: var(--dracula-cyan);
+  --variant-rgb-cyan: var(--dracula-rgb-cyan);
+  --variant-purple: var(--dracula-purple);
+  --variant-rgb-purple: var(--dracula-rgb-purple);
+  --variant-pink: var(--dracula-pink);
 
-  /* Purple is the theme's accent everywhere else, and the plugin's default
-     accent is `primary`, so this is the one a user sees without choosing.
-     Recolouring Bootstrap's token rather than `--mobile-accent` leaves the
-     plugin's own accent picker in charge: it writes an inline
-     `--mobile-accent` for every accent except `primary`, and removes it for
-     `primary`, which is when this shows through. */
-  --bs-primary: var(--dracula-purple);
-  --bs-primary-rgb: 189, 147, 249;
-
-  /* The progress label is one string laid across two surfaces: `min-width:
-     max-content` lets it overhang the fill onto the track, so whatever colour
-     it takes has to hold on both — and the fill is mixed from whichever accent
-     the user picked, which is not knowable here. The halo is what carries one
-     colour across the pair, and these two names are what the plugin exposes for
-     it; only their values are the theme's. `applyAccentColor` overwrites both
-     for a near-white accent, which is its business to get right and is left
-     alone.
-
-     Cyan rather than the body colour: the label is the one number in a row, and
-     in white it read as a third line of the same text. On this theme's own fill
-     it measures 5.32:1, and 8.52:1 where it overhangs onto the track. */
-  --mobile-progress-label: var(--dracula-cyan);
-  --mobile-progress-halo: var(--dracula-bg);
-
-  /* What sits on a solid accent fill — the selected row of a filter list, and
-     its icon. The plugin's default is #fff and it flips to dark only for an
-     accent it judges near-white, which Dracula's purple is not; white on it
-     measures 2.41:1, the theme's background 5.90:1.
-
-     Right for six of the seven accents the plugin offers, because the palette's
-     hues are all light ones: purple, green, red, orange and cyan all want a
-     dark label, and `dark` resolves to `light` here, which the plugin already
-     handles. The seventh, `secondary`, stays Bootstrap's grey #6C757D, where
-     this reads 3.03:1 against 4.68:1 for white — a trade taken knowingly for
-     the accent nobody is given by default. */
-  --mobile-accent-contrast: var(--dracula-bg);
-
-  /* Both halves of each name are needed. Bootstrap's text utilities never read
-     the colour — `.text-danger` resolves to `rgba(var(--bs-danger-rgb),
-     var(--bs-text-opacity))` — and its own dark block leaves the triples at
-     their light values, so the tracker message on a list row paints Bootstrap's
-     #dc3545 at 2.69:1 over a striped surface while `--bs-danger` beside it goes
-     unread. The palette's own red measures 3.88:1 there. */
-  --bs-danger: var(--dracula-red);
-  --bs-danger-rgb: 255, 85, 85;
-  --bs-success: var(--dracula-green);
-  --bs-success-rgb: 80, 250, 123;
-  --bs-warning: var(--dracula-orange);
-  --bs-warning-rgb: 255, 184, 108;
-  --bs-info: var(--dracula-cyan);
-  --bs-info-rgb: 139, 233, 253;
+  /* Three roles rather than colours, because each is a figure measured against
+     a ground the other variant does not share. The progress label is one string
+     laid across two surfaces — `min-width: max-content` lets it overhang the
+     fill onto the track — so it needs a halo to carry one colour across both,
+     and the fill is mixed from whichever accent the user picked, which is not
+     knowable here. `--mobile-accent-contrast` is what sits on a solid accent:
+     the plugin defaults it to #fff and flips it only for an accent it judges
+     near-white, which neither variant's purple is. */
+  --variant-progress-label: var(--dracula-cyan);
+  --variant-progress-halo: var(--dracula-bg);
+  --variant-accent-contrast: var(--dracula-bg);
 }
 
-/* The plugin runs its whole interface off one accent, and on a white surface no
-   single colour can do both jobs: measured against #FFF, purple is 2.41:1,
-   pink 2.39, cyan 1.38, green 1.37, yellow 1.12, where text needs 4.5. So on
-   Light the accent splits by role, and the split is what a thing has to be
-   legible against.
-
-   A solid area carries its own label, so the constraint is the label against
-   the fill, not the fill against the page: those stay Dracula's purple, which
-   takes a dark label at 5.90:1. Text and thin lines have only the page behind
-   them, and take Comment at 4.71:1 — the one accent the palette can spare
-   there, and being a blue-purple it still reads as this theme rather than as
-   Bootstrap's blue.
-
-   The semantic four are left to Bootstrap on Light for the same reason: Dracula
-   Classic tunes them for a dark background, and red at 3.14:1 is the best of
-   them.
-
-   Every figure above is Dracula Classic measured on white, which is the wrong
-   pairing and the reason the accent has to be split at all. The specification's
-   light variant, Alucard Classic, has its own twelve tokens for exactly this
-   surface; carrying it would replace this whole block rather than refine it. */
 :root:not([data-bs-theme="dark"]):has(#mainNavbar) {
-  --bs-primary: var(--dracula-purple);
-  --bs-primary-rgb: 189, 147, 249;
+  --variant-bg: var(--alucard-bg);
+  --variant-rgb-bg: var(--alucard-rgb-bg);
+  --variant-fg: var(--alucard-fg);
+  --variant-rgb-fg: var(--alucard-rgb-fg);
+  --variant-selection: var(--alucard-selection);
+  --variant-comment: var(--alucard-comment);
+  --variant-bg-light: var(--alucard-bg-light);
+  --variant-bg-dark: var(--alucard-bg-dark);
 
-  /* Purple takes a dark label; the plugin's Light default is a white one at
-     2.41:1. Where the string overhangs onto Bootstrap's light track a dark
-     label reads at 12.01:1, so the halo turns light and only has to sharpen
-     the edge rather than rescue it. */
-  --mobile-progress-label: var(--dracula-bg);
-  --mobile-progress-halo: var(--dracula-fg);
-}
+  --variant-red: var(--alucard-red);
+  --variant-rgb-red: var(--alucard-rgb-red);
+  --variant-orange: var(--alucard-orange);
+  --variant-rgb-orange: var(--alucard-rgb-orange);
+  --variant-yellow: var(--alucard-yellow);
+  --variant-green: var(--alucard-green);
+  --variant-rgb-green: var(--alucard-rgb-green);
+  --variant-cyan: var(--alucard-cyan);
+  --variant-rgb-cyan: var(--alucard-rgb-cyan);
+  --variant-purple: var(--alucard-purple);
+  --variant-rgb-purple: var(--alucard-rgb-purple);
+  --variant-pink: var(--alucard-pink);
 
-/* Two surfaces have no Light half in this file, and both are left to the plugin
-   whole rather than half-painted: the bottom bar, and the state colours in the
-   filter list.
-
-   The bar is #222 under white icons and a white readout
-   (`plugins/mobile/mobile.css:256`, `:186`, `:295`); the filter icons take the
-   row's own colour. Each is a pairing, and half of one — this theme's bar under
-   the plugin's white icons, or the theme's state colours on Bootstrap's white
-   list — reads worse than either whole.
-
-   What is missing is a light palette, not a decision. Dracula Classic is tuned
-   for a dark background: measured on white its six state colours run from
-   1.12:1 to 3.14:1. The specification's light variant, Alucard Classic, has
-   twelve tokens and five UI surfaces of its own for exactly this
-   (https://draculatheme.com/spec); both surfaces above are for it to paint. */
-
-/* The accent's text and border uses, taken back to Comment. The plugin paints
-   every one of them straight from `--mobile-accent` — `a` at mobile.css:97, the
-   tab links at :331, the active tab's underline at :335, the toolbar icons at
-   :363 and the filter's funnel at :406 — so there is no token to intercept and
-   the selectors have to be met. Two of them carry two ids, which `#mainContainer`
-   on its own does not outrank.
-
-   `#mainContainer a` reaches further than the links it is aimed at: a filter row
-   is an `<a class="list-group-item">`, so a selected one takes Comment on the
-   accent fill at 1.95:1 instead of the `--mobile-accent-contrast` the plugin
-   puts there, which measures 5.90:1. Narrowing the selector is not the fix —
-   the row is a link and Comment is what Light has for links. */
-:root:not([data-bs-theme="dark"]) #mainContainer a,
-:root:not([data-bs-theme="dark"]) #mainContainer #sortIcon i,
-:root:not([data-bs-theme="dark"]) #mainContainer #refreshIcon i,
-:root:not([data-bs-theme="dark"]) #mainContainer #searchIcon i,
-:root:not([data-bs-theme="dark"]) #mainContainer #torrentsFilter > a > i {
-  color: var(--dracula-comment);
-}
-
-:root:not([data-bs-theme="dark"]) #mainContainer .nav-tabs > li.active > a {
-  border-bottom-color: var(--dracula-comment);
+  --variant-progress-label: var(--alucard-fg);
+  --variant-progress-halo: var(--alucard-bg);
+  --variant-accent-contrast: var(--alucard-bg);
 }
 
 /* Bootstrap compiles its variants with literal hex rather than through
@@ -211,19 +186,19 @@
    hover holds the rest colour and the change lands on the active state, where
    it reads as a press rather than as a second accent. */
 #mainContainer .btn-primary {
-  --bs-btn-color: var(--dracula-bg);
-  --bs-btn-bg: var(--dracula-purple);
-  --bs-btn-border-color: var(--dracula-purple);
-  --bs-btn-hover-color: var(--dracula-bg);
-  --bs-btn-hover-bg: var(--dracula-purple);
-  --bs-btn-hover-border-color: var(--dracula-purple);
-  --bs-btn-active-color: var(--dracula-bg);
-  --bs-btn-active-bg: var(--dracula-pink);
-  --bs-btn-active-border-color: var(--dracula-pink);
-  --bs-btn-disabled-color: var(--dracula-bg);
-  --bs-btn-disabled-bg: var(--dracula-comment);
-  --bs-btn-disabled-border-color: var(--dracula-comment);
-  --bs-btn-focus-shadow-rgb: 189, 147, 249;
+  --bs-btn-color: var(--variant-bg);
+  --bs-btn-bg: var(--variant-purple);
+  --bs-btn-border-color: var(--variant-purple);
+  --bs-btn-hover-color: var(--variant-bg);
+  --bs-btn-hover-bg: var(--variant-purple);
+  --bs-btn-hover-border-color: var(--variant-purple);
+  --bs-btn-active-color: var(--variant-bg);
+  --bs-btn-active-bg: var(--variant-pink);
+  --bs-btn-active-border-color: var(--variant-pink);
+  --bs-btn-disabled-color: var(--variant-bg);
+  --bs-btn-disabled-bg: var(--variant-comment);
+  --bs-btn-disabled-border-color: var(--variant-comment);
+  --bs-btn-focus-shadow-rgb: var(--variant-rgb-purple);
 }
 
 /* The other button this interface has, on fifteen controls: the search field's
@@ -245,18 +220,18 @@
 
    Dark only: the label is this theme's foreground, which on Light would be white
    on white. Light keeps the plugin's pairing whole, as it does the bars. */
-:root[data-bs-theme="dark"] #mainContainer .btn-outline-secondary {
-  --bs-btn-color: var(--dracula-fg);
-  --bs-btn-border-color: var(--dracula-comment);
-  --bs-btn-hover-color: var(--dracula-fg);
-  --bs-btn-hover-bg: var(--dracula-comment);
-  --bs-btn-hover-border-color: var(--dracula-comment);
-  --bs-btn-active-color: var(--dracula-bg);
-  --bs-btn-active-bg: var(--dracula-pink);
-  --bs-btn-active-border-color: var(--dracula-pink);
-  --bs-btn-disabled-color: var(--dracula-comment);
-  --bs-btn-disabled-border-color: var(--dracula-comment);
-  --bs-btn-focus-shadow-rgb: 189, 147, 249;
+#mainContainer .btn-outline-secondary {
+  --bs-btn-color: var(--variant-fg);
+  --bs-btn-border-color: var(--variant-comment);
+  --bs-btn-hover-color: var(--variant-fg);
+  --bs-btn-hover-bg: var(--variant-comment);
+  --bs-btn-hover-border-color: var(--variant-comment);
+  --bs-btn-active-color: var(--variant-bg);
+  --bs-btn-active-bg: var(--variant-pink);
+  --bs-btn-active-border-color: var(--variant-pink);
+  --bs-btn-disabled-color: var(--variant-comment);
+  --bs-btn-disabled-border-color: var(--variant-comment);
+  --bs-btn-focus-shadow-rgb: var(--variant-rgb-purple);
 }
 
 /* Four of the plugin's ten selects are outside Bootstrap's reach — priority,
@@ -273,10 +248,10 @@
    the checkboxes take. Geometry stays too: the plugin measures these cells to
    size the selects (`plugins/mobile/init.js:1100`), and padding here would move
    what it computes. */
-:root[data-bs-theme="dark"] #mainContainer select:not(.form-select) {
-  color: var(--dracula-fg);
-  background-color: var(--dracula-bg);
-  border-color: var(--dracula-current);
+#mainContainer select:not(.form-select) {
+  color: var(--variant-fg);
+  background-color: var(--variant-bg);
+  border-color: var(--variant-selection);
 }
 
 /* A focused field rings in Bootstrap's own blue, and for the same reason the
@@ -311,7 +286,7 @@
    them. */
 #mainContainer input[type="checkbox"],
 #mainContainer input[type="radio"] {
-  accent-color: var(--dracula-purple);
+  accent-color: var(--variant-purple);
 }
 
 /* A field with a button on its end — the directory pickers on the Add and Save
@@ -438,9 +413,9 @@
    Dark only, and the same pairing argument as the bottom bar: the rule this
    replaces paints a Bootstrap token, so Light stays Bootstrap's until there is
    a light palette to paint it from. */
-:root[data-bs-theme="dark"] #mainContainer .nav-tabs,
-:root[data-bs-theme="dark"] #mainContainer #searchBar {
-  background-color: var(--dracula-bg-darker);
+#mainContainer .nav-tabs,
+#mainContainer #searchBar {
+  background-color: var(--variant-bg-dark);
 }
 
 /* The reserve the fixed row stands on: 3px of `.nav-tabs` padding, the 48px
@@ -658,55 +633,42 @@
   line-height: 17px;
 }
 
-/* The bottom bar, on Dark. The plugin builds it as one fixed surface for both
-   themes — #222 with white icons and a white readout
-   (`plugins/mobile/mobile.css:256`, `:186`, `:295`) — and that pairing is
-   internally consistent, so it is taken or left whole. Dark takes it; Light
-   keeps the plugin's until a light palette is carried, at which point the bar
-   is one of the surfaces the two variants part company over.
-
-   Current Line above it is what separates it from the page: `.navbar` sets
-   `border: none` at :252 and the plugin relies on #222 being darker than
-   whatever sits above.
+/* The bottom bar. The plugin gives it #222 with white icons and a white readout
+   (`plugins/mobile/mobile.css:256`, `:186`, `:295`), one surface for both
+   themes; each variant paints its own instead. `.navbar` sets `border: none` at
+   :252, so the rule above the bar is what separates it from the page.
 
    `.navbar-inverse` is on the `<nav>` and again on the `<ul>` inside it
-   (`plugins/mobile/mobile.html:3`, `:5`). Measured, the two are not the same
-   box — the list is 263px of the bar's 375 and starts 8px below its top edge,
-   Bootstrap's `--bs-navbar-padding-y` holding it off — so a surface on the
-   `<nav>` alone leaves the inner one painting a rectangle over it. */
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar {
-  border-top: 1px solid var(--dracula-current);
-  background-color: var(--dracula-bg-darker);
-}
+   (`plugins/mobile/mobile.html:3`, `:5`), and the two are not the same box: the
+   list is 263px of the bar's 375 and starts 8px below its top edge, Bootstrap's
+   `--bs-navbar-padding-y` holding it off. A surface on the `<nav>` alone leaves
+   the inner one painting a rectangle over it.
 
-/* The bar's content sat low in it, and by an even 8px: Bootstrap pads a navbar
-   `--bs-navbar-padding-y` top and bottom, and the plugin then replaces the
-   bottom one with the safe-area inset (`plugins/mobile/mobile.css:262`), which
-   is nothing on a device that has no notch. Everything rode 4px below the
-   middle.
-
-   Split evenly instead, and the bar keeps the height it had: 1 of border, 4, the
-   65px row, 4, and whatever inset the device asks for — the same 74 plus inset
-   as 8 and nothing gave. */
+   The padding is split evenly because the plugin replaces only the bottom one
+   with the safe-area inset (`plugins/mobile/mobile.css:262`), which is nothing
+   on a device without a notch. 1 of border, 4, the 65px row, 4, and whatever
+   inset the device asks for. */
 #mainContainer #mainNavbar {
+  border-top: 1px solid var(--variant-selection);
   padding-top: 4px;
   padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  background-color: var(--variant-bg-dark);
 }
 
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar .navbar-inverse {
+#mainContainer #mainNavbar .navbar-inverse {
   background-color: transparent;
 }
 
 /* One line rather than two. The plugin draws the rule as a bevel — #111111 on
    the left, #323232 on the right (`plugins/mobile/mobile.css:305`) — which is
    a groove cut into its own #222 and, on any other surface, 2px of noise. */
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar .divider-vertical {
-  border-right: 1px solid var(--dracula-current);
+#mainContainer #mainNavbar .divider-vertical {
+  border-right: 1px solid var(--variant-selection);
   border-left: none;
 }
 
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar .nav > li > div > span {
-  color: var(--dracula-fg);
+#mainContainer #mainNavbar .nav > li > div > span {
+  color: var(--variant-fg);
 }
 
 /* A tracker message is the longest thing a list row ever holds — "Tracker: [No
@@ -760,8 +722,8 @@
    utilities carry `!important` — `.text-danger` resolves to
    `color: rgba(var(--bs-danger-rgb), var(--bs-text-opacity)) !important` — so
    nothing set on the parent reaches it. */
-:root[data-bs-theme="dark"] #mainContainer #torrentsList #list td > span {
-  color: var(--dracula-yellow);
+#mainContainer #torrentsList #list td > span {
+  color: var(--variant-yellow);
 }
 
 /* A row spends 111px on three lines of content. Broken down: 16 of cell
@@ -789,11 +751,11 @@
    any colour of Dracula's. Light keeps the plugin's own bar — the accent at
    full strength, which is purple there and carries the dark label set with it
    at 5.90:1. */
-:root[data-bs-theme="dark"] #mainContainer .progress-bar {
+#mainContainer .progress-bar {
   background-color: color-mix(
     in srgb,
     var(--mobile-accent) 35%,
-    var(--dracula-bg)
+    var(--variant-bg)
   );
 }
 
@@ -825,27 +787,24 @@
    verdict. `init.js` is what gives it an element, because the plugin writes the
    whole line as one string.
 
-   The weight is reset in both themes — the element is a `<b>`, and it is one
-   because the plugin's update line selects `span` and would otherwise take it.
-   The colours are Dark's alone: on Bootstrap's white card orange is 1.72:1 and
-   green 1.37:1, and the palette holds no second pair that would read there.
-   Spacing is the row's gap, not this element's. */
+   The weight is reset because the element is a `<b>`, and it is one because the
+   plugin's update line selects `span` and would otherwise take it. Spacing is
+   the row's gap, not this element's.
+
+   Both variants carry the pair: orange and green measure 8.36:1 and 10.38:1 on
+   Dracula's background, 5.58:1 and 5.96:1 on Alucard's. */
 #mainContainer #torrentsList #list .dracula-ratio {
   font-weight: inherit;
-}
-
-:root[data-bs-theme="dark"] #mainContainer #torrentsList #list .dracula-ratio {
-  color: var(--dracula-orange);
+  color: var(--variant-orange);
 }
 
 /* Two classes, so the verdict wins over the default whatever the source order
    is — both rules would otherwise carry the same weight. */
-:root[data-bs-theme="dark"]
-  #mainContainer
+#mainContainer
   #torrentsList
   #list
   .dracula-ratio.dracula-ratio-met {
-  color: var(--dracula-green);
+  color: var(--variant-green);
 }
 
 /* The bars between the line's parts are structure, not words, and read as words
@@ -855,14 +814,12 @@
 
    Two elements per line at most, both written by the plugin as `" | "`; the
    spaces stay in the text and the row's gap is what keeps them apart. Weight
-   reset in both themes for the same reason the ratio's is, colour on Dark alone
-   for the same reason as the rest of the line. */
+   reset for the same reason the ratio's is. Comment carries the same job in
+   either variant — Alucard's is 5.56:1 on its own background, against the
+   3.03:1 measured here, so it stays a rule below the text beside it. */
 #mainContainer #torrentsList #list .dracula-sep {
   font-weight: inherit;
-}
-
-:root[data-bs-theme="dark"] #mainContainer #torrentsList #list .dracula-sep {
-  color: var(--dracula-comment);
+  color: var(--variant-comment);
 }
 
 /* No scrollbar, and the mask is why. Measured on this row: the line stands 18px
@@ -911,8 +868,8 @@
 
    Same striping as the list, so the figures are the list's: 12.74:1 on the plain
    rows and 10.90:1 on the striped. Dark only — Yellow on white is 1.12:1. */
-:root[data-bs-theme="dark"] #mainContainer #detailsDetailsPage td:nth-child(2) {
-  color: var(--dracula-yellow);
+#mainContainer #detailsDetailsPage td:nth-child(2) {
+  color: var(--variant-yellow);
 }
 
 /* Every icon in this interface is a glyph from the plugin's own webfont. The
@@ -1035,34 +992,32 @@
    11.51:1, cyan 11.41:1, orange 9.27:1, purple 6.55:1, red 5.03:1, comment
    3.36:1 — the gear is the quiet one exactly as it is on the desktop, where it
    measures 3.03:1. */
-:root[data-bs-theme="dark"]
-  #mainContainer
+#mainContainer
   #mainNavbar
   :is(.bi-plus-lg, .bi-play-fill, .bi-upload) {
-  color: var(--dracula-green);
+  color: var(--variant-green);
 }
 
-:root[data-bs-theme="dark"]
-  #mainContainer
+#mainContainer
   #mainNavbar
   :is(.bi-stop-fill, .bi-trash) {
-  color: var(--dracula-red);
+  color: var(--variant-red);
 }
 
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-pause-fill {
-  color: var(--dracula-orange);
+#mainContainer #mainNavbar .bi-pause-fill {
+  color: var(--variant-orange);
 }
 
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-download {
-  color: var(--dracula-cyan);
+#mainContainer #mainNavbar .bi-download {
+  color: var(--variant-cyan);
 }
 
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-house {
-  color: var(--dracula-purple);
+#mainContainer #mainNavbar .bi-house {
+  color: var(--variant-purple);
 }
 
-:root[data-bs-theme="dark"] #mainContainer #mainNavbar .bi-gear {
-  color: var(--dracula-comment);
+#mainContainer #mainNavbar .bi-gear {
+  color: var(--variant-comment);
 }
 
 /* The same seven states the desktop's panel colours, in the list that offers
@@ -1091,7 +1046,7 @@
   #torrentFilter
   .list-group-item:not(.active)
   > :is(.bi-asterisk, .bi-arrow-down-up, .bi-tag) {
-  color: var(--dracula-purple);
+  color: var(--variant-purple);
 }
 
 /* Not one of the labels, and not their colour either. The row wears a tag
@@ -1104,42 +1059,42 @@
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-tag.dracula-no-label {
-  color: var(--dracula-comment);
+  color: var(--variant-comment);
 }
 
 :root[data-bs-theme="dark"]
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-download {
-  color: var(--dracula-cyan);
+  color: var(--variant-cyan);
 }
 
 :root[data-bs-theme="dark"]
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-check-lg {
-  color: var(--dracula-green);
+  color: var(--variant-green);
 }
 
 :root[data-bs-theme="dark"]
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-stop-fill {
-  color: var(--dracula-orange);
+  color: var(--variant-orange);
 }
 
 :root[data-bs-theme="dark"]
   #torrentFilter
   .list-group-item:not(.active)
   > :is(.bi-pause-fill, .bi-globe2) {
-  color: var(--dracula-comment);
+  color: var(--variant-comment);
 }
 
 :root[data-bs-theme="dark"]
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-exclamation-triangle-fill {
-  color: var(--dracula-red);
+  color: var(--variant-red);
 }
 
 /* A filter row is a block with the count floated right
@@ -1202,8 +1157,8 @@
    `!important`: the utility forces `#fff` with one, so a colour here needs one
    to be seen at all. */
 #mainContainer .list-group-item > .badge.text-bg-secondary {
-  color: var(--dracula-cyan) !important;
-  background-color: var(--dracula-current) !important;
+  color: var(--variant-cyan) !important;
+  background-color: var(--variant-selection) !important;
 }
 
 /* And the digit inside the pill, which is a second offset with its own cause.

@@ -29,7 +29,7 @@
    must be, because that sheet loads before every plugin and this one after
    them — see the note beside the rule there. */
 #StatusBar {
-  background-color: var(--dracula-bg-darker);
+  background-color: var(--dracula-bg-dark);
 }
 
 /* Status bar layout: LEFT [rTorrent Disk CPU Torrents] | spacer | CENTER [↑Speed ↓Speed] | spacer | RIGHT [Open Port Time] */
@@ -47,8 +47,8 @@
 #StatusBar > .status-cell:last-child { order: 11; margin-left: 0; }  /* Time → last */
 
 .browseFrame {
-  border: 1px solid var(--dracula-current);
-  background-color: var(--dracula-bg-darker);
+  border: 1px solid var(--dracula-selection);
+  background-color: var(--dracula-bg-dark);
   border-radius: 4px;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .rmenuitem:hover {
-  background-color: var(--dracula-current);
+  background-color: var(--dracula-selection);
 }
 
 .rmenuitem.active {
@@ -90,7 +90,7 @@
 }
 
 .tskconsole, .exconsole, .console, .starterConsole {
-  background: var(--dracula-bg-darker);
+  background: var(--dracula-bg-dark);
   color: var(--dracula-green);
   font-family: var(--font-mono);
 }
@@ -161,10 +161,10 @@
 
 .cCell {
   color: var(--dracula-fg);
-  border-color: var(--dracula-current);
+  border-color: var(--dracula-selection);
   background-color: color-mix(in srgb,
     var(--dracula-purple) calc(var(--chunk-level, 0) * 1%),
-    var(--dracula-bg-darker));
+    var(--dracula-bg-dark));
 }
 
 .Cell1 { --chunk-level: 3; }
@@ -193,7 +193,7 @@
 }
 
 .shieven {
-  background: var(--dracula-bg-darker);
+  background: var(--dracula-bg-dark);
 }
 
 .shiodd {
@@ -201,7 +201,7 @@
 }
 
 .Cell0 {
-  border: 1px solid var(--dracula-current);
+  border: 1px solid var(--dracula-selection);
   border-radius: 4px;
 }
 
@@ -224,7 +224,7 @@
 }
 
 #meter-disk-holder {
-  background-color: var(--dracula-current);
+  background-color: var(--dracula-selection);
   border: none;
   border-radius: 3px;
   overflow: hidden;
@@ -236,14 +236,14 @@
   font-weight: bold;
   line-height: 20px;
   height: 20px;
-  text-shadow: 0 1px 2px color-mix(in srgb, var(--dracula-bg-darker) 80%, transparent);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--dracula-bg-dark) 80%, transparent);
 }
 
 /* No #meter-cpu-value rule: in 5.3.7 cpuload draws a flot graph into a canvas
    rather than a bar, so no such element exists. */
 
 #meter-cpu-holder {
-  background-color: var(--dracula-current);
+  background-color: var(--dracula-selection);
   border-radius: 3px;
   overflow: hidden;
   height: 20px;
@@ -354,7 +354,7 @@
    two are never built. */
 .noty_bar.noty_theme_default {
   color: var(--dracula-fg);
-  background-color: var(--dracula-bg-darker);
+  background-color: var(--dracula-bg-dark);
   background-image: none;
   --noty-icon: var(--icon-info);
 }
@@ -366,7 +366,7 @@
 .noty_bar.noty_theme_default.noty_success,
 .noty_bar.noty_theme_default.noty_information {
   color: var(--dracula-fg);
-  background-color: color-mix(in srgb, var(--noty-accent) 15%, var(--dracula-bg-darker));
+  background-color: color-mix(in srgb, var(--noty-accent) 15%, var(--dracula-bg-dark));
   border-color: var(--noty-accent);
 }
 
@@ -598,21 +598,21 @@ div#cadd div.dlg-header {
    panel. */
 div#ratioRuleList,
 .lf_rur {
-  background-color: var(--dracula-bg-darker);
-  border-color: var(--dracula-current);
+  background-color: var(--dracula-bg-dark);
+  border-color: var(--dracula-selection);
 }
 
 /* The .TextboxFocus half is the focused state, so it takes the focus border. */
 ul#rlsul > li input[type="text"],
 ul#rlsul > li input.TextboxNormal,
 .lf_rur input.TextboxNormal {
-  background-color: var(--dracula-bg-darker);
-  border-color: var(--dracula-current);
+  background-color: var(--dracula-bg-dark);
+  border-color: var(--dracula-selection);
 }
 
 ul#rlsul > li input.TextboxFocus,
 .lf_rur input.TextboxFocus {
-  background-color: var(--dracula-bg-darker);
+  background-color: var(--dracula-bg-dark);
   border-color: var(--dracula-purple);
 }
 
