@@ -1,7 +1,7 @@
 // Structural checks on the shipped files. Not unit tests: they read the
 // files as text and assert things the theme's own rules require but nothing
 // else enforces — names the theme owns end to end, the version it writes in
-// eight places, and the SVGs it encodes by hand.
+// nineteen places, and the SVGs it encodes by hand.
 //
 // Scope is deliberately narrow. A general "dead code" sweep over CSS custom
 // properties cannot be done by pattern alone: `var(NAME)` with a closing paren
@@ -22,6 +22,7 @@ const SHEETS = [
 	"stable.css",
 	"plugins.css",
 	"palette.css",
+	"fonts.css",
 	"icons.css",
 	"mobile.css",
 ];
@@ -30,18 +31,19 @@ const FILES = [...SHEETS, "init.js"];
 const read = (name) => readFileSync(join(THEME, name), "utf8");
 const css = SHEETS.map((name) => ({ name, text: read(name) }));
 
-// --- 1. One version, written in thirteen places ----------------------------
+// --- 1. One version, written in nineteen places ----------------------------
 //
-// Every file carries a human-readable "Version X.Y.Z" line in its header, the
-// three sheets ruTorrent loads each stamp a machine-readable custom property,
-// init.js carries the constant it compares them against at runtime, and the
-// three @import URLs carry it as their cache-buster. All of them have to agree,
-// or the startup check cries wolf at the user and an edited sheet is served
-// from cache.
+// Each of the eight files carries a human-readable "Version X.Y.Z" line in its
+// header, the three sheets ruTorrent loads each stamp a machine-readable custom
+// property, init.js carries the constant it compares them against at runtime,
+// and the seven @import URLs carry it as their cache-buster. All of them have to
+// agree, or the startup check cries wolf at the user and an edited sheet is
+// served from cache.
 //
-// palette.css and mobile.css stamp no custom property: they are fetched under
-// the version in the URL that imports them, so they cannot go stale on their
-// own — see the header of palette.css.
+// The four imported sheets — palette.css, fonts.css, icons.css and mobile.css —
+// stamp no custom property: they are fetched under the version in the URL that
+// imports them, so they cannot go stale on their own — see the header of
+// palette.css.
 
 const VERSION_HEADER = /^\s*\*\s*Version\s+(\d+\.\d+\.\d+)\b/m;
 
@@ -114,22 +116,22 @@ test("every @import asks for the version the theme is on", () => {
 		}
 	}
 	// Exact, not a floor: another import is a decision, and it should cost
-	// whoever makes it a look at this test. Five of them — the palette and the
-	// icons into style.css, and the palette, the icons and the mobile rules into
-	// plugins.css, which is the only sheet the mobile plugin's UI ever loads.
-	// icons.css is named twice on purpose: same URL, fetched once, and the
-	// desktop would otherwise wait for config time to get its icons.
+	// whoever makes it a look at this test. Seven of them — the palette, the
+	// fonts and the icons into style.css, and those three plus the mobile rules
+	// into plugins.css, which is the only sheet the mobile plugin's UI ever
+	// loads. The first three are named twice on purpose: same URLs, fetched
+	// once, and the desktop would otherwise wait for config time to get them.
 	assert.equal(
 		found,
-		5,
-		`expected 5 @imports across the sheets, found ${found}`,
+		7,
+		`expected 7 @imports across the sheets, found ${found}`,
 	);
 });
 
-// The imports are the only way palette.css, icons.css and mobile.css reach a
-// page: nothing links them, and the mobile UI loads no sheet of the theme's but
-// plugins.css. Losing one costs the colours or the icons everywhere at once,
-// and nothing else in this suite would notice.
+// The imports are the only way palette.css, fonts.css, icons.css and mobile.css
+// reach a page: nothing links them, and the mobile UI loads no sheet of the
+// theme's but plugins.css. Losing one costs the colours, the typeface or the
+// icons everywhere at once, and nothing else in this suite would notice.
 test("the sheets that carry the imports still carry them", () => {
 	const carries = (sheet, target) =>
 		assert.match(
@@ -137,20 +139,20 @@ test("the sheets that carry the imports still carry them", () => {
 			new RegExp(`@import\\s+url\\("${target.replace(".", "\\.")}`),
 			`${sheet} no longer imports ${target}`,
 		);
-	for (const target of ["palette.css", "icons.css"])
+	for (const target of ["palette.css", "fonts.css", "icons.css"])
 		carries("style.css", target);
-	for (const target of ["palette.css", "icons.css", "mobile.css"])
+	for (const target of ["palette.css", "fonts.css", "icons.css", "mobile.css"])
 		carries("plugins.css", target);
 });
 
 // --- 2. Theme-owned custom properties resolve ------------------------------
 //
-// Scoped to the two namespaces the theme both defines and consumes. Names
-// outside them (--row-odd-bg-color, --status-image, --menu-*) are upstream's
-// contract: the theme supplies values and upstream's own sheets read them, so
-// "unused here" says nothing about them.
+// Scoped to the three namespaces the theme both defines and consumes. Names
+// outside them (--row-odd-bg-color, --status-image, --menu-*, every --bs-*) are
+// somebody else's contract: the theme supplies values and upstream's own sheets
+// read them, so "unused here" says nothing about them.
 
-const OWNED = /^--(?:dracula|icon)-/;
+const OWNED = /^--(?:dracula|font|icon)-/;
 
 function definitions(text) {
 	const found = new Set();
@@ -171,7 +173,7 @@ function references(text) {
 const allDefined = new Set(css.flatMap(({ text }) => [...definitions(text)]));
 const allReferenced = new Set(css.flatMap(({ text }) => [...references(text)]));
 
-test("every --dracula-*/--icon-* the theme references is defined somewhere in it", () => {
+test("every name the theme owns and references is defined somewhere in it", () => {
 	const missing = [...allReferenced].filter(
 		(n) => OWNED.test(n) && !allDefined.has(n),
 	);
@@ -180,6 +182,53 @@ test("every --dracula-*/--icon-* the theme references is defined somewhere in it
 		[],
 		`referenced but never defined: ${missing.join(", ")}`,
 	);
+});
+
+// --- 2a. …and in a sheet the interface reading it actually loads -------------
+//
+// The theme is two programs sharing a folder. ruTorrent's desktop loads
+// style.css, stable.css and plugins.css; the mobile plugin disables the theme
+// plugin (`plugins/mobile/init.js:2138`) and loads plugins.css alone. A name
+// defined in a sheet the other interface never fetches resolves to nothing, the
+// declaration reading it is dropped, and the page looks merely plain — which is
+// why the check above, which pools every sheet, cannot see it.
+//
+// The reachable set is followed from the @import URLs rather than listed here,
+// so a sheet added to one entry point and forgotten at the other fails this
+// test instead of a reader's phone.
+
+const ENTRY_POINTS = {
+	desktop: ["style.css", "stable.css", "plugins.css"],
+	"the mobile plugin": ["plugins.css"],
+};
+
+function reachableFrom(entries) {
+	const seen = new Set();
+	for (const queue = [...entries]; queue.length;) {
+		const name = queue.shift();
+		if (seen.has(name)) continue;
+		seen.add(name);
+		// Comments first: the prose in these sheets quotes @import statements.
+		const text = read(name).replace(/\/\*[\s\S]*?\*\//g, "");
+		for (const m of text.matchAll(/@import\s+url\("([^"?]+)/g))
+			queue.push(m[1]);
+	}
+	return [...seen];
+}
+
+test("every name an interface reads is defined in a sheet that interface loads", () => {
+	for (const [ui, entries] of Object.entries(ENTRY_POINTS)) {
+		const texts = reachableFrom(entries).map(read);
+		const defined = new Set(texts.flatMap((t) => [...definitions(t)]));
+		const missing = [
+			...new Set(texts.flatMap((t) => [...references(t)])),
+		].filter((n) => OWNED.test(n) && !defined.has(n));
+		assert.deepEqual(
+			missing,
+			[],
+			`${ui} reads but cannot resolve: ${missing.join(", ")}`,
+		);
+	}
 });
 
 // Every exemption below is a name with a reader this repo cannot see, so it has
@@ -201,7 +250,7 @@ const EXEMPT = new Map([
 	["--dracula-selection", "palette record: shares its hex with Current Line"],
 ]);
 
-test("no --dracula-*/--icon-* is defined and then never used", () => {
+test("no name the theme owns is defined and then never used", () => {
 	const dead = [...allDefined].filter(
 		(n) => OWNED.test(n) && !allReferenced.has(n) && !EXEMPT.has(n),
 	);

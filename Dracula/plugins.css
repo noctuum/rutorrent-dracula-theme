@@ -10,11 +10,12 @@
    is what the sheets ruTorrent loads are stamped for — see palette.css.
 
    This sheet is the only one of the theme's that reaches the mobile plugin's
-   interface, so it is where the palette, the icons and the rules for that
-   interface have to enter. Imported rules take the position of the @import,
-   which is above everything else here and below every sheet loaded before this
-   one: still later than the plugin's own, which is what matters. */
+   interface, so it is where the palette, the typefaces, the icons and the rules
+   for that interface have to enter. Imported rules take the position of the
+   @import, which is above everything else here and below every sheet loaded
+   before this one: still later than the plugin's own, which is what matters. */
 @import url("palette.css?v=0.2.1"); /* x-release-please-version */
+@import url("fonts.css?v=0.2.1"); /* x-release-please-version */
 @import url("icons.css?v=0.2.1"); /* x-release-please-version */
 @import url("mobile.css?v=0.2.1"); /* x-release-please-version */
 
