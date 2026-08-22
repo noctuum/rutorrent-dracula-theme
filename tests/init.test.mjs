@@ -91,6 +91,7 @@ test("init.js evaluates against a stub ruTorrent and exposes its helpers", () =>
 		"draculaIconKind",
 		"draculaCssUrl",
 		"draculaMobileRateAt",
+		"draculaCountsTooltip",
 		"draculaVisualScale",
 		"draculaSharedWords",
 		"draculaDropWords",
@@ -387,6 +388,43 @@ test("draculaMobileRateAt: a line without a rate finds nothing", () => {
 	assert.equal(theme.draculaMobileRateAt(null, 0), null);
 	// An arrow with nothing after it is not a reading.
 	assert.equal(theme.draculaMobileRateAt("Seeding ↓", 0), null);
+});
+
+// rTorrent 0.9.8 reports no open file descriptors, upstream hides that count
+// rather than writing a zero, and the tooltip used to print the label anyway.
+test("draculaCountsTooltip: a count with no value takes its label with it", () => {
+	assert.equal(
+		theme.draculaCountsTooltip("Open Connections", [
+			{ label: "HTTP", value: "0" },
+			{ label: "Sockets", value: "22" },
+			{ label: "File Descriptors", value: "" },
+		]),
+		"Open Connections\nHTTP: 0\nSockets: 22",
+	);
+});
+
+test("draculaCountsTooltip: a zero is a value and stays", () => {
+	assert.equal(
+		theme.draculaCountsTooltip("Open Connections", [
+			{ label: "HTTP", value: "0" },
+		]),
+		"Open Connections\nHTTP: 0",
+	);
+});
+
+test("draculaCountsTooltip: with nothing to report only the title is left", () => {
+	assert.equal(
+		theme.draculaCountsTooltip("Open Connections", [
+			{ label: "HTTP", value: "" },
+			{ label: "Sockets", value: "" },
+			{ label: "File Descriptors", value: "" },
+		]),
+		"Open Connections",
+	);
+	assert.equal(
+		theme.draculaCountsTooltip("Open Connections", []),
+		"Open Connections",
+	);
 });
 
 test("draculaVisualScale: falls back to 1 when the viewport reports nothing", () => {

@@ -429,18 +429,40 @@ function draculaCpuTooltip(pane)
 		pane.title = "CPU Load: " + orig;
 }
 
+/* A title from the counts that have one. Anything whose value is empty is left
+   out entirely rather than printed as a label with nothing behind it. */
+function draculaCountsTooltip(title, counts)
+{
+	var lines = [title];
+	for(var i = 0; i < counts.length; i++)
+	{
+		if(counts[i] && counts[i].value !== "")
+			lines.push(counts[i].label + ": " + counts[i].value);
+	}
+	return lines.join("\n");
+}
+
+/* `webui.js:2179` fills the three counts from `stopen`, and a daemon that does
+   not report one answers -1: upstream then **hides** that element instead of
+   writing a zero (`:2182`). Hiding leaves the old text in place, so the text
+   alone would print a stale figure after a count disappears — the inline
+   `display` jQuery's `.hide()` writes is the signal to read. */
 function draculaConnectionsTooltip(cell)
 {
 	if(!cell)
 		return;
-	var count = function(id)
+	var read = function(id, label)
 	{
 		var el = document.getElementById(id);
-		return el ? el.textContent.replace(/\D/g, "") : "0";
+		if(!el || el.style.display === "none")
+			return { label: label, value: "" };
+		return { label: label, value: el.textContent.replace(/\D/g, "") };
 	};
-	cell.title = "Open Connections\nHTTP: " + count("stopen_http_count") +
-		"\nSockets: " + count("stopen_sock_count") +
-		"\nFile Descriptors: " + count("stopen_fd_count");
+	cell.title = draculaCountsTooltip("Open Connections", [
+		read("stopen_http_count", "HTTP"),
+		read("stopen_sock_count", "Sockets"),
+		read("stopen_fd_count", "File Descriptors")
+	]);
 }
 
 function draculaTorrentsTooltip(cell)
