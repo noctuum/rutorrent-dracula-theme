@@ -89,6 +89,7 @@ test("init.js evaluates against a stub ruTorrent and exposes its helpers", () =>
 		"draculaUserSizedColumn",
 		"draculaOlderThan",
 		"draculaIconKind",
+		"draculaCssUrl",
 		"draculaVisualScale",
 		"draculaSharedWords",
 		"draculaDropWords",
@@ -325,6 +326,29 @@ test("draculaIconKind: only tracklabels URLs classify, and by their parameter", 
 	assert.equal(theme.draculaIconKind("some/other/url?label=x"), null);
 	assert.equal(theme.draculaIconKind(""), null);
 	assert.equal(theme.draculaIconKind(null), null);
+});
+
+// The Trackers tab keeps the icon's URL in an inline background rather than in
+// an attribute, so the URL has to be taken back out of a CSS value before
+// draculaIconKind can judge it.
+test("draculaCssUrl: unwraps a background whatever the browser quoted it with", () => {
+	const target = "plugins/tracklabels/action.php?tracker=debian.org";
+	assert.equal(theme.draculaCssUrl(`url("${target}")`), target);
+	assert.equal(theme.draculaCssUrl(`url('${target}')`), target);
+	assert.equal(theme.draculaCssUrl(`url(${target})`), target);
+	assert.equal(theme.draculaCssUrl(`  url( "${target}" )  `), target);
+});
+
+// Anything without exactly one URL has no icon to judge, and answering with a
+// fragment would hand draculaIconKind something it could misread.
+test("draculaCssUrl: anything that is not one plain url() answers empty", () => {
+	assert.equal(theme.draculaCssUrl("none"), "");
+	assert.equal(theme.draculaCssUrl(""), "");
+	assert.equal(theme.draculaCssUrl(null), "");
+	assert.equal(theme.draculaCssUrl(undefined), "");
+	assert.equal(theme.draculaCssUrl("linear-gradient(red, blue)"), "");
+	// A stack of layers: the row is painting something of its own as well.
+	assert.equal(theme.draculaCssUrl("url(a.png), url(b.png)"), "");
 });
 
 test("draculaVisualScale: falls back to 1 when the viewport reports nothing", () => {
