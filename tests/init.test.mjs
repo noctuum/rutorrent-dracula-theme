@@ -90,6 +90,7 @@ test("init.js evaluates against a stub ruTorrent and exposes its helpers", () =>
 		"draculaOlderThan",
 		"draculaIconKind",
 		"draculaCssUrl",
+		"draculaMobileRateAt",
 		"draculaVisualScale",
 		"draculaSharedWords",
 		"draculaDropWords",
@@ -349,6 +350,43 @@ test("draculaCssUrl: anything that is not one plain url() answers empty", () => 
 	assert.equal(theme.draculaCssUrl("linear-gradient(red, blue)"), "");
 	// A stack of layers: the row is painting something of its own as well.
 	assert.equal(theme.draculaCssUrl("url(a.png), url(b.png)"), "");
+});
+
+// The plugin writes ` ↑`/` ↓` before theConverter.speed and a line can carry
+// both, upload first (`plugins/mobile/init.js:1906`-`:1907`). Everything below
+// is the shape that template produces.
+test("draculaMobileRateAt: finds a reading, arrow and unit included", () => {
+	const line = "Downloading ↓130.0 KiB/s | ETA 5h 5m";
+	const found = theme.draculaMobileRateAt(line, 0);
+	assert.equal(found.direction, "down");
+	assert.equal(line.substr(found.start, found.length), "↓130.0 KiB/s");
+});
+
+test("draculaMobileRateAt: both readings of a line, in the order written", () => {
+	const line = "Seeding ↑1.5 MiB/s ↓130.0 KiB/s | Ratio 0.377";
+	const up = theme.draculaMobileRateAt(line, 0);
+	assert.equal(up.direction, "up");
+	assert.equal(line.substr(up.start, up.length), "↑1.5 MiB/s");
+
+	const down = theme.draculaMobileRateAt(line, up.start + up.length);
+	assert.equal(down.direction, "down");
+	assert.equal(line.substr(down.start, down.length), "↓130.0 KiB/s");
+});
+
+// A rate at the very end has no space to stop at, and a zero rate is written as
+// nothing at all rather than as a reading of zero.
+test("draculaMobileRateAt: the last reading runs to the end of the line", () => {
+	const line = "Seeding ↑1.5 MiB/s";
+	const found = theme.draculaMobileRateAt(line, 0);
+	assert.equal(line.substr(found.start, found.length), "↑1.5 MiB/s");
+});
+
+test("draculaMobileRateAt: a line without a rate finds nothing", () => {
+	assert.equal(theme.draculaMobileRateAt("Seeding | Ratio 0.377", 0), null);
+	assert.equal(theme.draculaMobileRateAt("", 0), null);
+	assert.equal(theme.draculaMobileRateAt(null, 0), null);
+	// An arrow with nothing after it is not a reading.
+	assert.equal(theme.draculaMobileRateAt("Seeding ↓", 0), null);
 });
 
 test("draculaVisualScale: falls back to 1 when the viewport reports nothing", () => {

@@ -835,6 +835,22 @@
   color: var(--variant-comment);
 }
 
+/* A rate answers by direction, arrow and unit with it: down cyan, up green,
+   the pair the desktop already paints into `--icon-download-speed` and
+   `--icon-upload-speed`. `init.js` gives each reading an element, the plugin
+   writing the whole line as one string. */
+#mainContainer #torrentsList #list .dracula-rate {
+  font-weight: inherit;
+}
+
+#mainContainer #torrentsList #list .dracula-rate-down {
+  color: var(--variant-cyan);
+}
+
+#mainContainer #torrentsList #list .dracula-rate-up {
+  color: var(--variant-green);
+}
+
 /* No scrollbar, and the mask is why. Measured on this row: the line stands 18px
    with `scrollbar-width: none`, 28px at `thin` and 33px at `auto` — any gutter
    a browser reserves hands back the second line this rule exists to remove, and

@@ -2754,8 +2754,13 @@ function draculaStatusOverride()
 			if(!draculaErrorIcon(icon))
 				icon = "Status_Stopped";
 		}
-		else if(status === theUILang.Pausing)
-			status = "Paused";	// a state, not something in progress
+
+		// A state, not something in progress. Outside the branch above because a
+		// torrent on its way to paused counts as not running, and upstream's word
+		// for it is neither Finished nor Stopped, so the rewrite there passes it
+		// by.
+		if(status === theUILang.Pausing)
+			status = "Paused";
 
 		return [icon, status];
 	};
@@ -3342,6 +3347,74 @@ function draculaMobileSeparatorAt(text, from)
 	return at === -1 ? -1 : at + 1;
 }
 
+/* One rate reading in a status line, arrow included: where it starts, how long
+   it runs, and which way it points.
+
+   The plugin writes ` ↑` and ` ↓` before `theConverter.speed`
+   (`plugins/mobile/init.js:1906`, `:1907`), and a line can carry both — upload
+   first. `speed()` is `bytes()` plus `/s`, and `bytes()` puts exactly one space
+   between the number and the unit, so a reading is the arrow, a token, a space
+   and one more token. It ends at the space after the unit, which is the space
+   before the next arrow or before the bar. */
+function draculaMobileRateAt(text, from)
+{
+	if(typeof text !== "string")
+		return null;
+	var at = -1;
+	for(var i = from > 0 ? from : 0; i < text.length; i++)
+	{
+		var ch = text.charAt(i);
+		if(ch === "↑" || ch === "↓")
+		{
+			at = i;
+			break;
+		}
+	}
+	if(at === -1)
+		return null;
+	var space = text.indexOf(" ", at);
+	if(space === -1)
+		return null;
+	var end = text.indexOf(" ", space + 1);
+	if(end === -1)
+		end = text.length;
+	return {
+		start: at,
+		length: end - at,
+		direction: text.charAt(at) === "↑" ? "up" : "down"
+	};
+}
+
+/* Each rate in a line, wrapped so it can answer by direction.
+
+   Before the separators, for the reason the ratio is: that pass splits the
+   line's text nodes, and a reading left in a later node would not be found.
+   `<b>` because the plugin's update line selects `span`. */
+function draculaMarkMobileRates()
+{
+	var lines = document.querySelectorAll("#torrentsList #list td > span");
+	for(var i = 0; i < lines.length; i++)
+	{
+		if(lines[i].querySelector(".dracula-rate"))
+			continue;
+		var node = lines[i].firstChild;
+		if(!node || node.nodeType !== 3)
+			continue;
+		for(;;)
+		{
+			var found = draculaMobileRateAt(node.textContent, 0);
+			if(!found)
+				break;
+			var rate = node.splitText(found.start);
+			node = rate.splitText(found.length);
+			var box = document.createElement("b");
+			box.className = "dracula-rate dracula-rate-" + found.direction;
+			rate.parentNode.replaceChild(box, rate);
+			box.appendChild(rate);
+		}
+	}
+}
+
 /* Both separators of one line, wrapped so they can take a colour of their own.
 
    Runs after the ratio, never before: that pass reads the line's first text
@@ -3589,6 +3662,7 @@ function draculaMarkMobileLines()
 	{
 		var result = upstream.apply(this, arguments);
 		draculaMarkMobileRatios();
+		draculaMarkMobileRates();
 		draculaMarkMobileSeparators();
 		draculaMarkMobileSpeeds();
 		draculaListRequestEnded();
