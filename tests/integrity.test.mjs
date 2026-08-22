@@ -617,3 +617,33 @@ test("every inline SVG data URI decodes to a well-formed svg element", () => {
 		`only ${count} inline SVGs found — the pattern is probably wrong`,
 	);
 });
+
+// --- 6. The two state rows whose `icon` name upstream reversed --------------
+//
+// `icon="inactive"` is the Stopped row from ruTorrent 5.2.2 and the Inactive
+// row below it, so keying either glyph to the attribute paints one half of the
+// supported range with the other row's icon. The ids are the core's state keys
+// (`js/category-list.js`) and its filtering depends on them.
+
+test("the Stopped and Inactive rows take their icon from the id", () => {
+	const text = read("style.css");
+
+	for (const [id, glyph] of [
+		["-_-_-wfa-_-_-", "--icon-status-stopped"],
+		["-_-_-iac-_-_-", "--icon-status-inactive"],
+	])
+		assert.match(
+			text,
+			new RegExp(
+				`panel-label#${id}\\s*\\{[^}]*--status-image:\\s*var\\(${glyph}\\)`,
+			),
+			`no rule gives #${id} ${glyph}`,
+		);
+
+	for (const name of ["inactive", "paused"])
+		assert.doesNotMatch(
+			text,
+			new RegExp(`panel-label\\[icon="${name}"\\][^{]*\\{[^}]*--status-image`),
+			`icon="${name}" sets --status-image, and below 5.2.2 it is the other row`,
+		);
+});
