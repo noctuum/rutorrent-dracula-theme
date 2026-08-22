@@ -2196,63 +2196,71 @@ function draculaProbeIcon(url)
 	img.src = url;
 }
 
-function draculaMarkIcon(label)
+/* The CSSOM gives a background back as `url("…")` in Chrome and Firefox, and as
+   `url(…)` where nothing needs quoting. Anything that is not one plain url() —
+   `none`, a gradient, a comma-separated stack — has no single URL to judge and
+   answers empty. */
+function draculaCssUrl(value)
 {
-	var value = label.getAttribute("icon") || "";
-	var kind = draculaIconKind(value);
-	if(!kind)
-	{
-		label.removeAttribute("data-dracula-blank");
-		return;
-	}
-	var url = value.slice(4);
-	var state = draculaIconInk[url];
-	if(state === undefined)
-	{
-		draculaProbeIcon(url);
-		return;
-	}
-	if(state === "blank")
-		label.setAttribute("data-dracula-blank", kind);
-	else if(state === "inked")
-		label.removeAttribute("data-dracula-blank");
+	var m = /^\s*url\(\s*(?:"([^"]*)"|'([^']*)'|([^)\s]*))\s*\)\s*$/.exec(value || "");
+	return m ? (m[1] || m[2] || m[3] || "") : "";
 }
 
-/* The phone's filter list paints the same icons somewhere else again: an
-   `img.filter-icon` with the URL in its src (`plugins/mobile/init.js:579`),
-   where the panels carry it in an attribute. The probe above answers for both,
-   being keyed by the URL rather than by the element.
+function draculaMarkBlankIcon(el, url)
+{
+	var kind = draculaIconKind(url);
+	if(!kind)
+	{
+		el.removeAttribute("data-dracula-blank");
+		return;
+	}
+	var state = draculaIconInk[url];
+	if(state === undefined)
+		draculaProbeIcon(url);
+	else if(state === "blank")
+		el.setAttribute("data-dracula-blank", kind);
+	else if(state === "inked")
+		el.removeAttribute("data-dracula-blank");
+}
 
-   Marking is all that is needed. The image tracklabels serves is transparent,
-   not missing, so a background behind it shows through — and only a row proved
-   blank is ever given one, which is why a real favicon can never be covered. */
+function draculaMarkIconsIn(selector, urlOf)
+{
+	var nodes = document.querySelectorAll(selector);
+	for(var i = 0; i < nodes.length; i++)
+		draculaMarkBlankIcon(nodes[i], urlOf(nodes[i]));
+}
+
+/* Three surfaces show these icons and each keeps the URL somewhere else: the
+   sidebar panels in an `icon` attribute behind a `url:` prefix, the phone's
+   filter list in an `img` src (`plugins/mobile/init.js:579`), and the details
+   Trackers tab in an inline background written by `js/stable.js:944`. One probe
+   answers for all three, being keyed by the URL rather than by the element, so a
+   host already judged on one surface costs nothing on the next.
+
+   Marking is all the first two need: the image tracklabels serves is
+   transparent, not missing, so a background behind it shows through. The third
+   needs a pseudo-element — see the note in stable.css. Either way only a row
+   proved blank is ever marked, which is why a real favicon can never be
+   covered. */
 function draculaMarkFilterIcons()
 {
-	var icons = document.querySelectorAll("#torrentFilter img.filter-icon");
-	for(var i = 0; i < icons.length; i++)
+	draculaMarkIconsIn("#torrentFilter img.filter-icon", function(el)
 	{
-		var url = icons[i].getAttribute("src") || "";
-		var kind = draculaIconKind(url);
-		if(!kind)
-		{
-			icons[i].removeAttribute("data-dracula-blank");
-			continue;
-		}
-		var state = draculaIconInk[url];
-		if(state === undefined)
-			draculaProbeIcon(url);
-		else if(state === "blank")
-			icons[i].setAttribute("data-dracula-blank", kind);
-		else if(state === "inked")
-			icons[i].removeAttribute("data-dracula-blank");
-	}
+		return el.getAttribute("src") || "";
+	});
 }
 
 function draculaSweepIcons()
 {
-	var rows = document.querySelectorAll("panel-label[icon^='url:']");
-	Array.prototype.forEach.call(rows, draculaMarkIcon);
+	draculaMarkIconsIn("panel-label[icon^='url:']", function(el)
+	{
+		return (el.getAttribute("icon") || "").slice(4);
+	});
 	draculaMarkFilterIcons();
+	draculaMarkIconsIn("#TrackerList .stable-icon", function(el)
+	{
+		return draculaCssUrl(el.style.backgroundImage);
+	});
 }
 
 /* The panels are rebuilt as labels and trackers come and go, and a row can keep
@@ -2264,12 +2272,30 @@ function draculaWatchCategoryIcons()
 	var list = document.getElementById("CatList");
 	if(!list)
 		return;
-	draculaSweepIcons();
 	new MutationObserver(draculaSweepIcons).observe(list, {
 		childList: true,
 		subtree: true,
 		attributes: true,
 		attributeFilter: ["icon"]
+	});
+}
+
+/* The Trackers tab holds no rows until a torrent is selected and is rebuilt from
+   scratch on every poll, so its marks have to be reapplied rather than set once.
+   `style` is in the filter because that is where dxSTable puts the favicon and a
+   reused row can change host without changing shape; the sweep writes only
+   data-dracula-blank, which is not in the filter, so it cannot retrigger
+   itself. */
+function draculaWatchTrackerIcons()
+{
+	var list = document.getElementById("TrackerList");
+	if(!list)
+		return;
+	new MutationObserver(draculaSweepIcons).observe(list, {
+		childList: true,
+		subtree: true,
+		attributes: true,
+		attributeFilter: ["style"]
 	});
 }
 
@@ -2385,7 +2411,9 @@ plugin.allDone = function()
 	draculaWatchLoadingIndicator();
 	draculaSetFavicon();
 	draculaWatchLog();
+	draculaSweepIcons();
 	draculaWatchCategoryIcons();
+	draculaWatchTrackerIcons();
 	var toolbar = document.getElementById("t");
 	var tabbar = document.getElementById("tabbar");
 

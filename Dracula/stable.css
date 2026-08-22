@@ -298,6 +298,35 @@ body.compact .stable thead td div {
   height: 22px;
 }
 
+/* tracklabels answers for a tracker it has no picture of with a 16x16 PNG
+   transparent in every pixel, so the row paints an empty icon rather than
+   failing — nothing in the markup says which it is, and init.js counts opaque
+   pixels to find out.
+
+   A pseudo-element rather than this element's background-image, because
+   `js/stable.js:944` writes the favicon as an *inline* style: a sheet can only
+   beat that with !important, and an !important here would erase every real
+   favicon along with the blank ones. Painting over instead of behind is safe
+   only because of the marking — a row carries this attribute after its image is
+   proved to have no opaque pixel, and never before.
+
+   Same glyph and same Comment as the stand-in a picture-less tracker already
+   gets in the sidebar and on the phone; a substitute should not compete with the
+   real favicons beside it. */
+.stable-icon[data-dracula-blank="tracker"] {
+  position: relative;
+}
+
+.stable-icon[data-dracula-blank="tracker"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--icon-peer-network);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px;
+}
+
 .Status_Down { background-image: var(--icon-status-down); background-position: center; }
 .Status_Up { background-image: var(--icon-status-up); background-position: center; }
 .Status_Incompleted { background-image: var(--icon-status-incompleted); background-position: center; }
