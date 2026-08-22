@@ -152,7 +152,7 @@ test("the sheets that carry the imports still carry them", () => {
 // somebody else's contract: the theme supplies values and upstream's own sheets
 // read them, so "unused here" says nothing about them.
 
-const OWNED = /^--(?:dracula|font|icon)-/;
+const OWNED = /^--(?:dracula|alucard|functional|variant|font|icon)-/;
 
 function definitions(text) {
 	const found = new Set();
@@ -245,9 +245,48 @@ const EXEMPT = new Map([
 	// `css/panel-label.css` consumes it; nothing here needs to.
 	["--icon-letter-background-color", "read by upstream css/panel-label.css:72"],
 	["--icon-letter-border-color", "read by upstream css/panel-label.css:76"],
-	// The Dracula spec gives Selection and Current Line the same hex, so this
-	// name has no reader of its own but belongs to the palette as published.
-	["--dracula-selection", "palette record: shares its hex with Current Line"],
+	// palette.css records the specification whole, and the specification is
+	// larger than this interface. Each of these is published, carries a value no
+	// rule here has a use for, and is kept so that the record can be checked
+	// against the spec rather than against what happens to be painted.
+	["--dracula-current-line", "palette record: shares its hex with Comment"],
+	[
+		"--dracula-floating",
+		"palette record: shares its hex with Background Light",
+	],
+	["--dracula-bg-lighter", "palette record: no surface here is this shade"],
+	["--dracula-bg-darker", "palette record: no surface here is this shade"],
+	["--dracula-line-highlight", "palette record: no line highlight here"],
+	["--alucard-current-line", "palette record: shares its hex with Comment"],
+	["--alucard-floating", "palette record: not a surface this interface has"],
+	["--alucard-bg-lighter", "palette record: no surface here is this shade"],
+	["--alucard-bg-darker", "palette record: no surface here is this shade"],
+	["--alucard-line-highlight", "palette record: no line highlight here"],
+	[
+		"--alucard-yellow",
+		"palette record: Dark's yellow has readers, Light's has none yet",
+	],
+	[
+		"--alucard-pink",
+		"palette record: Dark's pink has readers, Light's has none yet",
+	],
+	["--functional-red", "palette record: chrome colours, measured and not used"],
+	[
+		"--functional-orange",
+		"palette record: chrome colours, measured and not used",
+	],
+	[
+		"--functional-green",
+		"palette record: chrome colours, measured and not used",
+	],
+	[
+		"--functional-cyan",
+		"palette record: chrome colours, measured and not used",
+	],
+	[
+		"--functional-purple",
+		"palette record: chrome colours, measured and not used",
+	],
 ]);
 
 test("no name the theme owns is defined and then never used", () => {
@@ -275,55 +314,150 @@ test("the exemption list has not gone stale", () => {
 // second, decimal copy of a colour that palette.css already holds, and nothing
 // but this test keeps the two in step when a palette value moves.
 
+const paletteText = css.find(({ name }) => name === "palette.css").text;
+
 const paletteHex = new Map(
-	[
-		...css
-			.find(({ name }) => name === "palette.css")
-			.text.matchAll(/(--dracula-[a-z-]+)\s*:\s*#([0-9a-fA-F]{6})/g),
-	].map(([, name, hex]) => [name, hex.toLowerCase()]),
+	[...paletteText.matchAll(/(--[a-z]+-[a-z-]+)\s*:\s*#([0-9a-fA-F]{6})/g)].map(
+		([, name, hex]) => [name, hex.toLowerCase()],
+	),
 );
 
 const asTriple = (hex) =>
 	[0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ");
 
-test("every --*-rgb triple still spells out the palette colour it stands for", () => {
+// The pairing is by name: `--alucard-rgb-red` answers to `--alucard-red` and to
+// nothing else. `rgb` sits next to the namespace so the eye groups the copies
+// together rather than reading to the end of each name.
+test("every --*-rgb-* triple still spells out the palette colour it stands for", () => {
 	const wrong = [];
-	for (const { name, text } of css) {
-		for (const m of text.matchAll(
-			/(--[a-zA-Z0-9-]+)-rgb\s*:\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*;/g,
-		)) {
-			const [, base, r, g, b] = m;
-			const written = [r, g, b].map(Number).join(", ");
-			// Most triples are written directly under the name they belong to,
-			// which says exactly which colour they should spell. The nearest one
-			// above and not the first in the file: `--bs-primary` is set once for
-			// Dark and again for Light, to two different colours, and each block's
-			// triple belongs to its own.
-			//
-			// `--bs-btn-focus-shadow-rgb` has no such partner — Bootstrap exposes
-			// only the triple — so all it can be held to is being some colour the
-			// palette publishes.
-			const beside = [
-				...text
-					.slice(0, m.index)
-					.matchAll(
-						new RegExp(
-							`${base}\\s*:\\s*var\\(\\s*(--dracula-[a-z-]+)\\s*\\)`,
-							"g",
-						),
-					),
-			].pop();
-			const candidates = beside ? [beside[1]] : [...paletteHex.keys()];
-			if (candidates.some((n) => asTriple(paletteHex.get(n)) === written))
-				continue;
+	for (const m of paletteText.matchAll(
+		/--([a-z]+)-rgb-([a-z]+)\s*:\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*;/g,
+	)) {
+		const [, space, colour, r, g, b] = m;
+		const name = `--${space}-${colour}`;
+		const written = [r, g, b].map(Number).join(", ");
+		const hex = paletteHex.get(name);
+		if (!hex)
+			wrong.push(`palette.css: --${space}-rgb-${colour} has no ${name}`);
+		else if (asTriple(hex) !== written)
 			wrong.push(
-				beside
-					? `${name}: ${base}-rgb is ${written}, but ${beside[1]} is #${paletteHex.get(beside[1])}`
-					: `${name}: ${base}-rgb is ${written}, which is no colour in palette.css`,
+				`palette.css: --${space}-rgb-${colour} is ${written}, but ${name} is #${hex}`,
 			);
-		}
 	}
 	assert.deepEqual(wrong, [], `\n${wrong.join("\n")}`);
+});
+
+// A triple anywhere but the palette is a copy nothing can hold to a colour.
+test("no sheet writes a triple of its own", () => {
+	const stray = [];
+	for (const { name, text } of css) {
+		if (name === "palette.css") continue;
+		for (const m of text
+			.replace(/\/\*[\s\S]*?\*\//g, "")
+			.matchAll(
+				/(--[a-zA-Z0-9-]+)\s*:\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*;/g,
+			))
+			stray.push(`${name}: ${m[1]}`);
+	}
+	assert.deepEqual(
+		stray,
+		[],
+		`written by hand outside the palette, so nothing keeps it in step: ${stray.join(", ")}`,
+	);
+});
+
+// --- 2c. The palette is the specification, at a named point -----------------
+//
+// Copied from github.com/dracula/draculatheme.com, content/spec.mdx, at commit
+// ab9840fc416836e1474b9a7d21522234af1eaddd (2026-08-14) — the same pin written
+// into the header of palette.css. Held here as well as there because a comment
+// states an intention and a test enforces one: a hex edited in the palette,
+// for whatever good reason at the time, fails this.
+//
+// Raising the pin is deliberate work: fetch that file at the newer commit,
+// replace this table with what it says, and move the commit in both places.
+// Nothing here should ever be edited to make a failing palette pass.
+//
+// The ANSI palettes are not recorded. The specification assigns them to
+// terminal applications and nothing in this interface is one; thirty-two names
+// no rule can read would make the record harder to check, not more faithful.
+
+const SPEC = {
+	"--dracula-bg": "#282a36",
+	"--dracula-fg": "#f8f8f2",
+	"--dracula-current-line": "#6272a4",
+	"--dracula-selection": "#44475a",
+	"--dracula-comment": "#6272a4",
+	"--dracula-red": "#ff5555",
+	"--dracula-orange": "#ffb86c",
+	"--dracula-yellow": "#f1fa8c",
+	"--dracula-green": "#50fa7b",
+	"--dracula-cyan": "#8be9fd",
+	"--dracula-purple": "#bd93f9",
+	"--dracula-pink": "#ff79c6",
+	"--dracula-floating": "#343746",
+	"--dracula-bg-lighter": "#424450",
+	"--dracula-bg-light": "#343746",
+	"--dracula-bg-dark": "#21222c",
+	"--dracula-bg-darker": "#191a21",
+	"--dracula-line-highlight": "#353747",
+
+	"--alucard-bg": "#fffbeb",
+	"--alucard-fg": "#1f1f1f",
+	"--alucard-current-line": "#6c664b",
+	"--alucard-selection": "#cfcfde",
+	"--alucard-comment": "#6c664b",
+	"--alucard-red": "#cb3a2a",
+	"--alucard-orange": "#a34d14",
+	"--alucard-yellow": "#846e15",
+	"--alucard-green": "#14710a",
+	"--alucard-cyan": "#036a96",
+	"--alucard-purple": "#644ac9",
+	"--alucard-pink": "#a3144d",
+	"--alucard-floating": "#efeddc",
+	"--alucard-bg-lighter": "#ece9df",
+	"--alucard-bg-light": "#dedccf",
+	"--alucard-bg-dark": "#ceccc0",
+	"--alucard-bg-darker": "#bcbab3",
+	"--alucard-line-highlight": "#e2deca",
+
+	"--functional-red": "#de5735",
+	"--functional-orange": "#a39514",
+	"--functional-green": "#089108",
+	"--functional-cyan": "#0081d6",
+	"--functional-purple": "#815cd6",
+};
+
+test("every palette colour is the value the specification publishes", () => {
+	const wrong = [];
+	for (const [name, hex] of Object.entries(SPEC)) {
+		// paletteHex holds the six digits; the table above keeps the `#` so it
+		// can be read against the specification page without translating.
+		const got = paletteHex.get(name);
+		if (got === undefined) wrong.push(`${name} is not in palette.css`);
+		else if (`#${got}` !== hex)
+			wrong.push(`${name} is #${got}, the spec says ${hex}`);
+	}
+	assert.deepEqual(wrong, [], `\n${wrong.join("\n")}`);
+});
+
+test("the palette publishes nothing the specification does not", () => {
+	// A colour invented here and given a spec-shaped name would be taken for
+	// Dracula's by anyone reading the file, and by anyone porting it onward.
+	const extra = [...paletteHex.keys()].filter((n) => !(n in SPEC));
+	assert.deepEqual(
+		extra,
+		[],
+		`not in the specification at the pinned commit: ${extra.join(", ")}`,
+	);
+});
+
+test("the pinned commit is stated in the palette as well as here", () => {
+	assert.match(
+		paletteText,
+		/ab9840fc416836e1474b9a7d21522234af1eaddd/,
+		"palette.css no longer names the commit this table was copied from",
+	);
 });
 
 // --- 3. !important does not creep ------------------------------------------

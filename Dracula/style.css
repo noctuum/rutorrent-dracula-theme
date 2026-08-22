@@ -131,7 +131,7 @@ input, select, textarea, button, optgroup, option {
 }
 
 .legendColorBox > div {
-  border-color: var(--dracula-current) !important;
+  border-color: var(--dracula-selection) !important;
 }
 
 /* Upstream asks for `monospace` at 0.9em here, and a bare `monospace` also
@@ -151,16 +151,16 @@ a:hover { color: var(--dracula-pink); }
    the same bar in both. Both inherit, so the root covers every scroller. Width
    is left at the default `auto`, which is what makes the bar wider than the
    10px the webkit rules below ask for. */
-html { scrollbar-color: var(--dracula-comment) var(--dracula-bg-darker); }
+html { scrollbar-color: var(--dracula-comment) var(--dracula-bg-dark); }
 
 /* Fallback for WebKit browsers without standard support. Chrome ignores every
    rule here because of the scrollbar-color above; do not tune it by eye in
    Chrome, nothing you change will show. */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: var(--dracula-bg-darker); }
+::-webkit-scrollbar-track { background: var(--dracula-bg-dark); }
 ::-webkit-scrollbar-thumb { background: var(--dracula-comment); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--dracula-purple); }
-::-webkit-scrollbar-corner { background: var(--dracula-bg-darker); }
+::-webkit-scrollbar-corner { background: var(--dracula-bg-dark); }
 
 /* === CSS Custom Properties (ruTorrent) === */
 
@@ -175,8 +175,8 @@ html { scrollbar-color: var(--dracula-comment) var(--dracula-bg-darker); }
   --text-color: var(--dracula-fg);
   --text-header-color: var(--dracula-fg);
   --menu-color: var(--dracula-fg);
-  --menu-background-color: var(--dracula-bg-darker);
-  --menu-border-color: var(--dracula-current);
+  --menu-background-color: var(--dracula-bg-dark);
+  --menu-border-color: var(--dracula-selection);
   --menu-disabled-color: var(--dracula-comment);
   --menu-disabled-background-color: var(--dracula-bg);
   --menu-highlight-color: var(--dracula-bg);
@@ -195,21 +195,21 @@ html { scrollbar-color: var(--dracula-comment) var(--dracula-bg-darker); }
      thins to a 0.75px hairline. */
   --menu-item-active-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='24' d='M224,72,96,200,40,144'/%3E%3C/svg%3E");
   --menu-item-exp-icon: var(--icon-caret-down);
-  --menu-connect-line-color: var(--dracula-current);
+  --menu-connect-line-color: var(--dracula-selection);
   --menu-connect-line-style: none;
   --container-bg-color: var(--dracula-bg);
-  --container-border-color: var(--dracula-current);
+  --container-border-color: var(--dracula-selection);
   --btn-bg-color: var(--dracula-comment);
   --header-bg-color: var(--dracula-bg);
-  --header-border-color: var(--dracula-current);
+  --header-border-color: var(--dracula-selection);
   --footer-height: 32px;
-  --footer-bg-color: var(--dracula-bg-darker);
+  --footer-bg-color: var(--dracula-bg-dark);
   --footer-bg-image: none;
-  --footer-border-color: var(--dracula-current);
+  --footer-border-color: var(--dracula-selection);
   --dialog-bg-color: var(--dracula-bg);
   --dialog-border-color: var(--dracula-comment);
   --navbar-height: 48px;
-  --navbar-bg-color: var(--dracula-bg-darker);
+  --navbar-bg-color: var(--dracula-bg-dark);
   --navbar-bg-image: none;
   --navbar-border-color: transparent;
   --navbar-item-bg-color: transparent;
@@ -324,8 +324,8 @@ div#msg > span:not(#loadimg) {
 
 category-panel {
   --open-background-image: var(--icon-caret-down);
-  --heading-background-color: var(--dracula-bg-darker);
-  --heading-border-color: var(--dracula-current);
+  --heading-background-color: var(--dracula-bg-dark);
+  --heading-border-color: var(--dracula-selection);
   font-size: 14px;
 }
 
@@ -491,9 +491,9 @@ input:is([type="text"], [type="number"], [type="password"], [type="search"],
          [type="url"], [type="email"], [type="tel"], [type="date"], [type="time"]),
 textarea,
 select {
-  background-color: var(--dracula-bg-darker);
+  background-color: var(--dracula-bg-dark);
   color: var(--dracula-fg);
-  border: 1px solid var(--dracula-current);
+  border: 1px solid var(--dracula-selection);
   border-radius: 4px;
   padding: 1px 4px;
   transition: border-color 0.15s ease;
@@ -524,8 +524,8 @@ select:focus-visible {
    the theme's button rule cannot reach without the pseudo-element. */
 input[type="file"] {
   color: var(--dracula-fg);
-  background-color: var(--dracula-bg-darker);
-  border: 1px solid var(--dracula-current);
+  background-color: var(--dracula-bg-dark);
+  border: 1px solid var(--dracula-selection);
   border-radius: 4px;
   padding: 3px;
 }
@@ -621,7 +621,7 @@ panel-label {
   --prefix-color: var(--dracula-fg);
   --prefix-fontsize: 23px;
   --badge-color: var(--dracula-cyan);
-  --badge-background-color: var(--dracula-current);
+  --badge-background-color: var(--dracula-selection);
   --icon-size: 22px;
   --status-image: none;
   /* A saved view has no icon of its own — upstream hands the component the first
@@ -741,7 +741,7 @@ panel-label[icon="all"]::part(icon)       { transform: translateY(0); }
 panel-label[icon="rss"]::part(icon)       { transform: translateY(0); }
 
 panel-label:hover {
-  background-color: color-mix(in srgb, var(--dracula-current) 50%, transparent);
+  background-color: color-mix(in srgb, var(--dracula-selection) 50%, transparent);
 }
 
 panel-label[selected] {
@@ -821,7 +821,7 @@ div#VDivider {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--dracula-bg-darker);
+    background-color: var(--dracula-bg-dark);
   }
 
   div#HDivider::after,
@@ -900,9 +900,9 @@ div#msg {
   align-items: center;
   justify-content: center;
 }
-div#sc { border: 1px solid var(--dracula-current); background-color: var(--dracula-bg); border-radius: 4px; }
+div#sc { border: 1px solid var(--dracula-selection); background-color: var(--dracula-bg); border-radius: 4px; }
 div#sc li.se_act div { background-color: var(--dracula-purple); color: var(--dracula-bg); border-radius: 3px; }
-div#lng { background-color: var(--dracula-bg-darker); border: 1px solid var(--dracula-current); border-radius: 4px; }
+div#lng { background-color: var(--dracula-bg-dark); border: 1px solid var(--dracula-selection); border-radius: 4px; }
 
 /* === Selection === */
 
@@ -912,7 +912,7 @@ div#lng { background-color: var(--dracula-bg-darker); border: 1px solid var(--dr
 
 .navbar-toggler {
   background-image: none;
-  border-color: var(--dracula-current);
+  border-color: var(--dracula-selection);
 
   /* The overflow-menu toggle shown under 768px draws its glyph through
      Bootstrap's --bs-navbar-color, and .navbar-toggler is a class selector, so
@@ -958,7 +958,7 @@ div#lng { background-color: var(--dracula-bg-darker); border: 1px solid var(--dr
    `background: transparent url(../images/tb_bg.gif) …` — a shorthand, so
    overriding only the colour leaves its pale raster painting on top. */
 #t .nav-link:hover {
-  background-color: var(--dracula-current);
+  background-color: var(--dracula-selection);
   background-image: none;
 }
 
@@ -978,11 +978,11 @@ div#lng { background-color: var(--dracula-bg-darker); border: 1px solid var(--dr
 /* Focus gets the hover fill as well as the ring. A ring alone around a button
    otherwise identical to its neighbours reads as decoration, not position. */
 #t .nav-link:focus-visible {
-  background-color: var(--dracula-current);
+  background-color: var(--dracula-selection);
 }
 
 div#t div.TB_Separator {
-  background-color: var(--dracula-current);
+  background-color: var(--dracula-selection);
   width: 1px;
   margin: 4px 2px;
 }
@@ -1400,8 +1400,8 @@ div#gcont div.row.Header {
      instead, and no block padding at all: the height is built in the cell, the
      way the table heading builds it. */
   padding: 0 0.3rem;
-  background: var(--dracula-bg-darker);
-  border-bottom: 1px solid var(--dracula-current);
+  background: var(--dracula-bg-dark);
+  border-bottom: 1px solid var(--dracula-selection);
   color: var(--dracula-purple);
   font-weight: bold;
 }
@@ -1433,7 +1433,7 @@ body.compact div#gcont div.row > div {
    sharing a top and a height and spanning the full width, so bottom borders on
    them meet edge to edge and read as a single rule. */
 div#gcont div.row:not(.Header) > div {
-  border-bottom: 1px solid color-mix(in srgb, var(--dracula-current) 45%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--dracula-selection) 45%, transparent);
 }
 
 /* The General tab is laid out `col-6 col-md-2` — two fields per line when there
@@ -1471,7 +1471,7 @@ div.graph_tab { background-color: var(--dracula-bg); }
    faint. */
 .graph_tab_grid {
   color: var(--dracula-fg);
-  border-color: var(--dracula-current);
+  border-color: var(--dracula-selection);
 }
 
 /* The hook above only reaches the canvas. flot writes the tick-label colour
@@ -1485,7 +1485,7 @@ div.graph_tab {
 }
 .graph_tab_tooltip {
   color: var(--dracula-fg);
-  background-color: var(--dracula-bg-darker);
+  background-color: var(--dracula-bg-dark);
   border: 1px solid var(--dracula-purple);
   border-radius: 4px;
   padding: 4px 8px;
@@ -1493,12 +1493,12 @@ div.graph_tab {
 
 /* === Lists & Dialogs === */
 
-div#List { border: 1px solid var(--dracula-current); border-radius: 4px; }
+div#List { border: 1px solid var(--dracula-selection); border-radius: 4px; }
 div#modalbg { background-color: color-mix(in srgb, var(--dracula-bg) 85%, transparent); }
 div#FileList, div#TrackerList, div#PeerList, div#Speed { background-color: var(--dracula-bg); }
 
 * > fieldset {
-  border: 1px solid var(--dracula-current);
+  border: 1px solid var(--dracula-selection);
   border-radius: 4px;
   padding: 8px;
 }
@@ -1510,9 +1510,9 @@ div#FileList, div#TrackerList, div#PeerList, div#Speed { background-color: var(-
    on a translucent #3B3B3B). Both spellings get the same treatment. */
 input.disabled, button.disabled,
 input:disabled, textarea:disabled, select:disabled, button:disabled {
-  background-color: var(--dracula-bg-darker);
+  background-color: var(--dracula-bg-dark);
   color: var(--dracula-comment);
-  border: 1px solid var(--dracula-current);
+  border: 1px solid var(--dracula-selection);
   opacity: 0.6;
 }
 
@@ -1522,7 +1522,7 @@ td.disabled, label.disabled, span.disabled, div.disabled {
 
 /* === Column Selector === */
 
-select.cols { border: 1px solid var(--dracula-current); border-radius: 4px; }
+select.cols { border: 1px solid var(--dracula-selection); border-radius: 4px; }
 
 /* === Detail Panel === */
 
@@ -1544,8 +1544,8 @@ div#tdetails { background-color: var(--dracula-bg); }
    Bootstrap's `p-0` utility on the element, and every Bootstrap utility carries
    `!important`. Full-width tabs want to touch the panel edges anyway. */
 .tabbar {
-  background-color: var(--dracula-bg-darker);
-  border-bottom: 1px solid var(--dracula-current);
+  background-color: var(--dracula-bg-dark);
+  border-bottom: 1px solid var(--dracula-selection);
 }
 
 /* init.js builds this and sizes the thumb; it is a sibling of the row, so it
@@ -1576,7 +1576,7 @@ div#tdetails { background-color: var(--dracula-bg); }
     display: block;
     position: relative;
     flex: 0 0 2px;
-    background-color: var(--dracula-bg-darker);
+    background-color: var(--dracula-bg-dark);
   }
 
   #dracula-tab-scroll.dracula-tabs-overflow::after {
@@ -1636,8 +1636,8 @@ div#tdetails { background-color: var(--dracula-bg); }
   font-size: 14px;
   text-align: center;
   color: var(--dracula-comment);
-  background-color: var(--dracula-bg-darker);
-  border: 1px solid color-mix(in srgb, var(--dracula-current) 55%, transparent);
+  background-color: var(--dracula-bg-dark);
+  border: 1px solid color-mix(in srgb, var(--dracula-selection) 55%, transparent);
   border-bottom: none;
   border-radius: 5px 5px 0 0;
   transition: all 0.15s ease;
@@ -1652,8 +1652,8 @@ body.compact .tabbar li.nav-item a.nav-link {
 
 .tabbar li.nav-item a.nav-link:hover {
   color: var(--dracula-fg);
-  background-color: var(--dracula-bg-lighter);
-  border-color: var(--dracula-current);
+  background-color: var(--dracula-bg-light);
+  border-color: var(--dracula-selection);
   /* Upstream's hover is `border-top: 2px solid #FFC73C`. Recolouring alone
      leaves the width, so a hovered tab grows 33px -> 34px and, with
      `transition: all` above, wobbles on its way there. The 2px top belongs to
@@ -1665,7 +1665,7 @@ body.compact .tabbar li.nav-item a.nav-link {
   color: var(--dracula-purple);
   font-weight: bold;
   background-color: var(--dracula-bg);
-  border-color: var(--dracula-current);
+  border-color: var(--dracula-selection);
   /* accent on top, where upstream puts its yellow one */
   border-top: 2px solid var(--dracula-purple);
   /* the panel colour over the bar's rule: the seam between tab and panel */
@@ -1695,7 +1695,7 @@ body.compact .tabbar li.nav-item a.nav-link {
    and `.list-group-item-action:hover` are both two classes, and the active rule
    sits later in bootstrap.min.css. */
 #stg .list-group {
-  --bs-list-group-action-hover-bg: var(--dracula-current);
+  --bs-list-group-action-hover-bg: var(--dracula-selection);
   --bs-list-group-action-hover-color: var(--dracula-fg);
 }
 
@@ -1791,7 +1791,7 @@ body.compact .tabbar li.nav-item a.nav-link {
 .dracula-help-title {
   padding-bottom: 3px;
   margin-bottom: 6px;
-  border-bottom: 1px solid var(--dracula-current);
+  border-bottom: 1px solid var(--dracula-selection);
   color: var(--dracula-purple);
   font-weight: bold;
 }
@@ -1870,7 +1870,7 @@ body.compact .tabbar li.nav-item a.nav-link {
 }
 
 .status-cell {
-  border-right: 1px solid var(--dracula-current);
+  border-right: 1px solid var(--dracula-selection);
   padding: 0 8px;
 }
 
@@ -2115,9 +2115,9 @@ body.compact .tabbar li.nav-item a.nav-link {
   z-index: 1900;
   max-width: 80vw;
   padding: 6px 10px;
-  border: 1px solid var(--dracula-current);
+  border: 1px solid var(--dracula-selection);
   border-radius: 4px;
-  background-color: var(--dracula-bg-darker);
+  background-color: var(--dracula-bg-dark);
   color: var(--dracula-fg);
   font-size: 13px;
   line-height: 1.45;

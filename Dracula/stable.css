@@ -10,13 +10,13 @@
 }
 
 .stable {
-  --header-bg-color: var(--dracula-bg-darker);
+  --header-bg-color: var(--dracula-bg-dark);
   --header-bg-image: none;
-  --header-border-color: var(--dracula-current);
+  --header-border-color: var(--dracula-selection);
   --col-resize-sep-bg-color: var(--dracula-comment);
   --row-border-color: transparent;
   --row-odd-bg-color: var(--dracula-bg);
-  --row-even-bg-color: var(--dracula-bg-darker);
+  --row-even-bg-color: var(--dracula-bg-dark);
   /* Shared with every other list in the theme; defined as --selection-bg-color
      in style.css. */
   --row-active-bg-color: var(--selection-bg-color);
@@ -131,7 +131,7 @@ body.compact .stable thead td div {
    more here would push the row past 30 and the height above would stop being
    the height. The inline 6px is what separates the columns. */
 .stable tbody td {
-  border-bottom: 1px solid color-mix(in srgb, var(--dracula-current) 40%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--dracula-selection) 40%, transparent);
   padding: 0 6px;
 }
 
@@ -180,7 +180,7 @@ body.compact .stable thead td div {
    the table whenever the Alternate list background setting is on, so this holds
    either way. */
 .stable tbody tr:hover:not(.selected) td {
-  background-color: var(--dracula-current);
+  background-color: var(--dracula-selection);
   filter: none;
 }
 
@@ -243,7 +243,7 @@ body.compact .stable thead td div {
 /* 12px rather than upstream's 11px: this badge is secondary text, but nothing
    in the theme goes below 12px. */
 .stable-scrollpos {
-  background: var(--dracula-bg-darker);
+  background: var(--dracula-bg-dark);
   color: var(--dracula-comment);
   border-radius: 4px;
   font-size: 12px;
