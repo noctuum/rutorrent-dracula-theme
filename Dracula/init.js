@@ -3850,6 +3850,63 @@ function draculaMarkMobileLines()
 	}
 }
 
+/* The mobile plugin disables the theme plugin on its way in
+   (`plugins/mobile/init.js:2138`), and that strips every sheet the theme has put
+   on the page. `plugins.css` is the one the mobile interface still needs, and
+   upstream puts it back only once `theWebUI.config` runs — measured, gone at
+   633ms and back at 1076ms, with the interface drawn and on screen in
+   Bootstrap's colours for the 443ms between.
+
+   It goes back the moment it goes, by re-appending the node rather than asking
+   for a fresh one. Once only: a sheet removed a second time is a theme being
+   switched off for good, and answering that would loop.
+
+   `injectCSS` (`js/plugins.js:24`) appends a new <link> on every call and never
+   looks for one already there, which is what puts this sheet on the page twice.
+   Holding it at a single copy is what keeps the restore from becoming a third,
+   and the copy kept is the newest, so which sheet wins does not change — it
+   still sits after every plugin sheet. */
+function draculaHoldPluginsCss()
+{
+	var head = document.head;
+	if(!head || !head.children || typeof MutationObserver !== "function")
+		return;
+
+	var kept = null;
+	var restored = false;
+	var ours = /\/themes\/[^/]+\/plugins\.css(\?|$)/;
+
+	function sync()
+	{
+		var links = [];
+		for(var i = 0; i < head.children.length; i++)
+		{
+			var el = head.children[i];
+			if(el.tagName === "LINK" && ours.test(el.getAttribute("href") || ""))
+				links.push(el);
+		}
+
+		if(!links.length)
+		{
+			if(kept && !restored)
+			{
+				restored = true;
+				head.appendChild(kept);
+			}
+			return;
+		}
+
+		kept = links[links.length - 1];
+		for(var j = 0; j < links.length - 1; j++)
+			links[j].parentNode.removeChild(links[j]);
+	}
+
+	sync();
+	new MutationObserver(sync).observe(head, { childList: true });
+}
+
+draculaHoldPluginsCss();
+
 if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 {
 	plugin.draculaConfig = theWebUI.config;
