@@ -2383,6 +2383,16 @@ function draculaWatchLog()
 	}).observe(lcont, { childList: true });
 }
 
+/* Called as this file is read rather than from `allDone`. The panel is drawn
+   with entries in it from 154ms and style.css lands at 666ms, while `allDone`
+   runs at 1190ms — from there the log spends 524ms painted in the theme with
+   every stamp still the body colour. From here a stamp has its own element in
+   the frame that first paints the sheet.
+
+   `#lcont` is static markup (`index.html:254`) and no script replaces it, so it
+   is on the page long before this file is read. */
+draculaWatchLog();
+
 /* Firefox reserves the torrent list's vertical scrollbar column and paints
    nothing in it on a first load: the list scrolls, 12px are taken out of the
    content, and no bar is drawn. A style recalculation creates it — switching
@@ -2442,7 +2452,6 @@ plugin.allDone = function()
 	// several arrive after allDone, each bringing its own focus handler.
 	draculaRestoreKeyboardFocus();
 	draculaWatchLoadingIndicator();
-	draculaWatchLog();
 	draculaSweepIcons();
 	draculaWatchCategoryIcons();
 	draculaWatchTrackerIcons();
@@ -3853,6 +3862,38 @@ function draculaMarkMobileLines()
 	}
 }
 
+/* The mark that lets --font-mono name the bundled face, put on <html> once the
+   page is known to be one the theme still paints in full.
+
+   A browser fetches a face when a rendered element resolves to it, and on a
+   phone one does: style.css carries both the JetBrains Mono faces and the log
+   panel's `font-family`, and both are live until the mobile plugin disables the
+   theme (`plugins/mobile/init.js:2138`). The panel is the only element reading
+   --font-mono that is rendered by then — the console, the chunk map and the URL
+   textarea sit in dialogs nothing has opened — and it is enough to pull 31,432
+   bytes of a latin subset that interface never draws.
+
+   Nothing readable at the moment this file runs says which interface is coming.
+   `jQuery.browser.mobile` is the mobile plugin's own
+   (`plugins/mobile/init.js:2666`) and does not exist yet, and every plugin is
+   evaluated inside one synchronous pass over `getplugins.php`, which no
+   observer or microtask of this file interleaves with. A timer runs after that
+   pass, where the answer is settled.
+
+   So the generic stack is what a page gets by default and this adds the face,
+   which costs the desktop only the gap between the timer and a fetch it makes
+   either way. */
+function draculaOfferBundledMono()
+{
+	setTimeout(function()
+	{
+		if(!draculaThemeSwitchedOff())
+			document.documentElement.classList.add("dracula-desktop");
+	}, 0);
+}
+
+draculaOfferBundledMono();
+
 /* The mobile plugin disables the theme plugin on its way in
    (`plugins/mobile/init.js:2138`), and that strips every sheet the theme has put
    on the page. `plugins.css` is the one the mobile interface still needs, and
@@ -3868,7 +3909,16 @@ function draculaMarkMobileLines()
    looks for one already there, which is what puts this sheet on the page twice.
    Holding it at a single copy is what keeps the restore from becoming a third,
    and the copy kept is the newest, so which sheet wins does not change — it
-   still sits after every plugin sheet. */
+   still sits after every plugin sheet.
+
+   An older copy goes only once the newer one has applied. A <link> styles
+   nothing until its sheet arrives, so dropping the working copy at the moment
+   the replacement is appended leaves the page with none of these rules for as
+   long as the fetch takes, and the mobile interface pays for that gap in a
+   webfont: `plugins/mobile/mobile.css:9` puts the icon family on `.bi:before`,
+   and with the theme's own rule missing the browser fetches 134,044 bytes for
+   metrics behind a glyph it never draws. `sheet` is non-null exactly when a
+   stylesheet is in force. */
 function draculaHoldPluginsCss()
 {
 	var head = document.head;
@@ -3899,7 +3949,15 @@ function draculaHoldPluginsCss()
 			return;
 		}
 
-		kept = links[links.length - 1];
+		var newest = links[links.length - 1];
+		if(links.length > 1 && !newest.sheet)
+		{
+			newest.addEventListener("load", sync, { once: true });
+			newest.addEventListener("error", sync, { once: true });
+			return;
+		}
+
+		kept = newest;
 		for(var j = 0; j < links.length - 1; j++)
 			links[j].parentNode.removeChild(links[j]);
 	}

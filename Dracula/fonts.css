@@ -11,12 +11,13 @@
  * plugins.css is the only route in — a face declared in style.css reaches the
  * desktop alone.
  *
- * JetBrains Mono's faces stay in style.css. Nothing in the mobile plugin
- * renders monospace: its markup carries no <code>, <pre> or .font-monospace,
- * and its own sheet names a family only for the icon font. --font-mono is
- * declared here all the same, because plugins.css reads it and plugins.css
- * loads in both interfaces; where the faces are absent the stack falls through
- * to ui-monospace.
+ * JetBrains Mono's faces stay in style.css, and --font-mono names them only
+ * under `html.dracula-desktop`. Nothing in the mobile plugin renders monospace:
+ * its markup carries no <code>, <pre> or .font-monospace, and its own sheet
+ * names a family only for the icon font. Naming the face on bare :root would
+ * still cost that interface 31,432 bytes of a latin subset, because style.css
+ * and the log panel it styles are both live on a phone until the mobile plugin
+ * disables the theme — see `draculaOfferBundledMono` in init.js.
  *
  * The src paths below are relative to this file, not to the sheet that imports
  * it, so it belongs beside fonts/.
@@ -30,13 +31,18 @@
      different faces. */
   --font-sans: "Inter", system-ui, sans-serif;
 
-  /* Monospace stack, shared by the plugin consoles, the chunk map and the
-     URL textarea so they do not drift apart.
+  /* Monospace stack, shared by the plugin consoles, the chunk map, the log
+     panel and the URL textarea so they do not drift apart. Generic here: the
+     bundled face is added by the rule below, and only where the mark says the
+     theme still has its full sheet set. */
+  --font-mono: ui-monospace, monospace;
+}
 
-     "JetBrainsMono Nerd Font" is in the stack because Nerd Font builds
-     register under their own family name and never under "JetBrains Mono" — a
-     locally installed copy answers to that name alone, and only to it, if the
-     bundled file ever fails. */
+/* "JetBrainsMono Nerd Font" is in the stack because Nerd Font builds register
+   under their own family name and never under "JetBrains Mono" — a locally
+   installed copy answers to that name alone, and only to it, if the bundled
+   file ever fails. */
+:root.dracula-desktop {
   --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font", ui-monospace, monospace;
 }
 

@@ -947,6 +947,14 @@
   content: "";
   width: 1em;
   height: 1em;
+  /* Emptying `content` does not release the webfont: the pseudo-element still
+     exists, still lays out as an inline-block, and still carries the family
+     `plugins/mobile/mobile.css:9` sets on it — so the browser fetches 134,044
+     bytes for metrics it draws no glyph with. `!important` because that rule
+     carries it and its sheet is the last one on the page. Named on the same
+     list as the stencils: an icon with no stencil keeps the plugin's glyph and
+     has to keep the font that draws it. */
+  font-family: inherit !important;
   background-color: currentColor;
   -webkit-mask-image: var(--dracula-glyph);
   mask-image: var(--dracula-glyph);

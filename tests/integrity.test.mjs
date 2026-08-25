@@ -474,11 +474,16 @@ const IMPORTANT_BUDGET = {
 	"style.css": 35,
 	"stable.css": 2,
 	"plugins.css": 1,
-	// Two, both Bootstrap's rather than the plugin's and both in one rule: being
-	// last of the three sheets outranks every rule the plugin writes, but not a
-	// utility class that carries !important on its own declarations. See the
-	// filter count's pill, where the utility forces both of them.
-	"mobile.css": 2,
+	// Three. Two are Bootstrap's rather than the plugin's and sit in one rule:
+	// being last of the three sheets outranks every rule the plugin writes, but
+	// not a utility class that carries !important on its own declarations. See
+	// the filter count's pill, where the utility forces both of them.
+	//
+	// The third is the icon font. `plugins/mobile/mobile.css:9` sets the family
+	// on `.bi:before` with !important, and an emptied `content` does not release
+	// it — the pseudo-element still lays out and the browser still fetches
+	// 134,044 bytes for its metrics.
+	"mobile.css": 3,
 	// Declarations only, no selectors to fight over.
 	"palette.css": 0,
 	"icons.css": 0,
@@ -674,4 +679,36 @@ test("every palette fallback in init.js is the value palette.css publishes", () 
 			`init.js falls back to ${fallback} for ${name}, palette.css says ${declared[1]}`,
 		);
 	}
+});
+
+// --- 8. The bundled monospace face is opted into, never defaulted to ---------
+//
+// A browser fetches a face when a rendered element resolves to it, and on a
+// phone one does: style.css carries both the JetBrains Mono faces and the log
+// panel's `font-family`, and both are live until the mobile plugin disables the
+// theme. Naming the face on bare :root is what makes that window cost 31,432
+// bytes the mobile interface never draws.
+
+test("--font-mono names the bundled face only behind the desktop mark", () => {
+	const fonts = read("fonts.css");
+
+	const base = fonts.match(/:root\s*\{[^}]*--font-mono:\s*([^;]+);/);
+	assert.ok(base, "fonts.css declares no --font-mono on :root");
+	assert.doesNotMatch(
+		base[1],
+		/JetBrains/,
+		"the default --font-mono names the bundled face, so a phone fetches it",
+	);
+
+	assert.match(
+		fonts,
+		/:root\.dracula-desktop\s*\{[^}]*--font-mono:\s*"JetBrains Mono"/,
+		"no rule gives the marked page the bundled face",
+	);
+
+	assert.match(
+		read("init.js"),
+		/classList\.add\("dracula-desktop"\)/,
+		"init.js never puts the mark on, so the bundled face is unreachable",
+	);
 });
