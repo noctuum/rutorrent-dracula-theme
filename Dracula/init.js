@@ -2383,6 +2383,16 @@ function draculaWatchLog()
 	}).observe(lcont, { childList: true });
 }
 
+/* Called as this file is read rather than from `allDone`. The panel is drawn
+   with entries in it from 154ms and style.css lands at 666ms, while `allDone`
+   runs at 1190ms — from there the log spends 524ms painted in the theme with
+   every stamp still the body colour. From here a stamp has its own element in
+   the frame that first paints the sheet.
+
+   `#lcont` is static markup (`index.html:254`) and no script replaces it, so it
+   is on the page long before this file is read. */
+draculaWatchLog();
+
 /* Firefox reserves the torrent list's vertical scrollbar column and paints
    nothing in it on a first load: the list scrolls, 12px are taken out of the
    content, and no bar is drawn. A style recalculation creates it — switching
@@ -2442,7 +2452,6 @@ plugin.allDone = function()
 	// several arrive after allDone, each bringing its own focus handler.
 	draculaRestoreKeyboardFocus();
 	draculaWatchLoadingIndicator();
-	draculaWatchLog();
 	draculaSweepIcons();
 	draculaWatchCategoryIcons();
 	draculaWatchTrackerIcons();
