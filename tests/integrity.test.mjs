@@ -647,3 +647,31 @@ test("the Stopped and Inactive rows take their icon from the id", () => {
 			`icon="${name}" sets --status-image, and below 5.2.2 it is the other row`,
 		);
 });
+
+// --- 7. A palette fallback is the palette -----------------------------------
+//
+// `draculaPaletteColor` reads a custom property and takes its second argument
+// when that resolves to nothing, which is what happens whenever it is called
+// before the sheets are on the page. The favicon is drawn as init.js is read —
+// close enough to that edge that the ordering is not worth depending on — and a
+// fallback that had drifted from the palette would paint the wrong colour with
+// nothing on the page looking wrong.
+
+test("every palette fallback in init.js is the value palette.css publishes", () => {
+	const palette = read("palette.css");
+	const calls = [
+		...read("init.js").matchAll(
+			/draculaPaletteColor\(\s*"(--[a-z0-9-]+)"\s*,\s*"(#[0-9a-fA-F]{6})"\s*\)/g,
+		),
+	];
+	assert.ok(calls.length, "no draculaPaletteColor call carries a fallback");
+	for (const [, name, fallback] of calls) {
+		const declared = palette.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`));
+		assert.ok(declared, `${name} is not defined in palette.css`);
+		assert.equal(
+			fallback.toLowerCase(),
+			declared[1].toLowerCase(),
+			`init.js falls back to ${fallback} for ${name}, palette.css says ${declared[1]}`,
+		);
+	}
+});

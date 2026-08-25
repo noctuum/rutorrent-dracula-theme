@@ -2155,6 +2155,16 @@ function draculaSetFavicon()
 	catch(e) { /* same */ }
 }
 
+/* Called as this file is read rather than from `allDone`, which runs once every
+   plugin has loaded — measured, upstream's thirteen icon links stand until
+   1153ms from there and until 680ms from here. Nothing else on the page touches
+   an icon link after 21ms, so there is no later writer to lose to.
+
+   The palette has resolved by then and the icon is drawn from it. The fallbacks
+   answer only if this ever runs ahead of the sheets, and a test holds them to
+   the palette's own values so that it would not matter if it did. */
+draculaSetFavicon();
+
 /* A label with no picture of its own and a tracker with no favicon both draw
    nothing, for the same reason: tracklabels points those rows at
    `plugins/tracklabels/action.php?label=…` or `?tracker=…`, and with nothing to
@@ -2418,16 +2428,10 @@ plugin.allDone = function()
 	   disables it (`plugins/mobile/init.js:2138`) — none of that holds, and this
 	   file keeps running anyway because ruTorrent splices it into the response.
 
-	   Two do hold, for reasons of their own:
-
-	   `draculaSetFavicon` touches nothing but `<head>`, so which interface
-	   paints the body is beside the point.
-
-	   `draculaCheckVersions` decides for itself whether there is anything to
-	   report. */
+	   `draculaCheckVersions` is the exception: it decides for itself whether
+	   there is anything to report. */
 	if(draculaThemeSwitchedOff())
 	{
-		draculaSetFavicon();
 		draculaCheckVersions();
 		return;
 	}
@@ -2438,7 +2442,6 @@ plugin.allDone = function()
 	// several arrive after allDone, each bringing its own focus handler.
 	draculaRestoreKeyboardFocus();
 	draculaWatchLoadingIndicator();
-	draculaSetFavicon();
 	draculaWatchLog();
 	draculaSweepIcons();
 	draculaWatchCategoryIcons();
