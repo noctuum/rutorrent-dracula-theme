@@ -474,11 +474,16 @@ const IMPORTANT_BUDGET = {
 	"style.css": 35,
 	"stable.css": 2,
 	"plugins.css": 1,
-	// Two, both Bootstrap's rather than the plugin's and both in one rule: being
-	// last of the three sheets outranks every rule the plugin writes, but not a
-	// utility class that carries !important on its own declarations. See the
-	// filter count's pill, where the utility forces both of them.
-	"mobile.css": 2,
+	// Three. Two are Bootstrap's rather than the plugin's and sit in one rule:
+	// being last of the three sheets outranks every rule the plugin writes, but
+	// not a utility class that carries !important on its own declarations. See
+	// the filter count's pill, where the utility forces both of them.
+	//
+	// The third is the icon font. `plugins/mobile/mobile.css:9` sets the family
+	// on `.bi:before` with !important, and an emptied `content` does not release
+	// it — the pseudo-element still lays out and the browser still fetches
+	// 134,044 bytes for its metrics.
+	"mobile.css": 3,
 	// Declarations only, no selectors to fight over.
 	"palette.css": 0,
 	"icons.css": 0,

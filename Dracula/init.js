@@ -3909,7 +3909,16 @@ draculaOfferBundledMono();
    looks for one already there, which is what puts this sheet on the page twice.
    Holding it at a single copy is what keeps the restore from becoming a third,
    and the copy kept is the newest, so which sheet wins does not change — it
-   still sits after every plugin sheet. */
+   still sits after every plugin sheet.
+
+   An older copy goes only once the newer one has applied. A <link> styles
+   nothing until its sheet arrives, so dropping the working copy at the moment
+   the replacement is appended leaves the page with none of these rules for as
+   long as the fetch takes, and the mobile interface pays for that gap in a
+   webfont: `plugins/mobile/mobile.css:9` puts the icon family on `.bi:before`,
+   and with the theme's own rule missing the browser fetches 134,044 bytes for
+   metrics behind a glyph it never draws. `sheet` is non-null exactly when a
+   stylesheet is in force. */
 function draculaHoldPluginsCss()
 {
 	var head = document.head;
@@ -3940,7 +3949,15 @@ function draculaHoldPluginsCss()
 			return;
 		}
 
-		kept = links[links.length - 1];
+		var newest = links[links.length - 1];
+		if(links.length > 1 && !newest.sheet)
+		{
+			newest.addEventListener("load", sync, { once: true });
+			newest.addEventListener("error", sync, { once: true });
+			return;
+		}
+
+		kept = newest;
 		for(var j = 0; j < links.length - 1; j++)
 			links[j].parentNode.removeChild(links[j]);
 	}
