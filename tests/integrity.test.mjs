@@ -471,7 +471,7 @@ test("the pinned commit is stated in the palette as well as here", () => {
 // A ratchet, not a limit. Lower these when a use is removed; raising one takes
 // an argument in the commit message.
 const IMPORTANT_BUDGET = {
-	"style.css": 34,
+	"style.css": 35,
 	"stable.css": 2,
 	"plugins.css": 1,
 	// Two, both Bootstrap's rather than the plugin's and both in one rule: being

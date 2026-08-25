@@ -431,6 +431,25 @@ test("draculaVisualScale: falls back to 1 when the viewport reports nothing", ()
 	assert.equal(theme.draculaVisualScale(), 1);
 });
 
+// A row's tooltip. rTorrent leaves `msg` an empty string on a torrent with
+// nothing wrong, and the daemon's own text is what goes under the name.
+test("draculaTorrentNote: a message goes on its own line under the name", () => {
+	assert.equal(
+		theme.draculaTorrentNote(
+			"debian-13.6.0-amd64-netinst.iso",
+			"Tracker: [No DHT nodes available for peer search.]",
+		),
+		"debian-13.6.0-amd64-netinst.iso\n" +
+			"Tracker: [No DHT nodes available for peer search.]",
+	);
+});
+
+test("draculaTorrentNote: nothing to report leaves the name alone", () => {
+	assert.equal(theme.draculaTorrentNote("alpine.iso", ""), "alpine.iso");
+	assert.equal(theme.draculaTorrentNote("alpine.iso", "   "), "alpine.iso");
+	assert.equal(theme.draculaTorrentNote("alpine.iso", undefined), "alpine.iso");
+});
+
 // The mobile plugin writes its whole status line as one string, so the ratio's
 // value has to be found in text before it can be given an element and coloured.
 // Everything below is what a real line looks like, taken off the plugin's own

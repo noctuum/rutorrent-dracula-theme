@@ -1241,6 +1241,19 @@ div#t div.TB_Separator {
     text-overflow: ellipsis;
   }
 
+  /* Search and Go are the exception to the labels above. They do not stand in
+     the grid: their row also carries the filter field, and at 390px the two
+     words take the width that field needs to be usable. A magnifier and an
+     arrow already say what they are, and above 768px upstream hides these same
+     words itself.
+
+     `!important` because the word is inside Bootstrap's own `d-inline`, whose
+     declaration carries it — no selector outranks a utility class here. */
+  #mnu_search > .d-md-none,
+  #mnu_go > .d-md-none {
+    display: none !important;
+  }
+
   /* `.btn-group` is a column flex box holding the toggle and its menu, and the
      grid stretches the group rather than the toggle inside it — without this
      the Plugins cell paints its fill short of the Help beside it. */

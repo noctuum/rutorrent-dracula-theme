@@ -64,6 +64,37 @@
   flex-shrink: 0;
 }
 
+/* A button standing beside a text field takes the field's height, so the pair
+   reads as one control. Upstream keeps the two level by giving both 1px of
+   vertical padding; this theme's buttons carry 6px and its fields still carry
+   1px, which is the 10px step — 35px against 25px.
+
+   The button comes down rather than the field going up: these are pickers
+   carrying three dots, so the height buys them nothing, and the fields are
+   compact by design throughout the theme.
+
+   Only buttons that are actually paired — a standalone Add File or Create keeps
+   its full height. The two arms are the two shapes a pair takes: the button
+   beside the field in one column, as every path picker is, and the button in the
+   column after it, which is how Add Torrent builds its label control.
+
+   `.dlg-window .row > div` is upstream's own flex row (`css/style.css:207`) at
+   0,2,1, so this has to outrank that as well as the theme's own button rule. */
+.dlg-window
+  .row
+  > :is(
+    div:has(
+        > input:is([type="text"], [type="number"], [type="password"], [type="search"])
+      ),
+    div:has(
+        > input:is([type="text"], [type="number"], [type="password"], [type="search"])
+      )
+      + div
+  )
+  > :is(.Button, button, input[type="button"]) {
+  padding-block: 1px;
+}
+
 /* _getdir ships literal system colours — `windowtext` for the entries,
    `highlight`/`highlighttext` for the selected one — so the directory picker
    wears the operating system's theme rather than this one: an OS blue selection

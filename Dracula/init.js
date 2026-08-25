@@ -4000,3 +4000,47 @@ dxSTable.prototype.create = function(ele, styles, aName)
 	this.prgStartColor = new RGBackground("#5C4F7A");
 	this.prgEndColor = new RGBackground("#36734E");
 }
+
+/* What a torrent row's tooltip says. The name alone unless the daemon has
+   something to report, and then the report under it — a `title` renders a
+   newline, so the two do not run together. */
+function draculaTorrentNote(name, msg)
+{
+	var text = typeof name === "string" ? name : "";
+	var note = typeof msg === "string" ? msg.trim() : "";
+	return note ? text + "\n" + note : text;
+}
+
+/* Upstream sets a row's tooltip once, to the first column: `createRow` writes
+   `title: cols[0]` (`stable.js:953`) and `setRowById` never revisits it, so a
+   torrent that runs into trouble after its row exists keeps a tooltip that says
+   only its name.
+
+   The wrap goes on `setRowById` rather than `createRow` because that is the one
+   call both paths run through — a new row and a row already on the page — and
+   the message is on the torrent object it is handed.
+
+   Written only when it changes. `setAttr` (`stable.js:1535`) marks the row dirty
+   for every attribute it is given, so passing the title every pass would rewrite
+   every row on every poll to say what it already said.
+
+   The torrent list only: `createRow` is what every dxSTable builds its rows
+   with, and a tracker or peer row has no torrent behind it. */
+plugin.draculaSetRowById = dxSTable.prototype.setRowById;
+dxSTable.prototype.setRowById = function(ids, sId, icon, attr)
+{
+	var list = window.theWebUI && typeof theWebUI.getTable === "function"
+		? theWebUI.getTable("trt") : null;
+	if(this === list && ids && typeof ids.name === "string")
+	{
+		var want = draculaTorrentNote(ids.name, ids.msg);
+		var row = this.rowdata ? this.rowdata[sId] : null;
+		var have = row && row.attr ? row.attr.title : undefined;
+		if(want !== have)
+		{
+			attr = attr || {};
+			attr.title = want;
+		}
+	}
+	return plugin.draculaSetRowById.call(this, ids, sId, icon, attr);
+};
