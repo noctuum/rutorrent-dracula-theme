@@ -3673,11 +3673,53 @@ function draculaMarkMobileSpeeds()
 	}
 }
 
+/* The three marks a status line carries. Each skips a line it has marked
+   already, so a pass with nothing new to do costs a walk and writes nothing. */
+function draculaMarkMobileLineParts()
+{
+	draculaMarkMobileRatios();
+	draculaMarkMobileRates();
+	draculaMarkMobileSeparators();
+}
+
+/* The rows are not in the document when `plugin.processTorrents` returns on its
+   first pass — measured there, the list holds none at that moment and holds
+   them a frame later. Marking from the wrap alone therefore leaves the first
+   list plain until the pass after it, which is a poll interval away: 2.8
+   seconds here and longer on a slow link.
+
+   So the marks follow the rows. `#torrentsList` belongs to the plugin's own
+   markup and does not exist when the wrap is installed, which is why this goes
+   on from the first pass rather than beside it.
+
+   The marks are written inside the subtree being watched, so the observer would
+   otherwise see its own writes; `marking` is what stops that. */
+var draculaMobileLinesWatched = false;
+
+function draculaWatchMobileLines()
+{
+	if(draculaMobileLinesWatched)
+		return;
+	var list = document.getElementById("torrentsList");
+	if(!list)
+		return;
+	draculaMobileLinesWatched = true;
+
+	var marking = false;
+	new MutationObserver(function()
+	{
+		if(marking)
+			return;
+		marking = true;
+		draculaMarkMobileLineParts();
+		marking = false;
+	}).observe(list, { childList: true, subtree: true });
+}
+
 /* `plugin.processTorrents` is where every row is written, created on the first
-   pass and rewritten in place after (`plugins/mobile/init.js:1844`), and it
-   builds them synchronously — so the marks go on as it returns. Installed from
-   the same window as the dark default, where the plugin object already exists
-   and its own init has not run.
+   pass and rewritten in place after (`plugins/mobile/init.js:1844`). Installed
+   from the same window as the dark default, where the plugin object already
+   exists and its own init has not run.
 
    Silent when the plugin is absent, which is every desktop page. */
 function draculaMarkMobileLines()
@@ -3690,9 +3732,8 @@ function draculaMarkMobileLines()
 	mobile.processTorrents = function()
 	{
 		var result = upstream.apply(this, arguments);
-		draculaMarkMobileRatios();
-		draculaMarkMobileRates();
-		draculaMarkMobileSeparators();
+		draculaWatchMobileLines();
+		draculaMarkMobileLineParts();
 		draculaMarkMobileSpeeds();
 		draculaListRequestEnded();
 		return result;
