@@ -2418,23 +2418,16 @@ plugin.allDone = function()
 	   disables it (`plugins/mobile/init.js:2138`) — none of that holds, and this
 	   file keeps running anyway because ruTorrent splices it into the response.
 
-	   Three do hold, for reasons of their own:
+	   Two do hold, for reasons of their own:
 
 	   `draculaSetFavicon` touches nothing but `<head>`, so which interface
 	   paints the body is beside the point.
-
-	   `draculaStatusOverride` wraps `theWebUI.getStatusIcon`, which the mobile
-	   plugin calls for a list row's status (`plugins/mobile/init.js:1880`) and
-	   for the details Status field (`:942`). It takes element `[1]` and never
-	   `[0]`, computing its own icon class at `:1898`, so the wrap changes the
-	   words there and nothing else.
 
 	   `draculaCheckVersions` decides for itself whether there is anything to
 	   report. */
 	if(draculaThemeSwitchedOff())
 	{
 		draculaSetFavicon();
-		draculaStatusOverride();
 		draculaCheckVersions();
 		return;
 	}
@@ -2597,7 +2590,6 @@ plugin.allDone = function()
 	draculaFixHiddenToolbarHeight();
 	draculaTouchDividers();
 	draculaTorrentActionKeys();
-	draculaStatusOverride();
 	draculaCheckVersions();
 }
 
@@ -2787,6 +2779,21 @@ function draculaStatusOverride()
 		return [icon, status];
 	};
 }
+
+/* Installed as this file is read rather than from `allDone`, because the first
+   torrent list is painted before `allDone` runs. `webui.js:1647` asks for a
+   row's icon only inside a `processTorrents` pass, and `setRowById` touches a
+   row only when that torrent's data has changed — so a row first painted
+   through upstream's function keeps upstream's icon until something about that
+   torrent moves, which on an idle one is a long time. Only `theWebUI` has to
+   exist this early; the status words are read when the wrap is called.
+
+   It installs whatever interface is showing. The mobile plugin calls
+   `theWebUI.getStatusIcon(v)[1]` for a list row (`plugins/mobile/init.js:1880`)
+   and for the details Status field (`:942`), taking element `[1]` and never
+   `[0]` and computing its own icon class at `:1898`, so there the wrap changes
+   the words and nothing visual. */
+draculaStatusOverride();
 
 // F4 hides the toolbar, and one branch in `theWebUI.resize` (`webui.js:2288`)
 // then pushes the status bar off the bottom of the screen, where nothing can
