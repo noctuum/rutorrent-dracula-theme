@@ -1,0 +1,92 @@
+/* Dracula Theme for ruTorrent — releases below 5.2.0
+ * Version 0.2.1 · built against ruTorrent 5.3   # x-release-please-version
+ * https://draculatheme.com
+ *
+ * 5.2.0 rewrote the torrent table. Before it, the heading is a table of its own
+ * inside `div.stable-head` rather than a `thead` inside the body table, the row
+ * striping is a class on the row rather than `.alternate` with nth-child, and a
+ * handful of declarations the theme relies on being absent are still there.
+ * Everything here addresses that older shape; on 5.2.0 and above none of these
+ * selectors match anything, so the file costs those releases nothing.
+ *
+ * Imported last, from plugins.css, because it has to outrank the upstream
+ * sheets rather than the theme's own.
+ *
+ * No version stamp on :root here — see the header of palette.css.
+ */
+
+/* The heading is its own table in a wrapper, and upstream paints it with a
+   raster gradient. The values are the ones 5.3.12 resolves to for the same
+   surfaces. */
+.stable-head {
+  height: 30px;
+  background: var(--dracula-bg-dark);
+}
+
+.stable-head table tr {
+  background-image: none;
+}
+
+.stable-head table tr td {
+  border-color: var(--dracula-selection);
+  font-size: inherit;
+}
+
+.stable-head table td div {
+  line-height: 30px;
+  color: var(--dracula-purple);
+  font-weight: bold;
+}
+
+.stable-head div.resz {
+  border: none;
+  background: transparent;
+}
+
+/* Striping is a class on the row here, not `.alternate` plus nth-child. */
+.stable-body tr.even td,
+.stable-body tr.odd td {
+  background: var(--dracula-bg-dark);
+}
+
+/* `.stable td` carries `font: menu` — a system font, 16px Arial in practice.
+   Only the family and the size are taken back: the `font` shorthand would also
+   pull in the row's line box, and the cell needs the normal one to centre its
+   text. Cells are top-aligned in these releases as well. */
+.stable td {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: normal;
+  vertical-align: middle;
+}
+
+/* The text sits in a div inside the cell, and upstream pins that div to 11px. */
+.stable td > div {
+  font-size: inherit;
+}
+
+/* 5.2.0 makes the name cell a flex row holding the icon and the name, which is
+   what centres them against each other. Here the icon is a float beside the
+   div, so both are put back on one line and centred. */
+.stable-body td > .stable-icon {
+  float: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.stable-body td > .stable-icon + div {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* The progress figure is pinned to 11px here; 5.2.0 lets it inherit. */
+.meter-text {
+  font-size: inherit;
+}
+
+/* The log's Clear button lives inside the tab row in these releases, and the
+   theme's own button padding stretches the row it sits in. */
+#tabbar .Button {
+  padding-block: 0;
+  line-height: 20px;
+}

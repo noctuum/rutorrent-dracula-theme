@@ -116,15 +116,16 @@ test("every @import asks for the version the theme is on", () => {
 		}
 	}
 	// Exact, not a floor: another import is a decision, and it should cost
-	// whoever makes it a look at this test. Seven of them — the palette, the
+	// whoever makes it a look at this test. Eight of them — the palette, the
 	// fonts and the icons into style.css, and those three plus the mobile rules
-	// into plugins.css, which is the only sheet the mobile plugin's UI ever
-	// loads. The first three are named twice on purpose: same URLs, fetched
-	// once, and the desktop would otherwise wait for config time to get them.
+	// and the pre-5.2.0 rules into plugins.css, which is the only sheet the
+	// mobile plugin's UI ever loads. The first three are named twice on purpose:
+	// same URLs, fetched once, and the desktop would otherwise wait for config
+	// time to get them.
 	assert.equal(
 		found,
-		7,
-		`expected 7 @imports across the sheets, found ${found}`,
+		8,
+		`expected 8 @imports across the sheets, found ${found}`,
 	);
 });
 
