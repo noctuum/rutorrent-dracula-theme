@@ -83,19 +83,22 @@
 .stable-body td > .stable-icon {
   float: none;
   display: inline-block;
-  margin: 0 6.4px 0 10.5px;
+  margin: 0 1.4px 0 10.5px;
   vertical-align: middle;
 }
 
-/* `.stable-body td div` pins every box to `height: 16px !important`, and with
-   the cell clipping at `overflow: hidden` a descender is cut off at that height
-   — the tail of a "g" goes. Only !important outranks !important.
+/* `.stable-body td div` pins every box to `height: 16px !important` and
+   `margin: 0 2px !important`. The cell clips at `overflow: hidden`, so the
+   height cuts a descender off — the tail of a "g" goes; the margin stands the
+   whole row's text 1.5px left of where 5.3.12 puts it. Only !important outranks
+   !important.
 
    5.3.12 uses three heights, and each is reproduced here: 19px for an ordinary
    cell, 22px for the name, and 16px for the progress figure, which is the one
    the shorter box was always right for. */
 .stable-body td > div {
   height: 19px !important;
+  margin-inline: 3.5px !important;
   padding: 2.1px 3.5px;
 }
 
@@ -103,9 +106,13 @@
   height: 16px !important;
 }
 
+/* The name is the one cell whose text is centred rather than resting on the top
+   of the content box: 5.3.12 centres it as a flex item, which lifts it 0.4px
+   against the 17.8px content box. A flex row of one reproduces that exactly. */
 .stable-body td > .stable-icon + div {
   height: 22px !important;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   vertical-align: middle;
 }
 

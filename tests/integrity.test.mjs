@@ -485,12 +485,14 @@ const IMPORTANT_BUDGET = {
 	// it — the pseudo-element still lays out and the browser still fetches
 	// 134,044 bytes for its metrics.
 	"mobile.css": 3,
-	// Three, all the same fight: `.stable-body td div` in ruTorrent below 5.2.0
-	// pins every cell's box to `height: 16px !important`, the cell clips at
-	// `overflow: hidden`, and a descender is cut off at that height. Only
-	// !important outranks !important. The three values are the reference's own —
-	// 19px for an ordinary cell, 22px for the name, 16px for the progress bar.
-	"legacy.css": 3,
+	// Four, all the same fight: `.stable-body td div` in ruTorrent below 5.2.0
+	// pins every cell's box with `height: 16px !important` and
+	// `margin: 0 2px !important`. The cell clips at `overflow: hidden`, so the
+	// height cuts a descender off, and the margin stands the row's text 1.5px
+	// left of the reference. Only !important outranks !important. Every value
+	// is the reference's own — 19px for an ordinary cell, 22px for the name,
+	// 16px for the progress bar, 3.5px of margin on each side.
+	"legacy.css": 4,
 	// Declarations only, no selectors to fight over.
 	"palette.css": 0,
 	"icons.css": 0,
