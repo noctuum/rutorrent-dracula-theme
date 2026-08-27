@@ -6,8 +6,15 @@
  * inside `div.stable-head` rather than a `thead` inside the body table, the row
  * striping is a class on the row rather than `.alternate` with nth-child, and a
  * handful of declarations the theme relies on being absent are still there.
- * Everything here addresses that older shape; on 5.2.0 and above none of these
- * selectors match anything, so the file costs those releases nothing.
+ * Everything here addresses that older shape.
+ *
+ * `.stable-head` is the release marker and every rule is keyed to it: nine of
+ * those wrappers exist below 5.2.0 and none at all from 5.2.0 on. The body's
+ * rules reach it as `.stable-head ~ .stable-body`, the two being siblings inside
+ * the table's wrapper. Without that key the selectors would match the newer
+ * shape too — `.stable-body td > div` is every cell of every release — and the
+ * heights here would be imposed on a table that does not want them. The sidebar
+ * rule at the end cannot be keyed this way and carries its own condition.
  *
  * Imported last, from plugins.css, because it has to outrank the upstream
  * sheets rather than the theme's own.
@@ -53,8 +60,8 @@
 }
 
 /* Striping is a class on the row here, not `.alternate` plus nth-child. */
-.stable-body tr.even td,
-.stable-body tr.odd td {
+.stable-head ~ .stable-body tr.even td,
+.stable-head ~ .stable-body tr.odd td {
   background: var(--dracula-bg-dark);
 }
 
@@ -62,16 +69,12 @@
    Only the family and the size are taken back: the `font` shorthand would also
    pull in the row's line box, and the cell needs the normal one to centre its
    text. Cells are top-aligned in these releases as well. */
-.stable td {
+.stable-head td,
+.stable-head ~ .stable-body td {
   font-family: inherit;
   font-size: inherit;
   line-height: normal;
   vertical-align: middle;
-}
-
-/* The text sits in a div inside the cell, and upstream pins that div to 11px. */
-.stable td > div {
-  font-size: inherit;
 }
 
 /* 5.2.0 makes the name cell a flex row holding the icon and the name, which is
@@ -80,36 +83,37 @@
 /* The margins carry what the flex wrapper contributes there — its own padding,
    the icon's margin and the gap — so the glyph and the name land where 5.3.12
    puts them: icon at 16.5px from the cell edge, name at 46.9px. */
-.stable-body td > .stable-icon {
+.stable-head ~ .stable-body td > .stable-icon {
   float: none;
   display: inline-block;
   margin: 0 1.4px 0 10.5px;
   vertical-align: middle;
 }
 
-/* `.stable-body td div` pins every box to `height: 16px !important` and
-   `margin: 0 2px !important`. The cell clips at `overflow: hidden`, so the
-   height cuts a descender off — the tail of a "g" goes; the margin stands the
-   whole row's text 1.5px left of where 5.3.12 puts it. Only !important outranks
-   !important.
+/* The text sits in a div inside the cell, and upstream pins that div to 11px,
+   to `height: 16px !important` and to `margin: 0 2px !important`. The cell clips
+   at `overflow: hidden`, so the height cuts a descender off — the tail of a "g"
+   goes; the margin stands the whole row's text 1.5px left of where 5.3.12 puts
+   it. Only !important outranks !important.
 
    5.3.12 uses three heights, and each is reproduced here: 19px for an ordinary
    cell, 22px for the name, and 16px for the progress figure, which is the one
    the shorter box was always right for. */
-.stable-body td > div {
+.stable-head ~ .stable-body td > div {
   height: 19px !important;
   margin-inline: 3.5px !important;
   padding: 2.1px 3.5px;
+  font-size: inherit;
 }
 
-.stable-body td > div.meter-value {
+.stable-head ~ .stable-body td > div.meter-value {
   height: 16px !important;
 }
 
 /* The name is the one cell whose text is centred rather than resting on the top
    of the content box: 5.3.12 centres it as a flex item, which lifts it 0.4px
    against the 17.8px content box. A flex row of one reproduces that exactly. */
-.stable-body td > .stable-icon + div {
+.stable-head ~ .stable-body td > .stable-icon + div {
   height: 22px !important;
   display: inline-flex;
   align-items: center;
@@ -117,7 +121,7 @@
 }
 
 /* The progress figure is pinned to 11px here; 5.2.0 lets it inherit. */
-.meter-text {
+.stable-head ~ .stable-body .meter-text {
   font-size: inherit;
 }
 
@@ -137,10 +141,8 @@
    background. The size opens the gap instead and draws the glyph in it, out of
    flow so the pill keeps its own box.
 
-   `body:has(.stable-head)` is what confines this to the older releases: nine of
-   those wrappers exist below 5.2.0 and none at all from 5.2.0 on. Every other
-   rule in this file is confined by its own selector; a shadow part is not, so
-   this one says so.
+   The sidebar is nowhere near the table, so this is the one rule that states
+   the release marker as a condition rather than reaching it through the markup.
 
    The numbers are the space 5.3.12 leaves: 7px of the host's part spacing on
    each side of the glyph, and the pill's own 1.4px of top padding, which is the
