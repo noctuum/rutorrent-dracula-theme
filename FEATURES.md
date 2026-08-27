@@ -108,10 +108,8 @@ nothing depends on what the machine has installed.
 
 ## What it needs
 
-**ruTorrent 5.2.0 or newer.** The floor was found by testing each release in
-turn: 5.1.12 and everything below it lays the torrent table out wrong, and
-5.2.0 is the first that does not. 5.2.0, 5.2.10, 5.3.0 and 5.3.12 were all
-checked; the theme is developed against the current release.
+**ruTorrent 5.1.12 or newer.** Checked on 5.1.12, 5.2.0, 5.2.10, 5.3.0 and
+5.3.12.
 
 Which rTorrent you run is ruTorrent's business rather than the theme's — the
 theme never speaks to the daemon. It is worth knowing all the same, because it
