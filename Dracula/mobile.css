@@ -531,6 +531,113 @@
   margin-left: auto;
 }
 
+/* The limits, in the same three columns as the readout and against the bar's
+   edge, with the readout moved off it. `order` puts this item there: the rules
+   below key on `li:last-child`, so it stands before the readout in the markup.
+
+   **It reserves nothing, where the readout has to.** A rate arrives and leaves
+   with the transfer, so its block must hold its width or the bar walks; a limit
+   is set by hand, and the readout moving is then a change the person just made.
+
+   On a torrent's details the bar is full and there is no edge to stand at, so
+   the item is dropped there — the plugin writes `display: none` inline on the
+   torrent controls in list mode, which is the only signal in the markup for
+   which of the two states the bar is in. */
+#mainContainer #mainNavbar .nav > li.dracula-limits {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  order: 1;
+  margin-right: 0;
+  align-content: center;
+  justify-content: end;
+  justify-items: end;
+  column-gap: 5px;
+  row-gap: 6px;
+}
+
+#mainContainer
+  #mainNavbar
+  .nav:not(:has(.torrentControl[style*="none"]))
+  > li.dracula-limits,
+#mainContainer #mainNavbar .dracula-limits[hidden],
+#mainContainer #mainNavbar .dracula-limit-icon[hidden] {
+  display: none;
+}
+
+/* Both rows stand whether their direction is limited or not: the height is what
+   keeps an empty one in the grid, and a row of no height is a row the block
+   drops — after which one limit centres on the bar instead of standing under
+   the rate it holds. 17px is the line the readout's rows measure. */
+#mainContainer #mainNavbar .nav > li.dracula-limits > div {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  min-height: 17px;
+  align-items: center;
+  justify-items: end;
+}
+
+/* The same three cells the readout names, and named for the same reason: a row
+   whose direction is unlimited is empty, and an unnamed cell would put the row
+   below it out of line. */
+/* `top` because the plugin lifts every figure in the bar 2px
+   (`plugins/mobile/mobile.css:295`) to square it against an icon it used to
+   stand beside on a line. In a grid row it lands 2px above its own cell. */
+#mainContainer #mainNavbar .dracula-limit-value {
+  grid-row: 1;
+  grid-column: 1;
+  top: 0;
+  line-height: 17px;
+}
+
+#mainContainer #mainNavbar .dracula-limit-unit {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: start;
+  font-weight: inherit;
+  line-height: 17px;
+}
+
+/* The desktop's own limit glyph, drawn as a stencil so it takes the row's
+   colour rather than the Comment the drawing carries. A mask reads alpha and
+   not fill, so the duotone's backdrop survives as it does everywhere else.
+
+   The pixel down is optical. Centred by its box the glyph draws 10 ink rows
+   against the figure's 11, its top on the figure's cap and its bottom a row
+   short of the baseline — and a dome with a flat underside that does not reach
+   the line reads as lifted. On the line it sits. */
+#mainContainer #mainNavbar .dracula-limit-icon {
+  display: block;
+  grid-row: 1;
+  grid-column: 3;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask: var(--icon-speedometer) center / 1em no-repeat;
+  mask: var(--icon-speedometer) center / 1em no-repeat;
+  transform: translateY(1px);
+}
+
+/* The glyph carries the direction, in the colours the rate icons beside it use.
+   The figure does not: it is a reading like every other in the bar and keeps the
+   body colour, so the colour says which direction and the row says what kind. */
+#mainContainer #mainNavbar .dracula-limit-up .dracula-limit-icon {
+  color: var(--variant-green);
+}
+
+#mainContainer #mainNavbar .dracula-limit-down .dracula-limit-icon {
+  color: var(--variant-cyan);
+}
+
+/* With a limit showing the readout gives up the edge and centres in what is
+   left between the app's icons and it. */
+#mainContainer
+  #mainNavbar
+  .nav:has(.dracula-limits:not([hidden]))
+  > li:last-child {
+  margin-right: auto;
+}
+
 /* The readout, as three columns rather than two lines of running text. Reading
    inward from the edge: the icon, the unit, then the rate itself — so the
    numbers line up under each other whatever their length, which two centred
