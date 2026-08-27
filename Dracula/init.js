@@ -18,7 +18,7 @@
  * undefined variable, and so a reader can see what the theme depends on.
  */
 
-/* global plugin, thePlugins, theWebUI, theUILang, theContextMenu, theDialogManager */
+/* global plugin, thePlugins, theWebUI, theUILang, theConverter, theContextMenu, theDialogManager */
 /* global dStatus, askYesNo, RGBackground, dxSTable, rGraph, ALIGN_LEFT */
 /* global document, setTimeout, clearTimeout, MutationObserver, MouseEvent, Intl, $, window, getComputedStyle, Image, console */
 
@@ -3679,6 +3679,85 @@ function draculaMarkMobileSpeeds()
 	}
 }
 
+/* rTorrent answers an unset limit with a figure at its own ceiling rather than
+   with nothing, so a limit is a figure above zero and below it (`js/webui.js:2170`). */
+var DRACULA_NO_LIMIT = 327625 * 1024;
+
+function draculaMobileLimit(value)
+{
+	if(!(value > 0) || value >= DRACULA_NO_LIMIT)
+		return "";
+	if(!window.theConverter || typeof theConverter.speed !== "function")
+		return "";
+	return theConverter.speed(value);
+}
+
+function draculaMobileLimitRow(item, name)
+{
+	var row = item.querySelector("." + name);
+	if(row)
+		return row;
+	row = document.createElement("div");
+	row.className = name;
+	var parts = ["dracula-limit-value", "dracula-limit-unit", "dracula-limit-icon"];
+	var tags = ["span", "b", "i"];
+	for(var i = 0; i < parts.length; i++)
+	{
+		var part = document.createElement(tags[i]);
+		part.className = parts[i];
+		row.appendChild(part);
+	}
+	item.appendChild(row);
+	return row;
+}
+
+/* The speed limits, which this interface shows nowhere and the desktop reads
+   from the same two figures.
+
+   Placed before the readout rather than after it: every rule that lays the
+   readout out keys on `li:last-child`, and an item appended to the list would
+   take that selector from it. The bar's edge is `order` instead.
+
+   A row whose direction is unlimited is empty, and with neither limited the
+   whole item goes — which is the state a bar without a limit is in, and it then
+   stands exactly as it stood before this existed. */
+function draculaShowMobileLimits()
+{
+	var nav = document.querySelector("#mainNavbar .nav");
+	var total = window.theWebUI && theWebUI.total;
+	if(!nav || !total || !nav.lastElementChild)
+		return;
+	var item = nav.querySelector(".dracula-limits");
+	if(!item)
+	{
+		item = document.createElement("li");
+		item.className = "dracula-limits";
+		nav.insertBefore(item, nav.lastElementChild);
+	}
+	var rows = [
+		["dracula-limit-up", draculaMobileLimit(total.rateUL)],
+		["dracula-limit-down", draculaMobileLimit(total.rateDL)]
+	];
+	var shown = false;
+	for(var i = 0; i < rows.length; i++)
+	{
+		var row = draculaMobileLimitRow(item, rows[i][0]);
+		var text = rows[i][1];
+		var at = text ? draculaSpeedUnitAt(text) : -1;
+		if(text)
+			shown = true;
+		/* The row stays even when its direction is unlimited. Removed, the other
+		   direction's limit becomes the item's only row and centres on the bar
+		   instead of standing under the rate it holds. */
+		row.querySelector(".dracula-limit-value").textContent =
+			at === -1 ? text : text.slice(0, at - 1);
+		row.querySelector(".dracula-limit-unit").textContent =
+			at === -1 ? "" : text.slice(at);
+		row.querySelector(".dracula-limit-icon").hidden = !text;
+	}
+	item.hidden = !shown;
+}
+
 /* The three marks a status line carries. Each skips a line it has marked
    already, so a pass with nothing new to do costs a walk and writes nothing. */
 function draculaMarkMobileLineParts()
@@ -3741,6 +3820,7 @@ function draculaMarkMobileLines()
 		draculaWatchMobileLines();
 		draculaMarkMobileLineParts();
 		draculaMarkMobileSpeeds();
+		draculaShowMobileLimits();
 		draculaListRequestEnded();
 		return result;
 	};
