@@ -3636,6 +3636,8 @@ function draculaColourMobileDiskMeter()
    A rate of zero is the empty string, not "0 B/s", so nothing to split; and the
    number is built by `theConverter.round` as `v + ""`, which is a full stop in
    every locale. */
+var DRACULA_FIGURE = /^[0-9]+(\.[0-9]+)?$/;
+
 function draculaSpeedUnitAt(text)
 {
 	if(typeof text !== "string")
@@ -3643,7 +3645,7 @@ function draculaSpeedUnitAt(text)
 	var at = text.indexOf(" ");
 	if(at <= 0)
 		return -1;
-	if(!/^[0-9]+(\.[0-9]+)?$/.test(text.slice(0, at)))
+	if(!DRACULA_FIGURE.test(text.slice(0, at)))
 		return -1;
 	return at + 1;
 }
@@ -3653,9 +3655,14 @@ function draculaSpeedUnitAt(text)
 
    Beside rather than inside: the plugin sets the span's text whole on every
    pass (`plugins/mobile/init.js:2096`), which would take a child with it, and
-   the grid needs the two as separate items in any case. The old element is
-   dropped first — the span is refilled each pass and a stale unit would
-   otherwise stand next to a fresh number. */
+   the grid needs the two as separate items in any case.
+
+   The span alone says what upstream wrote, because the plugin rewrites the span
+   and leaves the element beside it standing. A whole rate in the span is
+   therefore a rate to split, and a bare figure with a unit already beside it is
+   this function's own output and is left alone — which is what keeps a pass
+   with nothing new to do from writing, and the watcher from answering its own
+   writes. */
 function draculaMarkMobileSpeeds()
 {
 	var ids = ["upspeed", "downspeed"];
@@ -3664,19 +3671,61 @@ function draculaMarkMobileSpeeds()
 		var span = document.getElementById(ids[i]);
 		if(!span)
 			continue;
-		var stale = span.nextElementSibling;
-		if(stale && stale.className === "dracula-unit")
-			stale.parentNode.removeChild(stale);
+		var unit = span.nextElementSibling;
+		if(unit && unit.className !== "dracula-unit")
+			unit = null;
 		var text = span.textContent;
 		var at = draculaSpeedUnitAt(text);
 		if(at === -1)
+		{
+			/* Split already, or a rate with no unit to split off — zero, which
+			   the converter writes as nothing at all, among them. */
+			if(unit && !DRACULA_FIGURE.test(text))
+				unit.parentNode.removeChild(unit);
 			continue;
-		var unit = document.createElement("b");
-		unit.className = "dracula-unit";
-		unit.textContent = text.slice(at);
+		}
+		if(!unit)
+		{
+			unit = document.createElement("b");
+			unit.className = "dracula-unit";
+			span.parentNode.insertBefore(unit, span.nextSibling);
+		}
+		if(unit.textContent !== text.slice(at))
+			unit.textContent = text.slice(at);
 		span.textContent = text.slice(0, at - 1);
-		span.parentNode.insertBefore(unit, span.nextSibling);
 	}
+}
+
+/* The readout is written from a callback rather than from the pass that asks
+   for it: the plugin fetches the trackers it has no cache for before it renders,
+   and the rates go in when that answer lands (`plugins/mobile/init.js:2096`).
+   Splitting from the wrap alone therefore leaves the first readout in upstream's
+   own spacing until the pass after it, a poll away.
+
+   So the split follows the text. The readout is the list's sibling rather than
+   part of it, so the observer that follows the rows never sees it, and the rates
+   sit one wrapper down from the item (`plugins/mobile/mobile.html:31`). */
+var draculaMobileSpeedsWatched = false;
+
+function draculaWatchMobileSpeeds()
+{
+	if(draculaMobileSpeedsWatched)
+		return;
+	var span = document.getElementById("upspeed");
+	var readout = span && span.parentNode ? span.parentNode.parentNode : null;
+	if(!readout)
+		return;
+	draculaMobileSpeedsWatched = true;
+
+	var marking = false;
+	new MutationObserver(function()
+	{
+		if(marking)
+			return;
+		marking = true;
+		draculaMarkMobileSpeeds();
+		marking = false;
+	}).observe(readout, { childList: true, subtree: true, characterData: true });
 }
 
 /* rTorrent answers an unset limit with a figure at its own ceiling rather than
@@ -3819,8 +3868,8 @@ function draculaMarkMobileLines()
 		var result = upstream.apply(this, arguments);
 		draculaWatchMobileLines();
 		draculaMarkMobileLineParts();
+		draculaWatchMobileSpeeds();
 		draculaMarkMobileSpeeds();
-		draculaShowMobileLimits();
 		draculaListRequestEnded();
 		return result;
 	};
@@ -3864,6 +3913,25 @@ function draculaMarkMobileLines()
 				return was.apply(this, arguments);
 			};
 		})(stop[s], theWebUI[stop[s]]);
+	}
+
+	/* The limits are no part of the list response. The core asks for them
+	   separately from inside `addTorrents` (`js/webui.js:1702`) and folds the
+	   answer into `theWebUI.total` here (`js/webui.js:1777`), painting nothing —
+	   so they land just after the pass that asked for them, and a block drawn
+	   from that pass stands empty until the next one, a poll away.
+
+	   This is also where a limit set by hand arrives: `setdlrate` and `setulrate`
+	   answer into it (`js/webui.js:2194`, `:2199`). */
+	if(typeof theWebUI.addTotal === "function")
+	{
+		var addTotal = theWebUI.addTotal;
+		theWebUI.addTotal = function()
+		{
+			var result = addTotal.apply(this, arguments);
+			draculaShowMobileLimits();
+			return result;
+		};
 	}
 
 	if(typeof mobile.showSettings === "function")
