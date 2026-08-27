@@ -145,6 +145,92 @@
   line-height: 20px;
 }
 
+/* === The context menu === */
+
+/* 5.2.0 rebuilt `.CMenu`. The newer sheet gives the list a ridged border, a
+   radius and the theme's background, lays each item out as a flex row, and draws
+   the tick and the submenu arrow as pseudo-elements. This release paints the
+   list a fixed grey, floats its items at a fixed 150px, and marks the selected
+   item with a GIF. What follows is the newer sheet's own set of declarations
+   restated for the older shape — the item colours already come from the theme's
+   variables, which this release reads for the item but not for the list.
+
+   The menu is appended to the body rather than into the table, so these name the
+   release marker as a condition rather than reaching it through the markup. */
+body:has(.stable-head) ul.CMenu {
+  width: auto;
+  padding: 0.25rem 0;
+  border: 2px ridge var(--menu-border-color);
+  border-radius: 5px;
+  background: var(--menu-background-color);
+}
+
+body:has(.stable-head) ul.CMenu li {
+  display: block;
+  float: none;
+  width: auto;
+  margin-right: 0;
+  background: transparent;
+}
+
+body:has(.stable-head) ul.CMenu li:first-child {
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+body:has(.stable-head) ul.CMenu li:last-child {
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* The list is what paints the background from 5.2.0 on; here both the item and
+   the anchor paint it as well, and an opaque anchor squares off the radius the
+   first and last items inherit.
+
+   line-height comes from the list rather than the 16px this release pins, which
+   is what makes the item 28px rather than 26. */
+body:has(.stable-head) ul.CMenu li a {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.25rem;
+  border-radius: inherit;
+  line-height: inherit;
+  white-space: nowrap;
+  background-color: transparent;
+}
+
+/* The tick and the submenu arrow are pseudo-elements from 5.2.0 on and GIF
+   backgrounds here. style.css already masks currentColor through both marks;
+   what is missing below 5.2.0 is the box each one draws in, and the background
+   that would otherwise show through it. */
+body:has(.stable-head) ul.CMenu li a::before,
+body:has(.stable-head) ul.CMenu li a::after {
+  content: "";
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+body:has(.stable-head) ul.CMenu li a.sel {
+  background: none;
+  color: var(--menu-active-color);
+}
+
+body:has(.stable-head) ul.CMenu li a.exp {
+  background: none;
+}
+
+body:has(.stable-head) ul.CMenu li a.exp::after {
+  margin-left: auto;
+}
+
+body:has(.stable-head) ul.CMenu li hr {
+  width: auto;
+  margin: 0.25rem;
+  opacity: 0.75;
+}
+
 /* === The sidebar's separator === */
 
 /* `panel-label` gained a `separator` part between its count and its size in
