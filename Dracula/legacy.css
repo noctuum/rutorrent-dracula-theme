@@ -231,6 +231,42 @@ body:has(.stable-head) ul.CMenu li hr {
   opacity: 0.75;
 }
 
+/* === The settings dialog === */
+
+/* Two things this release does that 5.2.0 stopped doing. `.dlg-window` writes a
+   literal black for its text where the newer sheet reads `--text-color`, and the
+   settings window and its pages take their background from
+   `--settings-background-color`, a name the newer sheet dropped — unfilled it
+   resolves to upstream's own near-white.
+
+   The variable is filled rather than the two backgrounds painted: it is the seam
+   upstream left for a theme, and the pages sit inside the window, so one
+   declaration reaches both. */
+body:has(.stable-head) .dlg-window {
+  color: var(--text-color);
+}
+
+body:has(.stable-head) #stg {
+  --settings-background-color: var(--dialog-bg-color);
+}
+
+/* `legend` is a literal black here and `--text-header-color` from 5.2.0 on. */
+body:has(.stable-head) legend {
+  color: var(--text-header-color);
+}
+
+/* The page list is a list of links in this release and a Bootstrap list group
+   from 5.2.0 on. The current page takes the pair upstream gives the active item
+   of that group, which is the same pair the context menu highlights with. */
+body:has(.stable-head) #stg .lm li a {
+  color: var(--text-color);
+}
+
+body:has(.stable-head) #stg .lm li a.focus {
+  background-color: var(--menu-highlight-background-color);
+  color: var(--menu-highlight-color);
+}
+
 /* === The sidebar's separator === */
 
 /* `panel-label` gained a `separator` part between its count and its size in
