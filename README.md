@@ -21,8 +21,7 @@ height across every list, bundled fonts. Full list in
 
 ## Requires
 
-**ruTorrent 5.2.0 or newer.** Older releases lay the torrent table out
-differently and the theme does not fit them.
+**ruTorrent 5.1.12 or newer.**
 
 ## Install
 

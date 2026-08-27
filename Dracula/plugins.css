@@ -18,6 +18,7 @@
 @import url("fonts.css?v=0.2.1"); /* x-release-please-version */
 @import url("icons.css?v=0.2.1"); /* x-release-please-version */
 @import url("mobile.css?v=0.2.1"); /* x-release-please-version */
+@import url("legacy.css?v=0.2.1"); /* x-release-please-version */
 
 /* init.js reads this back at startup to catch a sheet the browser has cached
    from an older release. Declared per sheet, so a mixed set is caught too. */

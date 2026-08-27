@@ -116,15 +116,16 @@ test("every @import asks for the version the theme is on", () => {
 		}
 	}
 	// Exact, not a floor: another import is a decision, and it should cost
-	// whoever makes it a look at this test. Seven of them — the palette, the
+	// whoever makes it a look at this test. Eight of them — the palette, the
 	// fonts and the icons into style.css, and those three plus the mobile rules
-	// into plugins.css, which is the only sheet the mobile plugin's UI ever
-	// loads. The first three are named twice on purpose: same URLs, fetched
-	// once, and the desktop would otherwise wait for config time to get them.
+	// and the pre-5.2.0 rules into plugins.css, which is the only sheet the
+	// mobile plugin's UI ever loads. The first three are named twice on purpose:
+	// same URLs, fetched once, and the desktop would otherwise wait for config
+	// time to get them.
 	assert.equal(
 		found,
-		7,
-		`expected 7 @imports across the sheets, found ${found}`,
+		8,
+		`expected 8 @imports across the sheets, found ${found}`,
 	);
 });
 
@@ -484,6 +485,14 @@ const IMPORTANT_BUDGET = {
 	// it — the pseudo-element still lays out and the browser still fetches
 	// 134,044 bytes for its metrics.
 	"mobile.css": 3,
+	// Four, all the same fight: `.stable-body td div` in ruTorrent below 5.2.0
+	// pins every cell's box with `height: 16px !important` and
+	// `margin: 0 2px !important`. The cell clips at `overflow: hidden`, so the
+	// height cuts a descender off, and the margin stands the row's text 1.5px
+	// left of the reference. Only !important outranks !important. Every value
+	// is the reference's own — 19px for an ordinary cell, 22px for the name,
+	// 16px for the progress bar, 3.5px of margin on each side.
+	"legacy.css": 4,
 	// Declarations only, no selectors to fight over.
 	"palette.css": 0,
 	"icons.css": 0,

@@ -13,7 +13,11 @@
     "format:check": "prettier --check .",
     "check": "npm run format:check && npm run lint && npm test",
     "deploy": "./deploy.sh",
-    "verify": "npm run check && npm run deploy"
+    "deploy:5.2.0": "STAND_CONTAINER=rutorrent-b520 STAND_DATA=tmp/matrix/b-5.2.0/data ./deploy.sh",
+    "deploy:5.1.12": "STAND_CONTAINER=rutorrent-b5112 STAND_DATA=tmp/matrix/b-5.1.12/data ./deploy.sh",
+    "deploy:older": "npm run deploy:5.2.0 && npm run deploy:5.1.12",
+    "verify": "npm run check && npm run deploy",
+    "verify:older": "npm run check && npm run deploy:older"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
