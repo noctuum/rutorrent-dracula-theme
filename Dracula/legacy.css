@@ -127,3 +127,33 @@
   padding-block: 0;
   line-height: 20px;
 }
+
+/* === The sidebar's separator === */
+
+/* `panel-label` gained a `separator` part between its count and its size in
+   5.3.7; below that the two pills sit against one another with nothing between.
+   The part cannot be added from a stylesheet and neither pill can hold the glyph
+   — both are filled and rounded, so a `::before` inside one lands under its
+   background. The size opens the gap instead and draws the glyph in it, out of
+   flow so the pill keeps its own box.
+
+   `body:has(.stable-head)` is what confines this to the older releases: nine of
+   those wrappers exist below 5.2.0 and none at all from 5.2.0 on. Every other
+   rule in this file is confined by its own selector; a shadow part is not, so
+   this one says so.
+
+   The numbers are the space 5.3.12 leaves: 7px of the host's part spacing on
+   each side of the glyph, and the pill's own 1.4px of top padding, which is the
+   row's centre line. */
+body:has(.stable-head) panel-label[size]::part(size) {
+  position: relative;
+  margin-left: 12.1px;
+}
+
+body:has(.stable-head) panel-label[size]::part(size)::before {
+  position: absolute;
+  top: 1.4px;
+  right: calc(100% + 7px);
+  content: "/";
+  color: var(--dracula-comment);
+}
