@@ -255,6 +255,17 @@ body:has(.stable-head) legend {
   color: var(--text-header-color);
 }
 
+/* The General page carries two settings 5.3.12 no longer has — the side panel's
+   minimum width and the list table's minimum height — and the two full rows they
+   take put its content 4px past the room it has. The room is what is left of the
+   pages area once the button row and the gap above it are taken out, so the gap
+   is where the 4px come from. It is a gutter of the dialog and nothing measures
+   against it; 5.3.12 leaves 29px there, this release 14, and 10 is enough for a
+   page whose content ends where this one's does. */
+body:has(.stable-head) #st_btns {
+  margin-top: 10px;
+}
+
 /* The page list is a list of links in this release and a Bootstrap list group
    from 5.2.0 on. The current page takes the pair upstream gives the active item
    of that group, which is the same pair the context menu highlights with. */
