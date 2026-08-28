@@ -422,9 +422,21 @@ body:has(#side-panel) div#t div.navbar-nav a.nav-link:active {
 
 /* The settings dialog is content-sized on this release: `#stg-pages` carries a
    fixed 550px and the window has no height of its own, where from 5.1.0 the
-   window is a column flex box and the pages fill it. The theme's own height
-   would leave an empty strip below the buttons, so only its width applies here.
-   The page list still ends inside 550px, which is what that height buys. */
+   window is a column flex box its pages fill. The window is shown by writing
+   `display: block` inline, which no stylesheet rule outranks, so it cannot be
+   made a flex box from here — the pages take their own height instead and the
+   window follows them. The theme's height would leave an empty strip below the
+   buttons, so only its width applies.
+
+   General needs 595px and upstream's 550 gives it 484, which is the scrollbar.
+   Letting the block size to its content clears that; the cap is the height the
+   dialog is allowed anywhere, less the 44px its header and border take here, so
+   a page longer than General still scrolls rather than running off the screen. */
 body:has(#side-panel) div#stg {
   height: auto;
+}
+
+body:has(#side-panel) div#stg-pages {
+  height: auto;
+  max-height: calc(var(--settings-max-height) - 44px);
 }

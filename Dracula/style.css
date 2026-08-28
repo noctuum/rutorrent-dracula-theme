@@ -222,6 +222,12 @@ html { scrollbar-color: var(--dracula-comment) var(--dracula-bg-dark); }
   --loading-indicator-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cg fill='none' stroke='%236272A4' stroke-width='11' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M128 20V236M20 128H236M51.6 51.6L204.4 204.4M204.4 51.6L51.6 204.4'/%3E%3Cpath d='M128 92L153.5 102.5L164 128L153.5 153.5L128 164L102.5 153.5L92 128L102.5 102.5Z'/%3E%3Cpath d='M128 56L178.9 77.1L200 128L178.9 178.9L128 200L77.1 178.9L56 128L77.1 77.1Z'/%3E%3Cpath d='M128 20L204.4 51.6L236 128L204.4 204.4L128 236L51.6 204.4L20 128L51.6 51.6Z'/%3E%3C/g%3E%3C/svg%3E");
 
   --loading-indicator-side-length: 32px;
+
+  /* The theme's own, not one of upstream's. How tall the settings dialog is
+     allowed to grow — read here by the dialog itself and, below ruTorrent
+     5.1.0 where the dialog is sized by its content, by the block that holds
+     the pages. */
+  --settings-max-height: min(720px, 90vh);
 }
 
 /* === Loading Indicator: Three Dots === */
@@ -1746,7 +1752,7 @@ body.compact .tabbar li.nav-item a.nav-link {
 @media (min-width: 768px) {
   div#stg {
     width: min(1060px, 92vw);
-    height: min(720px, 90vh);
+    height: var(--settings-max-height);
   }
 }
 
