@@ -18,7 +18,7 @@
  * undefined variable, and so a reader can see what the theme depends on.
  */
 
-/* global plugin, thePlugins, theWebUI, theUILang, theConverter, theContextMenu, theDialogManager */
+/* global plugin, thePlugins, theWebUI, theUILang, theConverter, theContextMenu, theDialogManager, getSelection */
 /* global dStatus, askYesNo, RGBackground, dxSTable, rGraph, ALIGN_LEFT */
 /* global document, setTimeout, clearTimeout, MutationObserver, MouseEvent, Intl, $, window, getComputedStyle, Image, console */
 
@@ -3358,9 +3358,11 @@ function draculaMarkMobileRatios()
 		var value = text.splitText(found.start);
 		value.splitText(found.length);
 		var box = document.createElement("b");
-		box.className = found.value >= 1
-			? "dracula-ratio dracula-ratio-met"
-			: "dracula-ratio";
+		box.className = "dracula-ratio";
+		// How far along the ramp mobile.css mixes, as a plain number for
+		// `calc()`. Clamped at 1: past a full return the colour stops moving.
+		box.style.setProperty("--dracula-ratio-met",
+			String(Math.round(Math.min(found.value, 1) * 100)));
 		value.parentNode.replaceChild(box, value);
 		box.appendChild(value);
 	}
@@ -3807,6 +3809,26 @@ function draculaShowMobileLimits()
 	item.hidden = !shown;
 }
 
+/* Whether a selection is being held inside the torrent list.
+
+   The plugin rewrites a changed row's status line whole —
+   `row.find('span').html(…)`, `plugins/mobile/init.js:1953` — which replaces the
+   text nodes under it and takes any selection in them with it. Measured on a
+   transferring row: the selection went at 2103ms, the same millisecond the row's
+   markup changed. A selection in the torrent's name survives, because that
+   element is not rewritten.
+
+   `isCollapsed` is what keeps a caret from counting: only a real selection, with
+   text in it, holds anything up. */
+function draculaHoldingListSelection()
+{
+	var list = document.getElementById("torrentsList");
+	var selection = window.getSelection ? getSelection() : null;
+	if(!list || !selection || !selection.rangeCount || selection.isCollapsed)
+		return false;
+	return list.contains(selection.getRangeAt(0).commonAncestorContainer);
+}
+
 /* The three marks a status line carries. Each skips a line it has marked
    already, so a pass with nothing new to do costs a walk and writes nothing. */
 function draculaMarkMobileLineParts()
@@ -3865,6 +3887,16 @@ function draculaMarkMobileLines()
 	var upstream = mobile.processTorrents;
 	mobile.processTorrents = function()
 	{
+		/* A pass that would rewrite the row a selection is in destroys it, so
+		   while one is held the list stands still. Nothing is lost: the plugin
+		   compares each row against `rowsPrev`, which this pass leaves untouched,
+		   so the next one applies everything skipped. The arrow is still told the
+		   request finished, or it would turn until the selection went. */
+		if(draculaHoldingListSelection())
+		{
+			draculaListRequestEnded();
+			return undefined;
+		}
 		var result = upstream.apply(this, arguments);
 		draculaWatchMobileLines();
 		draculaMarkMobileLineParts();
