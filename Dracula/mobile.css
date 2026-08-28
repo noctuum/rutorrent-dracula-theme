@@ -1143,7 +1143,10 @@
    and `--icon-remove` red, `--icon-pause` orange, `--icon-settings` comment,
    `--icon-upload-speed` green against `--icon-download-speed` cyan. Home has no
    desktop counterpart; it returns to the unfiltered list, which is what
-   `--icon-status-all` means, and takes its purple.
+   `--icon-status-all` means, and carries the accent — read through
+   `--mobile-accent`, so an accent chosen on the settings page moves it. The
+   filter list's own All keeps the palette's purple: those seven are states and
+   answer to the palette, not to what the accent is set to.
 
    Keyed by class, not by the ids the bar's links carry, because the two speed
    glyphs have no id to key on. All nine classes are distinct within the bar.
@@ -1174,7 +1177,7 @@
 }
 
 #mainContainer #mainNavbar .bi-house {
-  color: var(--variant-purple);
+  color: var(--mobile-accent);
 }
 
 #mainContainer #mainNavbar .bi-gear {
