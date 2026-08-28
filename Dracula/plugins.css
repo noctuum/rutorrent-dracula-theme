@@ -315,6 +315,26 @@
   background-image: var(--icon-port-open);
 }
 
+/* The pane's hidden parts are not hidden. check_port empties a segment and calls
+   jQuery's `.hide()` on it, which writes a plain inline `display: none`, while
+   the same elements carry Bootstrap's `d-lg-block` — `display: block !important`
+   above 992px. An important declaration outranks an inline one that is not, so
+   they stay in the flow, and the separator carries `margin: 0 3px` inline
+   (`plugins/check_port/init.js`, `onLangLoaded`): six pixels of nothing after
+   the address, measured 19px from the number to the pane's edge against the
+   12px its padding asks for.
+
+   `:empty` is what tells a hidden segment from a live one — the plugin clears
+   the text in the same breath as it hides the element — and `!important` is
+   here because only `!important` outranks `!important`.
+
+   Silent on releases whose check_port has one protocol and no separator: that
+   markup carries neither this id nor this class. */
+#port-pane #port-ip-separator:empty,
+#port-pane .port-ip-text-segment:empty {
+  display: none !important;
+}
+
 /* === Scheduler === */
 
 /* The scheduler paints its week grid with a saturated #00A800 for full speed,
