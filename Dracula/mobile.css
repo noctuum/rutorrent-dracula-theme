@@ -388,9 +388,12 @@
 /* The current tab, and nothing else here, carries the accent. The underline is
    upstream's and stays as it is (`plugins/mobile/mobile.css:335`); this is its
    label. No toolbar row takes `active`, so the list's own `.nav-tabs` is
-   unaffected. */
+   unaffected.
+
+   `--mobile-accent` and not the palette, so an accent chosen on the settings
+   page moves this label with everything else it moves. */
 #mainContainer .nav-tabs > li.active > a {
-  color: var(--variant-purple);
+  color: var(--mobile-accent);
 }
 
 #mainContainer :is(#sort, #search, #refresh) > a,
