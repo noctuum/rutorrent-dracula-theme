@@ -160,6 +160,10 @@ function definitions(text) {
 	// A definition follows the start of a line, a `{` or a `;`.
 	for (const m of text.matchAll(/(?:^|[{;])\s*(--[a-zA-Z0-9-]+)\s*:/gm))
 		found.add(m[1]);
+	// `@property` defines a name too, and carries its initial value in the block
+	// rather than after a colon, so the pattern above cannot see it.
+	for (const m of text.matchAll(/@property\s+(--[a-zA-Z0-9-]+)/g))
+		found.add(m[1]);
 	return found;
 }
 
