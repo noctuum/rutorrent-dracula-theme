@@ -536,7 +536,14 @@ panel-label[data-dracula-blank="tracker"]::part(icon) {
 
    The set is kept whole even though some of these dialogs are core rather than
    plugin: an icon block split by who owns the dialog is a block nobody can edit
-   confidently. 20px matches the close button on the other side of the header. */
+   confidently. 20px matches the close button on the other side of the header.
+
+   Every selector carries the dialog around the header as well as the header's
+   own id. Below ruTorrent 5.1.0 the id is on the header itself and upstream
+   writes these two ways — `div#tadd-header` and `div#dlgHelp div.dlg-header` —
+   both of which outrank a bare id and would keep their own GIF. This shape ties
+   the heavier of the two and wins on order, on every release. Each header is a
+   div inside a `.dlg-window`; the dialog builder makes nothing else. */
 
 /* Five dialogs put a torrent into the list, and upstream draws four of them
    with the same images/world.gif. They do different things, so each gets its
@@ -544,7 +551,7 @@ panel-label[data-dracula-blank="tracker"]::part(icon) {
    so the button and the dialog it opens read as one action. */
 
 /* Add Torrent — the toolbar's Add button */
-#tadd-header {
+div.dlg-window div#tadd-header {
   background-image: var(--icon-add);
   background-size: 20px;
 }
@@ -552,62 +559,62 @@ panel-label[data-dracula-blank="tracker"]::part(icon) {
 /* Create New Torrent — the toolbar's Create button. Replaces
    plugins/create/images/create16.gif, a yellow star that reads as
    "favourite" rather than "new file". */
-#tcreate-header {
+div.dlg-window div#tcreate-header {
   background-image: var(--icon-create);
   background-size: 20px;
 }
 
 /* Bulk loading — the bulk_magnet plugin, which takes a list of magnet links */
-#dlgBulkAdd-header {
+div.dlg-window div#dlgBulkAdd-header {
   background-image: var(--icon-magnet);
   background-size: 20px;
 }
 
 /* Loading torrents picked out of a search result or an RSS feed. Same job in
    two plugins, so they share a glyph. */
-#tegLoadTorrents-header,
-#dlgLoadTorrents-header {
+div.dlg-window div#tegLoadTorrents-header,
+div.dlg-window div#dlgLoadTorrents-header {
   background-image: var(--icon-file-down);
   background-size: 20px;
 }
 
 /* Settings and the dialogs that configure one thing each */
-#stg-header,
-#dlg_datadir-header,
-#tedit-header,
-#dlgEditRatioRules-header,
-#dlg_unpack-header {
+div.dlg-window div#stg-header,
+div.dlg-window div#dlg_datadir-header,
+div.dlg-window div#tedit-header,
+div.dlg-window div#dlgEditRatioRules-header,
+div.dlg-window div#dlg_unpack-header {
   background-image: var(--icon-settings);
   background-size: 20px;
 }
 
 /* RSS feeds, groups, filters and the URL rewrite rules that feed them */
-#dlgAddRSS-header,
-#dlgAddRSSGroup-header,
-#dlgEditRSS-header,
-#dlgEditFilters-header,
-#dlgEditRules-header {
+div.dlg-window div#dlgAddRSS-header,
+div.dlg-window div#dlgAddRSSGroup-header,
+div.dlg-window div#dlgEditRSS-header,
+div.dlg-window div#dlgEditFilters-header,
+div.dlg-window div#dlgEditRules-header {
   background-image: var(--icon-rss);
   background-size: 20px;
 }
 
 /* Help and About */
-#dlgHelp-header,
-#dlgAbout-header {
+div.dlg-window div#dlgHelp-header,
+div.dlg-window div#dlgAbout-header {
   background-image: var(--icon-help);
   background-size: 20px;
 }
 
 /* Add Peer — a plus on a person. The bare plus-circle belongs to Add Torrent,
    and those two dialogs sit one click apart in the Peers tab. */
-#padd-header {
+div.dlg-window div#padd-header {
   background-image: var(--icon-user-plus);
   background-size: 20px;
 }
 
 /* Properties, and the dialog that annotates a peer rather than adding one */
-#dlgProps-header,
-#cadd-header {
+div.dlg-window div#dlgProps-header,
+div.dlg-window div#cadd-header {
   background-image: var(--icon-info);
   background-size: 20px;
 }
@@ -620,13 +627,13 @@ div#cadd div.dlg-header {
 }
 
 /* Confirmation prompts */
-#yesnoDlg-header {
+div.dlg-window div#yesnoDlg-header {
   background-image: var(--icon-warning);
   background-size: 20px;
 }
 
 /* Label assignment */
-#dlgLabel-header {
+div.dlg-window div#dlgLabel-header {
   background-image: var(--icon-tag);
   background-size: 20px;
 }

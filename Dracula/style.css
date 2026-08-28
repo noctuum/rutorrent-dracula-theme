@@ -1744,7 +1744,7 @@ body.compact .tabbar li.nav-item a.nav-link {
    breakpoint keeps phones on upstream's near-fullscreen sizing. No !important:
    the theme loads after css/style.css, so equal specificity wins on order. */
 @media (min-width: 768px) {
-  #stg {
+  div#stg {
     width: min(1060px, 92vw);
     height: min(720px, 90vh);
   }
@@ -1789,7 +1789,7 @@ body.compact .tabbar li.nav-item a.nav-link {
    what the wording was measured against.
 
    No height: this dialog is as tall as its longer group. */
-#dlgHelp {
+div#dlgHelp {
   width: min(720px, 92vw);
   max-width: min(720px, 92vw);
 }

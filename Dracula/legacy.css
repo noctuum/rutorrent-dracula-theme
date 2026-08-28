@@ -419,3 +419,12 @@ body:has(#side-panel) div#t div.navbar-nav a.nav-link:active {
   padding: 6px;
   background-color: var(--dracula-pink);
 }
+
+/* The settings dialog is content-sized on this release: `#stg-pages` carries a
+   fixed 550px and the window has no height of its own, where from 5.1.0 the
+   window is a column flex box and the pages fill it. The theme's own height
+   would leave an empty strip below the buttons, so only its width applies here.
+   The page list still ends inside 550px, which is what that height buys. */
+body:has(#side-panel) div#stg {
+  height: auto;
+}
