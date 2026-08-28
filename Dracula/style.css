@@ -1860,11 +1860,25 @@ body.compact .tabbar li.nav-item a.nav-link {
    background lives in plugins.css because that sheet loads at index 30, after
    every plugin sheet (10-27), and the plugins that put cells in this bar paint
    their own; from here, at index 7, an equal-specificity rule loses on order.
-   Layout has no such fight, so it stays with the rest of the structure. */
+   Layout has no such fight, so it stays with the rest of the structure.
+
+   The height and the border are written exactly as 5.2.0's own `css/style.css`
+   writes them, together with `#maincont` below, so from 5.2.0 up all three
+   restate what upstream already computes. Below 5.2.0 the bar is
+   `position: absolute; bottom: 0` with no height of its own and a hardcoded
+   `#A0A0A0` line (`css/style.css:578` on 5.1.12), and `#maincont` reserves a
+   literal 25px for it (`css/style.css:329`) — a 32px bar in a 25px reserve
+   covers the panels' bottom edges instead of clearing them. */
 #StatusBar {
-  color: var(--dracula-fg);
   display: flex;
   justify-content: space-between;
+  height: var(--footer-height);
+  border-top: 1px solid var(--footer-border-color);
+  color: var(--dracula-fg);
+}
+
+#maincont {
+  height: calc(100dvh - var(--navbar-height) - 5px - var(--footer-height) - 5px);
 }
 
 /* Upload speed icon (Phosphor arrow-circle-up, Green) */
