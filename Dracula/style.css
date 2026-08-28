@@ -222,6 +222,12 @@ html { scrollbar-color: var(--dracula-comment) var(--dracula-bg-dark); }
   --loading-indicator-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cg fill='none' stroke='%236272A4' stroke-width='11' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M128 20V236M20 128H236M51.6 51.6L204.4 204.4M204.4 51.6L51.6 204.4'/%3E%3Cpath d='M128 92L153.5 102.5L164 128L153.5 153.5L128 164L102.5 153.5L92 128L102.5 102.5Z'/%3E%3Cpath d='M128 56L178.9 77.1L200 128L178.9 178.9L128 200L77.1 178.9L56 128L77.1 77.1Z'/%3E%3Cpath d='M128 20L204.4 51.6L236 128L204.4 204.4L128 236L51.6 204.4L20 128L51.6 51.6Z'/%3E%3C/g%3E%3C/svg%3E");
 
   --loading-indicator-side-length: 32px;
+
+  /* The theme's own, not one of upstream's. How tall the settings dialog is
+     allowed to grow — read here by the dialog itself and, below ruTorrent
+     5.1.0 where the dialog is sized by its content, by the block that holds
+     the pages. */
+  --settings-max-height: min(720px, 90vh);
 }
 
 /* === Loading Indicator: Three Dots === */
@@ -350,6 +356,31 @@ body.compact category-panel::part(heading) {
 category-list {
   background-color: var(--dracula-bg);
   border: none;
+}
+
+/* A row ends in two pills, the count and the size, with a "/" between them.
+   ruTorrent 5.3.7 added that mark as a `separator` part; below it the part does
+   not exist and the two pills sit 7px apart with nothing in the gap.
+
+   `init.js` writes the marker, because no stylesheet can ask whether a shadow
+   part exists. Neither pill can hold the glyph — both are filled and rounded, so
+   a `::before` inside one lands under its own background. The size opens the gap
+   instead and draws the glyph in it, out of flow so the pill keeps its box.
+
+   The numbers are the space 5.3.12 leaves: 7px of the host's part spacing either
+   side of the glyph, and the pill's own 1.4px of top padding, which is the row's
+   centre line. */
+html[data-dracula-label-separator="missing"] panel-label[size]::part(size) {
+  position: relative;
+  margin-left: 12.1px;
+}
+
+html[data-dracula-label-separator="missing"] panel-label[size]::part(size)::before {
+  position: absolute;
+  top: 1.4px;
+  right: calc(100% + 7px);
+  content: "/";
+  color: var(--dracula-comment);
 }
 
 /* === Buttons === */
@@ -988,18 +1019,22 @@ div#t div.TB_Separator {
   margin: 4px 2px;
 }
 
-/* The magnifier opens a menu of search engines, the same affordance the plugins
-   button beside it marks with a caret, so it gets the same mark.
+/* Both of these open a menu and say so with a caret. The magnifier's is
+   `theSearchEngines.show()` from an inline onclick, and below ruTorrent 5.1.0
+   the plugins button is the same shape — a plain link on
+   `theWebUI.showPluginsMenu()`. From 5.1.0 up that button carries Bootstrap's
+   `dropdown-toggle`, whose own `::after` these declarations restate value for
+   value, so naming it here costs those releases nothing.
 
-   Drawn here rather than by adding Bootstrap's `dropdown-toggle` class: that
-   class is also Bootstrap's hook for *operating* a dropdown, and this menu is
-   upstream's own, opened by `theSearchEngines.show()` from an inline onclick.
-   Adding the class would put Bootstrap in charge of a menu it does not own.
+   Drawn here rather than by adding the class: `dropdown-toggle` is also
+   Bootstrap's hook for *operating* a dropdown, and neither menu is Bootstrap's
+   to operate.
 
    The declarations are Bootstrap's `.dropdown-toggle::after` copied exactly —
    em-based so it tracks the font, and `border-top` with no colour so it takes
-   currentColor from the link, which is how the plugins caret is coloured too. */
-#mnu_search::after {
+   currentColor from the link. */
+#mnu_search::after,
+#mnu_plugins::after {
   display: inline-block;
   margin-left: 0.255em;
   vertical-align: 0.255em;
@@ -1740,9 +1775,9 @@ body.compact .tabbar li.nav-item a.nav-link {
    breakpoint keeps phones on upstream's near-fullscreen sizing. No !important:
    the theme loads after css/style.css, so equal specificity wins on order. */
 @media (min-width: 768px) {
-  #stg {
+  div#stg {
     width: min(1060px, 92vw);
-    height: min(720px, 90vh);
+    height: var(--settings-max-height);
   }
 }
 
@@ -1785,7 +1820,7 @@ body.compact .tabbar li.nav-item a.nav-link {
    what the wording was measured against.
 
    No height: this dialog is as tall as its longer group. */
-#dlgHelp {
+div#dlgHelp {
   width: min(720px, 92vw);
   max-width: min(720px, 92vw);
 }
@@ -1860,11 +1895,25 @@ body.compact .tabbar li.nav-item a.nav-link {
    background lives in plugins.css because that sheet loads at index 30, after
    every plugin sheet (10-27), and the plugins that put cells in this bar paint
    their own; from here, at index 7, an equal-specificity rule loses on order.
-   Layout has no such fight, so it stays with the rest of the structure. */
+   Layout has no such fight, so it stays with the rest of the structure.
+
+   The height and the border are written exactly as 5.2.0's own `css/style.css`
+   writes them, together with `#maincont` below, so from 5.2.0 up all three
+   restate what upstream already computes. Below 5.2.0 the bar is
+   `position: absolute; bottom: 0` with no height of its own and a hardcoded
+   `#A0A0A0` line (`css/style.css:578` on 5.1.12), and `#maincont` reserves a
+   literal 25px for it (`css/style.css:329`) — a 32px bar in a 25px reserve
+   covers the panels' bottom edges instead of clearing them. */
 #StatusBar {
-  color: var(--dracula-fg);
   display: flex;
   justify-content: space-between;
+  height: var(--footer-height);
+  border-top: 1px solid var(--footer-border-color);
+  color: var(--dracula-fg);
+}
+
+#maincont {
+  height: calc(100dvh - var(--navbar-height) - 5px - var(--footer-height) - 5px);
 }
 
 /* Upload speed icon (Phosphor arrow-circle-up, Green) */

@@ -25,9 +25,9 @@
 // Bump together with the stamps on :root in each sheet: this file compares
 // itself against them at startup.
 var DRACULA_VERSION = "0.2.1"; // x-release-please-version
-// The oldest ruTorrent the theme is checked on. Older 5.x carry the same markup
-// and legacy.css fits them, but they are untested.
-var DRACULA_RUTORRENT_MIN = "5.1.12";
+// The oldest ruTorrent the theme is checked on — every 5.x release from here up
+// has been raised on a stand and measured against 5.3.12.
+var DRACULA_RUTORRENT_MIN = "5.0.0";
 
 // Compared a component at a time as numbers: "5.10" sorts below "5.9" as text
 // and above it as a version, and ruTorrent has already passed 5.9.
@@ -1042,6 +1042,57 @@ function draculaWatchContextMenu()
 		setTimeout(draculaPrepareContextMenu, 0);
 		return result;
 	};
+}
+
+// Which toolbar button the open menu belongs to, so a second click on that
+// button closes it and a click on another one still opens its own.
+var draculaOpenMenuButton = null;
+
+function draculaMenuIsOpen()
+{
+	return !!(window.theContextMenu && theContextMenu.obj && theContextMenu.obj.is(":visible"));
+}
+
+// A toolbar button that opens one of upstream's own menus from an inline
+// onclick — the magnifier through `theSearchEngines.show()`, and below
+// ruTorrent 5.1.0 the plugins button through `theWebUI.showPluginsMenu()`.
+//
+// The document mouseup that closes a menu skips anything carrying
+// `top-menu-item` (`objects.js:308`), which both of these do, so a second click
+// reaches the inline handler with the menu still open and rebuilds it in place.
+// Closing on that click is what the Bootstrap dropdown does for the plugins
+// button from 5.1.0 up.
+//
+// Capturing, because the handler to head off is the element's own.
+function draculaMenuButtonToggles(button)
+{
+	if(!button || button.getAttribute("data-dracula-toggle"))
+		return;
+	button.setAttribute("data-dracula-toggle", "1");
+
+	button.addEventListener("click", function(ev)
+	{
+		if(draculaOpenMenuButton === button && draculaMenuIsOpen())
+		{
+			ev.preventDefault();
+			ev.stopImmediatePropagation();
+			draculaOpenMenuButton = null;
+			draculaCloseMenu();
+			return;
+		}
+		draculaOpenMenuButton = button;
+	}, true);
+}
+
+function draculaToolbarMenusToggle()
+{
+	draculaMenuButtonToggles(document.getElementById("mnu_search"));
+
+	// From 5.1.0 the plugins button is a Bootstrap dropdown, which toggles on
+	// its own and must not be answered twice.
+	var plugins = document.getElementById("mnu_plugins");
+	if(plugins && !plugins.hasAttribute("data-bs-toggle"))
+		draculaMenuButtonToggles(plugins);
 }
 
 // The F1 help screen has to carry the theme's bindings too. Upstream builds
@@ -2359,6 +2410,7 @@ function draculaMarkFilterIcons()
 
 function draculaSweepIcons()
 {
+	draculaMarkLabelSeparator();
 	draculaMarkIconsIn("panel-label[icon^='url:']", function(el)
 	{
 		return (el.getAttribute("icon") || "").slice(4);
@@ -2368,6 +2420,29 @@ function draculaSweepIcons()
 	{
 		return draculaCssUrl(el.style.backgroundImage);
 	});
+}
+
+/* A sidebar row ends in two pills, the count and the size, and ruTorrent 5.3.7
+   put a `separator` part between them to hold the "/" that divides the two.
+   Below that release the part does not exist and the pills sit against one
+   another, so the theme draws the mark itself.
+ *
+ * No stylesheet can ask whether a shadow part exists, so the answer is written
+ * onto the root for `style.css` to key on. It is a fact about the release, not
+ * about any one row, so the first label to carry a size settles it for good.
+ */
+var draculaSeparatorAnswered = false;
+
+function draculaMarkLabelSeparator()
+{
+	if(draculaSeparatorAnswered)
+		return;
+	var label = document.querySelector("panel-label[size]");
+	if(!label || !label.shadowRoot)
+		return;
+	draculaSeparatorAnswered = true;
+	if(!label.shadowRoot.querySelector("[part~=separator]"))
+		document.documentElement.setAttribute("data-dracula-label-separator", "missing");
 }
 
 /* The panels are rebuilt as labels and trackers come and go, and a row can keep
@@ -2672,6 +2747,7 @@ plugin.allDone = function()
 	draculaTabScrollIndicator();
 	draculaStatusBarKeys();
 	draculaWatchContextMenu();
+	draculaToolbarMenusToggle();
 	draculaFillKeyHelp();
 	draculaFixToolbarSeparators();
 	draculaShortenMenuLabels();

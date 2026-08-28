@@ -13,8 +13,7 @@
  * rules reach it as `.stable-head ~ .stable-body`, the two being siblings inside
  * the table's wrapper. Without that key the selectors would match the newer
  * shape too — `.stable-body td > div` is every cell of every release — and the
- * heights here would be imposed on a table that does not want them. The sidebar
- * rule at the end cannot be keyed this way and carries its own condition.
+ * heights here would be imposed on a table that does not want them.
  *
  * Imported last, from plugins.css, because it has to outrank the upstream
  * sheets rather than the theme's own.
@@ -280,28 +279,137 @@ body:has(.stable-head) #stg .lm li a.focus {
 
 /* === The sidebar's separator === */
 
-/* `panel-label` gained a `separator` part between its count and its size in
-   5.3.7; below that the two pills sit against one another with nothing between.
-   The part cannot be added from a stylesheet and neither pill can hold the glyph
-   — both are filled and rounded, so a `::before` inside one lands under its
-   background. The size opens the gap instead and draws the glyph in it, out of
-   flow so the pill keeps its own box.
+/* === ruTorrent below 5.1.0 === */
 
-   The sidebar is nowhere near the table, so this is the one rule that states
-   the release marker as a condition rather than reaching it through the markup.
+/* 5.1.0 moved this release's light literals into custom properties. Below it
+   they are written out, so every surface here stays pale whatever the theme
+   sets. Each rule states 5.1.0's own declaration against the selector this
+   release uses — those carry a tag name, which outranks a bare id.
 
-   The numbers are the space 5.3.12 leaves: 7px of the host's part spacing on
-   each side of the glyph, and the pill's own 1.4px of top padding, which is the
-   row's centre line. */
-body:has(.stable-head) panel-label[size]::part(size) {
-  position: relative;
-  margin-left: 12.1px;
+   `#side-panel` is the marker: it is in 5.0.0's markup and in none after it. */
+
+body:has(#side-panel) div#t {
+  height: var(--navbar-height);
+  background: var(--navbar-bg-image);
+  background-color: var(--navbar-bg-color);
+  background-position: center;
+  background-repeat: repeat-x;
+  border-bottom: 1px solid var(--navbar-border-color);
 }
 
-body:has(.stable-head) panel-label[size]::part(size)::before {
-  position: absolute;
-  top: 1.4px;
-  right: calc(100% + 7px);
-  content: "/";
-  color: var(--dracula-comment);
+/* Painted at every width here, where 5.1.0 paints it only while the collapsed
+   menu is open. The bar behind it carries the same colour, so the two agree. */
+body:has(#side-panel) #top-menu {
+  background-color: var(--navbar-bg-color);
+  border-bottom: 1px solid var(--navbar-border-color);
+}
+
+/* The radius is zeroed in this release's own 768px query and left alone from
+   5.1.0, so the toolbar's buttons come out square here only. 6px is the main
+   sheet's value for the same rule. */
+body:has(#side-panel) div#t .nav-link {
+  border-radius: 6px;
+  border-color: var(--navbar-item-border-color);
+}
+
+body:has(#side-panel) div.dlg-window {
+  background-color: var(--dialog-bg-color);
+  border-color: var(--dialog-border-color);
+}
+
+body:has(#side-panel) div.dlg-header {
+  background-color: var(--header-bg-color);
+  border-bottom-color: var(--header-border-color);
+}
+
+body:has(#side-panel) #list-table,
+body:has(#side-panel) div#tdcont {
+  background-color: var(--container-bg-color);
+  border-color: var(--container-border-color);
+}
+
+/* The sidebar also stops at its last row here and leaves the space below it to
+   the page. 5.1.0 fills it with a column flex box and `flex: 1 1 auto` on the
+   list; this release has neither, and an extra `#side-panel` wrapper between
+   the two that has to carry the same growth for the box to reach the bottom. */
+body:has(#side-panel) #offcanvas-sidepanel,
+body:has(#side-panel) #side-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background-color: var(--container-bg-color);
+  border-color: var(--container-border-color);
+}
+
+body:has(#side-panel) #side-panel,
+body:has(#side-panel) #CatList {
+  flex: 1 1 auto;
+}
+
+/* The box is already 32px here and `background-size` comes from the main sheet,
+   so only the image and where it sits are missing. */
+body:has(#side-panel) #ind {
+  background-image: var(--loading-indicator-icon);
+  background-position: center;
+}
+
+/* The caret is this release's own background on the heading, at `2px 50%`, and
+   upstream holds 21px of left padding to clear it; from 5.1.0 it is a 20px
+   `::before` and the padding drops to a quarter of a rem. The main sheet's 3px
+   is right for that shape and drops the text onto the caret in this one. */
+body:has(#side-panel) category-panel::part(heading) {
+  padding-left: 21px;
+}
+
+/* The plugins button is a plain link on `theWebUI.showPluginsMenu()` here; from
+   5.1.0 it is a Bootstrap dropdown inside a `.btn-group`. The bar's three-zone
+   ordering keys on that group, so without this the button stays in the left
+   cluster with the actions. The separator in front of it goes for the reason
+   the one in front of the group goes: it divides nothing once the button has
+   moved. */
+@media (min-width: 768px) {
+  body:has(#side-panel) #top-menu .navbar-nav > #mnu_plugins {
+    order: 3;
+  }
+
+  body:has(#side-panel) #top-menu .navbar-nav > .TB_Separator:has(+ #mnu_plugins) {
+    display: none;
+  }
+}
+
+/* Upstream writes the toolbar's interaction rules with three type selectors on
+   this release (`css/style.css:589`, inside its own 768px query) and with none
+   from 5.1.0, so the theme's hover fill and pink press lose the cascade here and
+   its pale `tb_bg.gif` paints instead. Same declarations, stated heavy enough to
+   land. The press keeps its padding restated for the reason the main sheet
+   gives: upstream's `:active` shrinks the button and shifts the whole row. */
+body:has(#side-panel) div#t div.navbar-nav a.nav-link:hover {
+  background-color: var(--dracula-selection);
+  background-image: none;
+}
+
+body:has(#side-panel) div#t div.navbar-nav a.nav-link:active {
+  padding: 6px;
+  background-color: var(--dracula-pink);
+}
+
+/* The settings dialog is content-sized on this release: `#stg-pages` carries a
+   fixed 550px and the window has no height of its own, where from 5.1.0 the
+   window is a column flex box its pages fill. The window is shown by writing
+   `display: block` inline, which no stylesheet rule outranks, so it cannot be
+   made a flex box from here — the pages take their own height instead and the
+   window follows them. The theme's height would leave an empty strip below the
+   buttons, so only its width applies.
+
+   General needs 595px and upstream's 550 gives it 484, which is the scrollbar.
+   Letting the block size to its content clears that; the cap is the height the
+   dialog is allowed anywhere, less the 44px its header and border take here, so
+   a page longer than General still scrolls rather than running off the screen. */
+body:has(#side-panel) div#stg {
+  height: auto;
+}
+
+body:has(#side-panel) div#stg-pages {
+  height: auto;
+  max-height: calc(var(--settings-max-height) - 44px);
 }

@@ -21,7 +21,7 @@ height across every list, bundled fonts. Full list in
 
 ## Requires
 
-**ruTorrent 5.1.12 or newer.**
+**ruTorrent 5.0.0 or newer.**
 
 ## Install
 
