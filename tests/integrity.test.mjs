@@ -246,6 +246,18 @@ const EXEMPT = new Map([
 	["--dracula-version", "read by draculaCheckVersions"],
 	["--dracula-version-stable", "read by draculaCheckVersions"],
 	["--dracula-version-plugins", "read by draculaCheckVersions"],
+	// The progress bar is interpolated in JS, so no rule names either end. They
+	// live in palette.css because that is the only place a colour may be written,
+	// and init.js resolves them off an element.
+	["--dracula-progress-start", "read by dxSTable.prototype.create in init.js"],
+	["--dracula-progress-end", "read by dxSTable.prototype.create in init.js"],
+	// The graphs' previous-period series, written into flot's options by
+	// `rGraph.prototype.create`. No rule can name them: they reach a canvas.
+	[
+		"--dracula-graph-down-earlier",
+		"read by rGraph.prototype.create in init.js",
+	],
+	["--dracula-graph-up-earlier", "read by rGraph.prototype.create in init.js"],
 	// Upstream's own panel-label contract. The theme supplies the value and
 	// `css/panel-label.css` consumes it; nothing here needs to.
 	["--icon-letter-background-color", "read by upstream css/panel-label.css:72"],
@@ -729,5 +741,92 @@ test("--font-mono names the bundled face only behind the desktop mark", () => {
 		read("init.js"),
 		/classList\.add\("dracula-desktop"\)/,
 		"init.js never puts the mark on, so the bundled face is unreachable",
+	);
+});
+
+// --- 6. Colours live in palette.css and nowhere else ------------------------
+//
+// palette.css is the record of the specification and the only place a colour
+// may be written. A hex or an rgb() anywhere else is a copy that has stopped
+// following it: change Purple in the palette and the stray stays as it was,
+// silently, with nothing on screen looking broken.
+//
+// Comments are stripped first — they quote colours as documentation, and a
+// measurement written into a note is not a declaration. In CSS the selectors go
+// too: `#add` is an id to a pattern and a colour to nobody, and stripping the
+// text before each `{` removes every selector and at-rule prelude at once.
+
+const COLOUR_HEX =
+	/#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{3})\b/g;
+// Only a literal: `rgba(var(--x-rgb), .5)` reads the palette and is the shape
+// Bootstrap's utilities force, so a digit after the paren is what marks a copy.
+const COLOUR_FN = /\b(?:rgba?|hsla?)\(\s*[\d.]/g;
+
+function colourLiterals(name) {
+	let text = read(name).replace(/\/\*[\s\S]*?\*\//g, "");
+	if (name.endsWith(".js")) {
+		// `:` before the slashes is a URL, not a comment.
+		text = text.replace(/(^|[^:])\/\/.*$/gm, "$1");
+	} else {
+		text = text.replace(/[^{};]*\{/g, "");
+	}
+	return [
+		...(text.match(COLOUR_HEX) || []),
+		...(text.match(COLOUR_FN) || []),
+	].map((s) => s.trim());
+}
+
+// Each entry is one literal and the reason it cannot be a name. Removing the
+// literal removes the entry: the staleness check below refuses a reason that no
+// longer answers to anything.
+const COLOUR_EXEMPT = {
+	"init.js": [
+		// draculaSetFavicon runs at file scope so that upstream's icon is replaced
+		// before it is ever painted, which is earlier than any stylesheet — see the
+		// note there. Measured: the favicon is drawn from these two on every load.
+		["#282A36", "favicon: drawn before a stylesheet exists"],
+		["#BD93F9", "favicon: drawn before a stylesheet exists"],
+	],
+	"mobile.css": [
+		// A mask reads alpha and discards hue, so this is the word "opaque"
+		// spelled as a colour. Naming a palette entry here would say the opposite.
+		["#000", "mask stop: a mask reads alpha, so this is opacity"],
+		["#000", "mask stop: a mask reads alpha, so this is opacity"],
+	],
+};
+
+test("no colour is written outside palette.css", () => {
+	const stray = [];
+	for (const name of FILES) {
+		if (name === "palette.css") continue;
+		const allowed = (COLOUR_EXEMPT[name] || []).map(([literal]) => literal);
+		for (const found of colourLiterals(name)) {
+			const at = allowed.indexOf(found);
+			if (at === -1) stray.push(`${name}: ${found}`);
+			else allowed.splice(at, 1);
+		}
+	}
+	assert.deepEqual(
+		stray,
+		[],
+		`written outside palette.css: ${stray.join(", ")}. Define it in ` +
+			`palette.css and read the name, or exempt it here with a reason.`,
+	);
+});
+
+test("no colour exemption outlives its literal", () => {
+	const dead = [];
+	for (const [name, entries] of Object.entries(COLOUR_EXEMPT)) {
+		const found = colourLiterals(name);
+		for (const [literal, reason] of entries) {
+			const at = found.indexOf(literal);
+			if (at === -1) dead.push(`${name}: ${literal} (${reason})`);
+			else found.splice(at, 1);
+		}
+	}
+	assert.deepEqual(
+		dead,
+		[],
+		`exempted but no longer written: ${dead.join(", ")} — drop the entry`,
 	);
 });

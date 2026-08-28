@@ -316,6 +316,84 @@ function draculaWatchVisualViewport()
 	});
 }
 
+/* === Reading the palette ===================================================
+ *
+ * One way in, three shapes out: channels for what upstream interpolates, a CSS
+ * string for what is written into markup, and a lazy `RGBackground` for what is
+ * handed to upstream's own gradient. All three go through the one probe below,
+ * so a colour resolves the same way wherever it is read.
+ *
+ * Reading the declaration text instead does not work: a `color-mix()` comes
+ * back as its own source, `color-mix(in srgb, …)`, which upstream's colour
+ * parser cannot read and a canvas will not always accept. Applying the name to
+ * an element and reading it back is what resolves it.
+ */
+
+/* A palette colour as channels.
+
+   The `, transparent` fallback separates a missing sheet from a real colour:
+   without palette.css the name resolves to nothing, the probe comes back at
+   zero alpha, and the caller is left with whatever upstream chose. */
+function draculaPaletteChannels(name)
+{
+	var probe = document.createElement("span");
+	probe.style.color = "var(" + name + ", transparent)";
+	probe.style.display = "none";
+	document.documentElement.appendChild(probe);
+	var value = getComputedStyle(probe).color;
+	probe.parentNode.removeChild(probe);
+
+	var parts = value.match(/[\d.]+/g);
+	if(!parts || parts.length < 3)
+		return null;
+	if(parts.length > 3 && parseFloat(parts[3]) === 0)
+		return null;
+
+	// `color(srgb …)` carries each channel as a fraction; `rgb()` carries bytes.
+	var scale = value.indexOf("color(") === 0 ? 255 : 1;
+	return [
+		Math.round(parseFloat(parts[0]) * scale),
+		Math.round(parseFloat(parts[1]) * scale),
+		Math.round(parseFloat(parts[2]) * scale)
+	];
+}
+
+/* A palette colour as a CSS string, for the places it is written into markup
+   rather than interpolated. `rgb(r, g, b)` rather than the hex it may have been
+   declared as: one form out, whatever went in. */
+function draculaPaletteColor(name, fallback)
+{
+	var channels = draculaPaletteChannels(name);
+	return channels ? "rgb(" + channels.join(", ") + ")" : fallback;
+}
+
+/* An `RGBackground` that reads its colour the first time something asks for it.
+
+   The read cannot happen when the table is built: palette.css arrives through
+   an @import, which is a fetch of its own, and `dxSTable.prototype.create` runs
+   before it lands — measured at 1656ms with three sheets on the page and the
+   palette not among them, where the name resolves to nothing. Deferring to the
+   first paint costs nothing and the sheet is always there by then.
+
+   `fallback` is upstream's own value, kept for a page carrying no palette at
+   all. The answer is held after the first read: the gradient is recomputed for
+   every row on every pass, and a probe element per channel per row is not. */
+function draculaPaletteBackground(name, fallback)
+{
+	var colour = new RGBackground();
+	var resolved = null;
+	Object.defineProperty(colour, "channels", {
+		get: function()
+		{
+			if(!resolved)
+				resolved = draculaPaletteChannels(name) || fallback;
+			return resolved;
+		},
+		set: function() {}
+	});
+	return colour;
+}
+
 /* === Status bar meters === */
 
 /* The meters colour themselves by how full they are: the plugin interpolates
@@ -325,19 +403,28 @@ function draculaWatchVisualViewport()
    value between stays inside one palette family rather than passing through the
    muddy tones a green-to-red ramp gives at 50%.
 
+   The ends are palette names rather than colours: nothing here is written as a
+   hex, and a change to the hue in palette.css reaches the meter.
+
    The repaint is not decoration: this runs from allDone, by which time the
    meter has drawn itself once with upstream's colours and would keep them until
    its next poll. Recomputing from the width already on screen fixes that at
    once, through the plugin's own RGBackground so the interpolation matches what
    the next poll will produce. */
-function draculaRecolorMeter(name, elementId, startColor, endColor)
+function draculaRecolorMeter(name, elementId, startName, endName)
 {
 	var plg = thePlugins.get(name);
 	if(!plg || !plg.enabled)
 		return;
 
-	plg.prgStartColor = new RGBackground(startColor);
-	plg.prgEndColor = new RGBackground(endColor);
+	plg.prgStartColor = draculaPaletteBackground(
+		startName,
+		plg.prgStartColor && plg.prgStartColor.channels
+	);
+	plg.prgEndColor = draculaPaletteBackground(
+		endName,
+		plg.prgEndColor && plg.prgEndColor.channels
+	);
 
 	if(!elementId)
 		return;
@@ -2088,12 +2175,6 @@ var draculaLetterR =
 	"C158 49 157 51 156 52C155 53 154 54 153 55C149 59 146 60 142 58C140 57 139 54 139 47" +
 	"C137 34 135 31 129 29C127 29 122 28 120 29Z";
 
-function draculaPaletteColor(name, fallback)
-{
-	var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-	return v || fallback;
-}
-
 function draculaSetFavicon()
 {
 	var tile = draculaPaletteColor("--dracula-bg", "#282A36");
@@ -2544,8 +2625,13 @@ plugin.allDone = function()
 	   cpuload has no bar to repaint. In 5.3.7 it is a flot graph and these
 	   colours arrive as its line colour, which flot fills underneath at partial
 	   alpha, so the filled area looks muted next to the value named here. */
-	draculaRecolorMeter("diskspace", "meter-disk-value", "#FF79C6", "#BD93F9");
-	draculaRecolorMeter("cpuload",   null,               "#8BE9FD", "#BD93F9");
+	draculaRecolorMeter(
+		"diskspace",
+		"meter-disk-value",
+		"--dracula-pink",
+		"--dracula-purple"
+	);
+	draculaRecolorMeter("cpuload", null, "--dracula-cyan", "--dracula-purple");
 
 	draculaResharpenCpuGraph();
 	draculaWatchPixelRatio();
@@ -3160,8 +3246,11 @@ var draculaColumns = {
 // #009900 green, and two darker variants for the previous period), none of them
 // in the palette. Download takes the cyan and upload the green the theme uses
 // for those directions in the status bar and the row icons; the previous-period
-// series take the same hues mixed 45% over the background (#558090, #3A8855) so
-// they read as the same measurement, further back.
+// series take the same hues further back, which palette.css holds as roles of
+// their own.
+//
+// Resolved rather than named: these are written into flot's options and reach a
+// canvas, which does not take a `color-mix()`.
 //
 // Hooked on the rGraph base rather than the two subclasses: both set
 // this.datasets and only then call super.create(), so by the time this runs the
@@ -3169,13 +3258,13 @@ var draculaColumns = {
 // which is what carries the new colors onto the canvas.
 if(typeof rGraph !== "undefined")
 {
-	var draculaSeriesColors = {
-		speedgraph_dl: "#8BE9FD",
-		speedgraph_ul: "#50FA7B",
-		trafic_downloaded: "#8BE9FD",
-		trafic_uploaded: "#50FA7B",
-		trafic_downloaded_old: "#558090",
-		trafic_uploaded_old: "#3A8855"
+	var draculaSeriesNames = {
+		speedgraph_dl: "--dracula-cyan",
+		speedgraph_ul: "--dracula-green",
+		trafic_downloaded: "--dracula-cyan",
+		trafic_uploaded: "--dracula-green",
+		trafic_downloaded_old: "--dracula-graph-down-earlier",
+		trafic_uploaded_old: "--dracula-graph-up-earlier"
 	};
 
 	// The Trafic graph builds its previous-period series by spreading the current
@@ -3196,7 +3285,8 @@ if(typeof rGraph !== "undefined")
 		for(var i = 0; i < this.datasets.length; i++)
 		{
 			var d = this.datasets[i];
-			var c = draculaSeriesColors[d.label];
+			var name = draculaSeriesNames[d.label];
+			var c = name ? draculaPaletteColor(name, null) : null;
 			if(c)
 			{
 				d.color = c;
@@ -3608,8 +3698,8 @@ function draculaColourMobileDiskMeter()
 		return;
 	draculaDiskMeterWatched = true;
 
-	var start = new RGBackground("#FF79C6");
-	var end = new RGBackground("#BD93F9");
+	var start = draculaPaletteBackground("--dracula-pink");
+	var end = draculaPaletteBackground("--dracula-purple");
 	var watch = { attributes: true, attributeFilter: ["style"] };
 	var observer = new MutationObserver(function()
 	{
@@ -4223,14 +4313,18 @@ dxSTable.prototype.create = function(ele, styles, aName)
 	draculaPatchColumns(styles, aName);
 	plugin.draculaTableCreate.call(this, ele, styles, aName);
 
-	// Torrent progress bar: Purple → Green gradient, each mixed 35% over the
-	// background (#282A36). The bar is a large fill spanning most of the cell with
-	// the percentage printed on top, so the accent colors at full strength put that
-	// text at 1.3:1. Mixed down, the same hues read as purple and green while the
-	// label clears 5.3:1 at every fill level, needing no outline.
-	// #5C4F7A = 35% #BD93F9, #36734E = 35% #50FA7B.
-	this.prgStartColor = new RGBackground("#5C4F7A");
-	this.prgEndColor = new RGBackground("#36734E");
+	// The torrent progress bar's two ends, from palette.css — the reasoning and
+	// the measurements are at their definitions. Upstream's own pair stands if
+	// they cannot be read, which is the state of a page without the theme's
+	// sheets rather than a state worth painting over.
+	this.prgStartColor = draculaPaletteBackground(
+		"--dracula-progress-start",
+		this.prgStartColor.channels
+	);
+	this.prgEndColor = draculaPaletteBackground(
+		"--dracula-progress-end",
+		this.prgEndColor.channels
+	);
 }
 
 /* What a torrent row's tooltip says. The name alone unless the daemon has
