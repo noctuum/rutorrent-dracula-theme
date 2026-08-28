@@ -108,8 +108,13 @@ nothing depends on what the machine has installed.
 
 ## What it needs
 
-**ruTorrent 5.1.12 or newer.** Checked on 5.1.12, 5.2.0, 5.2.10, 5.3.0 and
-5.3.12.
+**ruTorrent 5.0.0 or newer**, which is every 5.x release there is. Each one from
+5.0.0 to 5.1.12 was raised and measured against 5.3.12, along with 5.2.0, 5.2.10,
+5.3.0, 5.3.1 and 5.3.12 above them.
+
+Two releases changed enough to need the theme's own answer, and both are covered:
+5.2.0 rebuilt the torrent table, and 5.1.0 moved the interface colours into
+custom properties a theme can set.
 
 Which rTorrent you run is ruTorrent's business rather than the theme's — the
 theme never speaks to the daemon. It is worth knowing all the same, because it

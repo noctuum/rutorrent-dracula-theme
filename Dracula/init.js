@@ -25,9 +25,9 @@
 // Bump together with the stamps on :root in each sheet: this file compares
 // itself against them at startup.
 var DRACULA_VERSION = "0.2.1"; // x-release-please-version
-// The oldest ruTorrent the theme is checked on. Older 5.x carry the same markup
-// and legacy.css fits them, but they are untested.
-var DRACULA_RUTORRENT_MIN = "5.1.12";
+// The oldest ruTorrent the theme is checked on — every 5.x release from here up
+// has been raised on a stand and measured against 5.3.12.
+var DRACULA_RUTORRENT_MIN = "5.0.0";
 
 // Compared a component at a time as numbers: "5.10" sorts below "5.9" as text
 // and above it as a version, and ruTorrent has already passed 5.9.
