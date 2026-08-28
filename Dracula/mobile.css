@@ -1177,16 +1177,16 @@
    than the class alone.
 
    On the list's own surface these measure green 10.38:1, cyan 10.29:1, orange
-   8.36:1, purple 5.90:1, red 4.53:1, comment 3.03:1.
+   8.36:1, purple 5.90:1, red 4.53:1, comment 3.03:1 on Dark; on Light, where
+   the list is `#FFFBEB`, green 5.96:1, cyan 5.78:1, orange 5.58:1, purple
+   6.02:1, red 4.85:1, comment 5.56:1.
 
    Not on a selected row: it is filled with the accent, and a state colour on
-   purple measures 1.30:1 for red and 1.95:1 for comment. Those rows keep
-   `--mobile-accent-contrast`, which is what the plugin already puts there and
-   what measures 5.90:1.
-
-   Dark only. On Light the list sits on white, where the same six measure
-   between 1.12:1 and 3.14:1. */
-:root[data-bs-theme="dark"]
+   that fill measures 1.30:1 for red and 1.95:1 for comment on Dark, 1.24:1 and
+   1.08:1 for the same two on Light. Those rows keep `--mobile-accent-contrast`,
+   which is what the plugin already puts there and what measures 5.90:1 on Dark
+   and 6.02:1 on Light. */
+#mainContainer
   #torrentFilter
   .list-group-item:not(.active)
   > :is(.bi-asterisk, .bi-arrow-down-up, .bi-tag) {
@@ -1199,42 +1199,42 @@
    reads here for the same reason the Inactive row does: a row that counts what
    is missing should not sit at the same weight as the rows that count what is
    there. */
-:root[data-bs-theme="dark"]
+#mainContainer
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-tag.dracula-no-label {
   color: var(--variant-comment);
 }
 
-:root[data-bs-theme="dark"]
+#mainContainer
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-download {
   color: var(--variant-cyan);
 }
 
-:root[data-bs-theme="dark"]
+#mainContainer
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-check-lg {
   color: var(--variant-green);
 }
 
-:root[data-bs-theme="dark"]
+#mainContainer
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-stop-fill {
   color: var(--variant-orange);
 }
 
-:root[data-bs-theme="dark"]
+#mainContainer
   #torrentFilter
   .list-group-item:not(.active)
   > :is(.bi-pause-fill, .bi-globe2) {
   color: var(--variant-comment);
 }
 
-:root[data-bs-theme="dark"]
+#mainContainer
   #torrentFilter
   .list-group-item:not(.active)
   > .bi-exclamation-triangle-fill {
@@ -1268,19 +1268,27 @@
    Two kinds, and the same two glyphs the desktop's panels use for them, so a
    row without a picture looks the same in both interfaces: a tag for a label,
    which is a name someone chose, and the peer network for a tracker, which is a
-   host that answered. */
+   host that answered.
+
+   Drawn as a stencil, the way every other icon in this interface is. Painted as
+   an image these two would carry the drawing's own colours instead of the row's,
+   and the tag's body is `#F8F8F2` — 1.03:1 on Alucard's page, with its
+   `opacity='0.2'` backdrop the only thing left to see. A mask reads alpha, so
+   the colour comes from the row and that backdrop still gives the second tone.
+   The element is upstream's `<img>` and keeps its transparent source
+   (`plugins/mobile/init.js:547`), which draws nothing under the paint. */
 #mainContainer #torrentFilter .filter-icon[data-dracula-blank] {
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
+  background-color: currentColor;
+  -webkit-mask: var(--dracula-glyph) center / contain no-repeat;
+  mask: var(--dracula-glyph) center / contain no-repeat;
 }
 
 #mainContainer #torrentFilter .filter-icon[data-dracula-blank="label"] {
-  background-image: var(--icon-tag);
+  --dracula-glyph: var(--icon-tag);
 }
 
 #mainContainer #torrentFilter .filter-icon[data-dracula-blank="tracker"] {
-  background-image: var(--icon-peer-network);
+  --dracula-glyph: var(--icon-peer-network);
 }
 
 /* The pill itself was Bootstrap's grey. `.text-bg-secondary` carries
