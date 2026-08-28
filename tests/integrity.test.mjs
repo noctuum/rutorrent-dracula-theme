@@ -246,6 +246,11 @@ const EXEMPT = new Map([
 	["--dracula-version", "read by draculaCheckVersions"],
 	["--dracula-version-stable", "read by draculaCheckVersions"],
 	["--dracula-version-plugins", "read by draculaCheckVersions"],
+	// The progress bar is interpolated in JS, so no rule names either end. They
+	// live in palette.css because that is the only place a colour may be written,
+	// and init.js resolves them off an element.
+	["--dracula-progress-start", "read by dxSTable.prototype.create in init.js"],
+	["--dracula-progress-end", "read by dxSTable.prototype.create in init.js"],
 	// Upstream's own panel-label contract. The theme supplies the value and
 	// `css/panel-label.css` consumes it; nothing here needs to.
 	["--icon-letter-background-color", "read by upstream css/panel-label.css:72"],
