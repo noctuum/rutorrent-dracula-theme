@@ -1286,6 +1286,53 @@
   align-items: center;
 }
 
+/* What a row's text is when nothing is happening to it, said once so that every
+   state agrees on it.
+
+   Bootstrap ships `--bs-list-group-action-color` as a literal
+   `rgba(33, 37, 41, 0.75)` — its own body colour at three quarters, compiled in,
+   reading neither `--bs-body-color-rgb` nor anything this theme sets. At rest it
+   is invisible: `.list-group-item` comes later in Bootstrap's own sheet and wins
+   the tie with `--bs-list-group-color`. It becomes visible the moment something
+   asks for it by name, and upstream's sticky-hover neutraliser
+   (`plugins/mobile/mobile.css:110`) does exactly that — it restores the text to
+   `--bs-list-group-action-color` rather than to the colour the row had, so on a
+   device where hover sticks after a tap the row is left with a grey that is not
+   in either palette and does not clear until the next touch. Naming it here
+   makes that restore a no-op. */
+#mainContainer .list-group {
+  --bs-list-group-action-color: var(--variant-fg);
+}
+
+/* A tap leaves the row focused, and Bootstrap paints focus with the same
+   declaration it paints hover — `.list-group-item-action:focus,
+   .list-group-item-action:hover` is one rule — so the grey outlives the tap and
+   sits there until something else takes focus. Upstream's own neutraliser names
+   `:hover` alone, so focus goes through it untouched. Measured on Alucard:
+   #CECCC0 against #FFFBEB at rest.
+
+   `:not(:focus-visible)` is what keeps this from blinding a keyboard: a pointer
+   or a finger sets `:focus` without setting `:focus-visible`, so only the
+   silent kind is cancelled and a focus arrived at by Tab keeps its ground. */
+#mainContainer .list-group-item-action:not(.active):focus:not(:focus-visible) {
+  background-color: var(--bs-list-group-bg);
+}
+
+/* A press that turns into a scroll leaves `:active` applied until the next
+   touch, and the row keeps Bootstrap's pressed background with nothing to clear
+   it — measured #DEDCCF on Alucard against #FFFBEB at rest. Upstream cancels the
+   same stickiness for `:hover` and leaves `:active` deliberately, which is the
+   half that survives a scroll.
+
+   Nothing is lost by dropping it: a tap answers by turning the row `.active`,
+   which the accent fills and which stays. The query is upstream's own test for a
+   device whose touch cannot hover. */
+@media (hover: none) {
+  #mainContainer .list-group-item-action:not(.active):active {
+    background-color: var(--bs-list-group-bg);
+  }
+}
+
 /* A tracker tracklabels has no favicon for. It answers for every tracker rather
    than 404ing, falling back to a 16x16 PNG whose every pixel is transparent
    (`plugins/tracklabels/action.php`, last line), so the row is blank rather than
