@@ -45,7 +45,10 @@ function loadTheme() {
 		$: undefined,
 		console: { warn: noop, log: noop },
 		document: {
-			documentElement: {},
+			// A palette colour is read by applying the name to a throwaway element
+			// and reading it back, so the root has to accept one and the element has
+			// to know where it was put.
+			documentElement: { appendChild: noop, removeChild: noop },
 			addEventListener: noop,
 			querySelectorAll: () => [],
 			getElementById: () => null,
@@ -53,6 +56,7 @@ function loadTheme() {
 				style: {},
 				appendChild: noop,
 				setAttribute: noop,
+				parentNode: { removeChild: noop },
 			}),
 			head: { appendChild: noop },
 		},
@@ -61,7 +65,9 @@ function loadTheme() {
 		MutationObserver: function () {
 			return { observe: noop, disconnect: noop };
 		},
-		getComputedStyle: () => ({ getPropertyValue: () => "" }),
+		// `color` empty is a palette that has not loaded, which is what every
+		// caller's fallback is for.
+		getComputedStyle: () => ({ getPropertyValue: () => "", color: "" }),
 		Image: function () {},
 		matchMedia: () => ({
 			addEventListener: noop,

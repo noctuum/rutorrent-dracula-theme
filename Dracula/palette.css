@@ -126,6 +126,21 @@
     var(--dracula-bg)
   );
 
+  /* The traffic graph draws the period before this one beside the current one,
+     from the same two hues so that the pair reads as one measurement at two
+     depths. 45% over the page is what separates them without introducing a
+     colour the theme does not otherwise use. */
+  --dracula-graph-down-earlier: color-mix(
+    in srgb,
+    var(--dracula-cyan) 45%,
+    var(--dracula-bg)
+  );
+  --dracula-graph-up-earlier: color-mix(
+    in srgb,
+    var(--dracula-green) 45%,
+    var(--dracula-bg)
+  );
+
   /* ── Decimal copies ───────────────────────────────────────────────────────
      Bootstrap's utilities take a bare `r, g, b` rather than a colour —
      `.text-danger` resolves to

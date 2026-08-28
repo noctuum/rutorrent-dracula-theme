@@ -251,6 +251,13 @@ const EXEMPT = new Map([
 	// and init.js resolves them off an element.
 	["--dracula-progress-start", "read by dxSTable.prototype.create in init.js"],
 	["--dracula-progress-end", "read by dxSTable.prototype.create in init.js"],
+	// The graphs' previous-period series, written into flot's options by
+	// `rGraph.prototype.create`. No rule can name them: they reach a canvas.
+	[
+		"--dracula-graph-down-earlier",
+		"read by rGraph.prototype.create in init.js",
+	],
+	["--dracula-graph-up-earlier", "read by rGraph.prototype.create in init.js"],
 	// Upstream's own panel-label contract. The theme supplies the value and
 	// `css/panel-label.css` consumes it; nothing here needs to.
 	["--icon-letter-background-color", "read by upstream css/panel-label.css:72"],

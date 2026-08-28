@@ -3246,8 +3246,11 @@ var draculaColumns = {
 // #009900 green, and two darker variants for the previous period), none of them
 // in the palette. Download takes the cyan and upload the green the theme uses
 // for those directions in the status bar and the row icons; the previous-period
-// series take the same hues mixed 45% over the background (#558090, #3A8855) so
-// they read as the same measurement, further back.
+// series take the same hues further back, which palette.css holds as roles of
+// their own.
+//
+// Resolved rather than named: these are written into flot's options and reach a
+// canvas, which does not take a `color-mix()`.
 //
 // Hooked on the rGraph base rather than the two subclasses: both set
 // this.datasets and only then call super.create(), so by the time this runs the
@@ -3255,13 +3258,13 @@ var draculaColumns = {
 // which is what carries the new colors onto the canvas.
 if(typeof rGraph !== "undefined")
 {
-	var draculaSeriesColors = {
-		speedgraph_dl: "#8BE9FD",
-		speedgraph_ul: "#50FA7B",
-		trafic_downloaded: "#8BE9FD",
-		trafic_uploaded: "#50FA7B",
-		trafic_downloaded_old: "#558090",
-		trafic_uploaded_old: "#3A8855"
+	var draculaSeriesNames = {
+		speedgraph_dl: "--dracula-cyan",
+		speedgraph_ul: "--dracula-green",
+		trafic_downloaded: "--dracula-cyan",
+		trafic_uploaded: "--dracula-green",
+		trafic_downloaded_old: "--dracula-graph-down-earlier",
+		trafic_uploaded_old: "--dracula-graph-up-earlier"
 	};
 
 	// The Trafic graph builds its previous-period series by spreading the current
@@ -3282,7 +3285,8 @@ if(typeof rGraph !== "undefined")
 		for(var i = 0; i < this.datasets.length; i++)
 		{
 			var d = this.datasets[i];
-			var c = draculaSeriesColors[d.label];
+			var name = draculaSeriesNames[d.label];
+			var c = name ? draculaPaletteColor(name, null) : null;
 			if(c)
 			{
 				d.color = c;
@@ -3694,8 +3698,8 @@ function draculaColourMobileDiskMeter()
 		return;
 	draculaDiskMeterWatched = true;
 
-	var start = new RGBackground("#FF79C6");
-	var end = new RGBackground("#BD93F9");
+	var start = draculaPaletteBackground("--dracula-pink");
+	var end = draculaPaletteBackground("--dracula-purple");
 	var watch = { attributes: true, attributeFilter: ["style"] };
 	var observer = new MutationObserver(function()
 	{
