@@ -478,7 +478,13 @@ test("the pinned commit is stated in the palette as well as here", () => {
 const IMPORTANT_BUDGET = {
 	"style.css": 35,
 	"stable.css": 2,
-	"plugins.css": 1,
+	// Two. The second is check_port's hidden segments: the plugin empties one and
+	// calls jQuery's `.hide()`, writing a plain inline `display: none`, while the
+	// same elements carry Bootstrap's `d-lg-block` — `display: block !important`.
+	// An important declaration outranks an inline one that is not, so a hidden
+	// separator stays in the flow with its inline `margin: 0 3px`. Only
+	// !important outranks !important.
+	"plugins.css": 2,
 	// Three. Two are Bootstrap's rather than the plugin's and sit in one rule:
 	// being last of the three sheets outranks every rule the plugin writes, but
 	// not a utility class that carries !important on its own declarations. See
