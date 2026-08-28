@@ -372,11 +372,25 @@
    Only the three icon links are turned into flex containers. The funnel's is
    already `inline-flex` and centred (`plugins/mobile/mobile.css:388`), and
    deliberately so — inline is what keeps its tap target the width of the icon
-   and its text rather than the whole empty stretch of the row. */
+   and its text rather than the whole empty stretch of the row.
+
+   The label is the body's colour, not the accent. Upstream gives every tab link
+   `--mobile-accent` (`plugins/mobile/mobile.css:331`), so the colour that marks
+   one tab as current marks all four of them and the list toolbar's filter label
+   besides; which tab is current is said below instead. */
 #mainContainer .nav-tabs > li > a {
   height: 48px;
   padding-top: 0;
   padding-bottom: 0;
+  color: var(--variant-fg);
+}
+
+/* The current tab, and nothing else here, carries the accent. The underline is
+   upstream's and stays as it is (`plugins/mobile/mobile.css:335`); this is its
+   label. No toolbar row takes `active`, so the list's own `.nav-tabs` is
+   unaffected. */
+#mainContainer .nav-tabs > li.active > a {
+  color: var(--variant-purple);
 }
 
 #mainContainer :is(#sort, #search, #refresh) > a,
