@@ -3358,9 +3358,11 @@ function draculaMarkMobileRatios()
 		var value = text.splitText(found.start);
 		value.splitText(found.length);
 		var box = document.createElement("b");
-		box.className = found.value >= 1
-			? "dracula-ratio dracula-ratio-met"
-			: "dracula-ratio";
+		box.className = "dracula-ratio";
+		// How far along the ramp mobile.css mixes, as a plain number for
+		// `calc()`. Clamped at 1: past a full return the colour stops moving.
+		box.style.setProperty("--dracula-ratio-met",
+			String(Math.round(Math.min(found.value, 1) * 100)));
 		value.parentNode.replaceChild(box, value);
 		box.appendChild(value);
 	}

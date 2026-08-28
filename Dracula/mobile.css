@@ -918,30 +918,40 @@
   padding: 0 6px;
 }
 
+/* Typed for the same reason `--chunk-level` is, and the note at that one in
+   plugins.css carries the detail: untyped, a value `calc()` cannot read makes
+   the whole `color-mix()` invalid at computed-value time and the number is left
+   with no colour at all; typed, it is rejected at parse and falls back to 0,
+   which is orange. The `, 0` below stays for a browser with no @property
+   support. */
+@property --dracula-ratio-met {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 /* The ratio is the one number in the line that says whether a torrent has paid
-   back, so it answers by colour: orange below 1, green at 1 and above. The word
-   beside it stays with the rest of the line — only the value carries the
-   verdict. `init.js` is what gives it an element, because the plugin writes the
-   whole line as one string.
+   back, so it answers by colour, and it moves the way the bar above it moves:
+   orange at nothing returned, green at one time over, every shade between. It
+   holds green above 1 — twice paid back is not more paid back than once — which
+   is why `init.js` clamps before it writes. The word beside it stays with the
+   rest of the line; only the value carries the verdict.
 
    The weight is reset because the element is a `<b>`, and it is one because the
    plugin's update line selects `span` and would otherwise take it. Spacing is
    the row's gap, not this element's.
 
-   Both variants carry the pair: orange and green measure 8.36:1 and 10.38:1 on
-   Dracula's background, 5.58:1 and 5.96:1 on Alucard's. */
+   Measured across the ramp at nought, a quarter, a half, three quarters and
+   full: 8.36:1, 8.35:1, 8.70:1, 9.38:1 and 10.38:1 on Dracula's background;
+   5.58:1, 6.24:1, 6.55:1, 6.42:1 and 5.96:1 on Alucard's. The ends are the worst
+   of it — no mix between them sits below the colour it came from. */
 #mainContainer #torrentsList #list .dracula-ratio {
   font-weight: inherit;
-  color: var(--variant-orange);
-}
-
-/* Two classes, so the verdict wins over the default whatever the source order
-   is — both rules would otherwise carry the same weight. */
-#mainContainer
-  #torrentsList
-  #list
-  .dracula-ratio.dracula-ratio-met {
-  color: var(--variant-green);
+  color: color-mix(
+    in srgb,
+    var(--variant-green) calc(var(--dracula-ratio-met, 0) * 1%),
+    var(--variant-orange)
+  );
 }
 
 /* The bars between the line's parts are structure, not words, and read as words
