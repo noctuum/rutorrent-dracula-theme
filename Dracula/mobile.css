@@ -372,11 +372,28 @@
    Only the three icon links are turned into flex containers. The funnel's is
    already `inline-flex` and centred (`plugins/mobile/mobile.css:388`), and
    deliberately so — inline is what keeps its tap target the width of the icon
-   and its text rather than the whole empty stretch of the row. */
+   and its text rather than the whole empty stretch of the row.
+
+   The label is the body's colour, not the accent. Upstream gives every tab link
+   `--mobile-accent` (`plugins/mobile/mobile.css:331`), so the colour that marks
+   one tab as current marks all four of them and the list toolbar's filter label
+   besides; which tab is current is said below instead. */
 #mainContainer .nav-tabs > li > a {
   height: 48px;
   padding-top: 0;
   padding-bottom: 0;
+  color: var(--variant-fg);
+}
+
+/* The current tab, and nothing else here, carries the accent. The underline is
+   upstream's and stays as it is (`plugins/mobile/mobile.css:335`); this is its
+   label. No toolbar row takes `active`, so the list's own `.nav-tabs` is
+   unaffected.
+
+   `--mobile-accent` and not the palette, so an accent chosen on the settings
+   page moves this label with everything else it moves. */
+#mainContainer .nav-tabs > li.active > a {
+  color: var(--mobile-accent);
 }
 
 #mainContainer :is(#sort, #search, #refresh) > a,
@@ -1126,7 +1143,10 @@
    and `--icon-remove` red, `--icon-pause` orange, `--icon-settings` comment,
    `--icon-upload-speed` green against `--icon-download-speed` cyan. Home has no
    desktop counterpart; it returns to the unfiltered list, which is what
-   `--icon-status-all` means, and takes its purple.
+   `--icon-status-all` means, and carries the accent — read through
+   `--mobile-accent`, so an accent chosen on the settings page moves it. The
+   filter list's own All keeps the palette's purple: those seven are states and
+   answer to the palette, not to what the accent is set to.
 
    Keyed by class, not by the ids the bar's links carry, because the two speed
    glyphs have no id to key on. All nine classes are distinct within the bar.
@@ -1157,7 +1177,7 @@
 }
 
 #mainContainer #mainNavbar .bi-house {
-  color: var(--variant-purple);
+  color: var(--mobile-accent);
 }
 
 #mainContainer #mainNavbar .bi-gear {
