@@ -988,18 +988,22 @@ div#t div.TB_Separator {
   margin: 4px 2px;
 }
 
-/* The magnifier opens a menu of search engines, the same affordance the plugins
-   button beside it marks with a caret, so it gets the same mark.
+/* Both of these open a menu and say so with a caret. The magnifier's is
+   `theSearchEngines.show()` from an inline onclick, and below ruTorrent 5.1.0
+   the plugins button is the same shape — a plain link on
+   `theWebUI.showPluginsMenu()`. From 5.1.0 up that button carries Bootstrap's
+   `dropdown-toggle`, whose own `::after` these declarations restate value for
+   value, so naming it here costs those releases nothing.
 
-   Drawn here rather than by adding Bootstrap's `dropdown-toggle` class: that
-   class is also Bootstrap's hook for *operating* a dropdown, and this menu is
-   upstream's own, opened by `theSearchEngines.show()` from an inline onclick.
-   Adding the class would put Bootstrap in charge of a menu it does not own.
+   Drawn here rather than by adding the class: `dropdown-toggle` is also
+   Bootstrap's hook for *operating* a dropdown, and neither menu is Bootstrap's
+   to operate.
 
    The declarations are Bootstrap's `.dropdown-toggle::after` copied exactly —
    em-based so it tracks the font, and `border-top` with no colour so it takes
-   currentColor from the link, which is how the plugins caret is coloured too. */
-#mnu_search::after {
+   currentColor from the link. */
+#mnu_search::after,
+#mnu_plugins::after {
   display: inline-block;
   margin-left: 0.255em;
   vertical-align: 0.255em;

@@ -371,3 +371,35 @@ body:has(#side-panel) #ind {
 body:has(#side-panel) category-panel::part(heading) {
   padding-left: 21px;
 }
+
+/* The plugins button is a plain link on `theWebUI.showPluginsMenu()` here; from
+   5.1.0 it is a Bootstrap dropdown inside a `.btn-group`. The bar's three-zone
+   ordering keys on that group, so without this the button stays in the left
+   cluster with the actions. The separator in front of it goes for the reason
+   the one in front of the group goes: it divides nothing once the button has
+   moved. */
+@media (min-width: 768px) {
+  body:has(#side-panel) #top-menu .navbar-nav > #mnu_plugins {
+    order: 3;
+  }
+
+  body:has(#side-panel) #top-menu .navbar-nav > .TB_Separator:has(+ #mnu_plugins) {
+    display: none;
+  }
+}
+
+/* Upstream writes the toolbar's interaction rules with three type selectors on
+   this release (`css/style.css:589`, inside its own 768px query) and with none
+   from 5.1.0, so the theme's hover fill and pink press lose the cascade here and
+   its pale `tb_bg.gif` paints instead. Same declarations, stated heavy enough to
+   land. The press keeps its padding restated for the reason the main sheet
+   gives: upstream's `:active` shrinks the button and shifts the whole row. */
+body:has(#side-panel) div#t div.navbar-nav a.nav-link:hover {
+  background-color: var(--dracula-selection);
+  background-image: none;
+}
+
+body:has(#side-panel) div#t div.navbar-nav a.nav-link:active {
+  padding: 6px;
+  background-color: var(--dracula-pink);
+}
