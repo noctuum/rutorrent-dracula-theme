@@ -101,7 +101,7 @@
      `applyAccentColor` darkens the overlay itself for an accent it judges
      near-white and writes that inline (`plugins/mobile/init.js:710`), so its
      own switch still outranks this. */
-  --mobile-stripe: rgb(0 0 0 / 15%);
+  --mobile-stripe: var(--dracula-stripe);
 }
 
 /* The plugin offers Light, Dark and System, and `applyTheme` resolves all three

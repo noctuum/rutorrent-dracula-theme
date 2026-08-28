@@ -141,6 +141,15 @@
     var(--dracula-bg)
   );
 
+  /* Shades rather than hues, and the same in either variant: a darkening of
+     whatever happens to be under them. The shadow sits beneath a floating
+     surface; the stripe is the diagonal overlay on a striped progress bar, one
+     value for both variants because the fill is a mix of the accent with the
+     page rather than the accent itself. Named here because a colour is a
+     colour, whatever it is made of. */
+  --dracula-shadow: rgb(0 0 0 / 45%);
+  --dracula-stripe: rgb(0 0 0 / 15%);
+
   /* ── Decimal copies ───────────────────────────────────────────────────────
      Bootstrap's utilities take a bare `r, g, b` rather than a colour —
      `.text-danger` resolves to
