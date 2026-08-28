@@ -331,7 +331,11 @@ body:has(#side-panel) #top-menu {
   border-bottom: 1px solid var(--navbar-border-color);
 }
 
+/* The radius is zeroed in this release's own 768px query and left alone from
+   5.1.0, so the toolbar's buttons come out square here only. 6px is the main
+   sheet's value for the same rule. */
 body:has(#side-panel) div#t .nav-link {
+  border-radius: 6px;
   border-color: var(--navbar-item-border-color);
 }
 
@@ -351,10 +355,22 @@ body:has(#side-panel) div#tdcont {
   border-color: var(--container-border-color);
 }
 
+/* The sidebar also stops at its last row here and leaves the space below it to
+   the page. 5.1.0 fills it with a column flex box and `flex: 1 1 auto` on the
+   list; this release has neither, and an extra `#side-panel` wrapper between
+   the two that has to carry the same growth for the box to reach the bottom. */
 body:has(#side-panel) #offcanvas-sidepanel,
 body:has(#side-panel) #side-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   background-color: var(--container-bg-color);
   border-color: var(--container-border-color);
+}
+
+body:has(#side-panel) #side-panel,
+body:has(#side-panel) #CatList {
+  flex: 1 1 auto;
 }
 
 /* The box is already 32px here and `background-size` comes from the main sheet,
