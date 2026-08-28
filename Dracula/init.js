@@ -316,11 +316,20 @@ function draculaWatchVisualViewport()
 	});
 }
 
-/* A palette colour as channels, for the places upstream interpolates one.
+/* === Reading the palette ===================================================
+ *
+ * One way in, three shapes out: channels for what upstream interpolates, a CSS
+ * string for what is written into markup, and a lazy `RGBackground` for what is
+ * handed to upstream's own gradient. All three go through the one probe below,
+ * so a colour resolves the same way wherever it is read.
+ *
+ * Reading the declaration text instead does not work: a `color-mix()` comes
+ * back as its own source, `color-mix(in srgb, …)`, which upstream's colour
+ * parser cannot read and a canvas will not always accept. Applying the name to
+ * an element and reading it back is what resolves it.
+ */
 
-   `RGBackground` reads `#rgb`, `#rrggbb` and `rgb(r, g, b)` and nothing else,
-   while a `color-mix()` resolves to `color(srgb …)`, so the value is read off an
-   element and converted here rather than handed over as a string.
+/* A palette colour as channels.
 
    The `, transparent` fallback separates a missing sheet from a real colour:
    without palette.css the name resolves to nothing, the probe comes back at
@@ -347,6 +356,15 @@ function draculaPaletteChannels(name)
 		Math.round(parseFloat(parts[1]) * scale),
 		Math.round(parseFloat(parts[2]) * scale)
 	];
+}
+
+/* A palette colour as a CSS string, for the places it is written into markup
+   rather than interpolated. `rgb(r, g, b)` rather than the hex it may have been
+   declared as: one form out, whatever went in. */
+function draculaPaletteColor(name, fallback)
+{
+	var channels = draculaPaletteChannels(name);
+	return channels ? "rgb(" + channels.join(", ") + ")" : fallback;
 }
 
 /* An `RGBackground` that reads its colour the first time something asks for it.
@@ -2156,12 +2174,6 @@ var draculaLetterR =
 	"C167 39 166 40 166 41C165 41 164 42 164 42C164 43 163 44 162 45C161 46 159 47 159 48" +
 	"C158 49 157 51 156 52C155 53 154 54 153 55C149 59 146 60 142 58C140 57 139 54 139 47" +
 	"C137 34 135 31 129 29C127 29 122 28 120 29Z";
-
-function draculaPaletteColor(name, fallback)
-{
-	var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-	return v || fallback;
-}
 
 function draculaSetFavicon()
 {
