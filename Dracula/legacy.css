@@ -305,3 +305,69 @@ body:has(.stable-head) panel-label[size]::part(size)::before {
   content: "/";
   color: var(--dracula-comment);
 }
+
+/* === ruTorrent below 5.1.0 === */
+
+/* 5.1.0 moved this release's light literals into custom properties. Below it
+   they are written out, so every surface here stays pale whatever the theme
+   sets. Each rule states 5.1.0's own declaration against the selector this
+   release uses — those carry a tag name, which outranks a bare id.
+
+   `#side-panel` is the marker: it is in 5.0.0's markup and in none after it. */
+
+body:has(#side-panel) div#t {
+  height: var(--navbar-height);
+  background: var(--navbar-bg-image);
+  background-color: var(--navbar-bg-color);
+  background-position: center;
+  background-repeat: repeat-x;
+  border-bottom: 1px solid var(--navbar-border-color);
+}
+
+/* Painted at every width here, where 5.1.0 paints it only while the collapsed
+   menu is open. The bar behind it carries the same colour, so the two agree. */
+body:has(#side-panel) #top-menu {
+  background-color: var(--navbar-bg-color);
+  border-bottom: 1px solid var(--navbar-border-color);
+}
+
+body:has(#side-panel) div#t .nav-link {
+  border-color: var(--navbar-item-border-color);
+}
+
+body:has(#side-panel) div.dlg-window {
+  background-color: var(--dialog-bg-color);
+  border-color: var(--dialog-border-color);
+}
+
+body:has(#side-panel) div.dlg-header {
+  background-color: var(--header-bg-color);
+  border-bottom-color: var(--header-border-color);
+}
+
+body:has(#side-panel) #list-table,
+body:has(#side-panel) div#tdcont {
+  background-color: var(--container-bg-color);
+  border-color: var(--container-border-color);
+}
+
+body:has(#side-panel) #offcanvas-sidepanel,
+body:has(#side-panel) #side-panel {
+  background-color: var(--container-bg-color);
+  border-color: var(--container-border-color);
+}
+
+/* The box is already 32px here and `background-size` comes from the main sheet,
+   so only the image and where it sits are missing. */
+body:has(#side-panel) #ind {
+  background-image: var(--loading-indicator-icon);
+  background-position: center;
+}
+
+/* The caret is this release's own background on the heading, at `2px 50%`, and
+   upstream holds 21px of left padding to clear it; from 5.1.0 it is a 20px
+   `::before` and the padding drops to a quarter of a rem. The main sheet's 3px
+   is right for that shape and drops the text onto the caret in this one. */
+body:has(#side-panel) category-panel::part(heading) {
+  padding-left: 21px;
+}
