@@ -1044,6 +1044,57 @@ function draculaWatchContextMenu()
 	};
 }
 
+// Which toolbar button the open menu belongs to, so a second click on that
+// button closes it and a click on another one still opens its own.
+var draculaOpenMenuButton = null;
+
+function draculaMenuIsOpen()
+{
+	return !!(window.theContextMenu && theContextMenu.obj && theContextMenu.obj.is(":visible"));
+}
+
+// A toolbar button that opens one of upstream's own menus from an inline
+// onclick — the magnifier through `theSearchEngines.show()`, and below
+// ruTorrent 5.1.0 the plugins button through `theWebUI.showPluginsMenu()`.
+//
+// The document mouseup that closes a menu skips anything carrying
+// `top-menu-item` (`objects.js:308`), which both of these do, so a second click
+// reaches the inline handler with the menu still open and rebuilds it in place.
+// Closing on that click is what the Bootstrap dropdown does for the plugins
+// button from 5.1.0 up.
+//
+// Capturing, because the handler to head off is the element's own.
+function draculaMenuButtonToggles(button)
+{
+	if(!button || button.getAttribute("data-dracula-toggle"))
+		return;
+	button.setAttribute("data-dracula-toggle", "1");
+
+	button.addEventListener("click", function(ev)
+	{
+		if(draculaOpenMenuButton === button && draculaMenuIsOpen())
+		{
+			ev.preventDefault();
+			ev.stopImmediatePropagation();
+			draculaOpenMenuButton = null;
+			draculaCloseMenu();
+			return;
+		}
+		draculaOpenMenuButton = button;
+	}, true);
+}
+
+function draculaToolbarMenusToggle()
+{
+	draculaMenuButtonToggles(document.getElementById("mnu_search"));
+
+	// From 5.1.0 the plugins button is a Bootstrap dropdown, which toggles on
+	// its own and must not be answered twice.
+	var plugins = document.getElementById("mnu_plugins");
+	if(plugins && !plugins.hasAttribute("data-bs-toggle"))
+		draculaMenuButtonToggles(plugins);
+}
+
 // The F1 help screen has to carry the theme's bindings too. Upstream builds
 // that dialog as one Bootstrap row of `.col-4` key / `.col-8` action pairs
 // (content.js:299), which with these entries added stands 300px wide and 773px
@@ -2672,6 +2723,7 @@ plugin.allDone = function()
 	draculaTabScrollIndicator();
 	draculaStatusBarKeys();
 	draculaWatchContextMenu();
+	draculaToolbarMenusToggle();
 	draculaFillKeyHelp();
 	draculaFixToolbarSeparators();
 	draculaShortenMenuLabels();
