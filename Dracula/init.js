@@ -2410,6 +2410,7 @@ function draculaMarkFilterIcons()
 
 function draculaSweepIcons()
 {
+	draculaMarkLabelSeparator();
 	draculaMarkIconsIn("panel-label[icon^='url:']", function(el)
 	{
 		return (el.getAttribute("icon") || "").slice(4);
@@ -2419,6 +2420,29 @@ function draculaSweepIcons()
 	{
 		return draculaCssUrl(el.style.backgroundImage);
 	});
+}
+
+/* A sidebar row ends in two pills, the count and the size, and ruTorrent 5.3.7
+   put a `separator` part between them to hold the "/" that divides the two.
+   Below that release the part does not exist and the pills sit against one
+   another, so the theme draws the mark itself.
+ *
+ * No stylesheet can ask whether a shadow part exists, so the answer is written
+ * onto the root for `style.css` to key on. It is a fact about the release, not
+ * about any one row, so the first label to carry a size settles it for good.
+ */
+var draculaSeparatorAnswered = false;
+
+function draculaMarkLabelSeparator()
+{
+	if(draculaSeparatorAnswered)
+		return;
+	var label = document.querySelector("panel-label[size]");
+	if(!label || !label.shadowRoot)
+		return;
+	draculaSeparatorAnswered = true;
+	if(!label.shadowRoot.querySelector("[part~=separator]"))
+		document.documentElement.setAttribute("data-dracula-label-separator", "missing");
 }
 
 /* The panels are rebuilt as labels and trackers come and go, and a row can keep

@@ -13,8 +13,7 @@
  * rules reach it as `.stable-head ~ .stable-body`, the two being siblings inside
  * the table's wrapper. Without that key the selectors would match the newer
  * shape too — `.stable-body td > div` is every cell of every release — and the
- * heights here would be imposed on a table that does not want them. The sidebar
- * rule at the end cannot be keyed this way and carries its own condition.
+ * heights here would be imposed on a table that does not want them.
  *
  * Imported last, from plugins.css, because it has to outrank the upstream
  * sheets rather than the theme's own.
@@ -279,32 +278,6 @@ body:has(.stable-head) #stg .lm li a.focus {
 }
 
 /* === The sidebar's separator === */
-
-/* `panel-label` gained a `separator` part between its count and its size in
-   5.3.7; below that the two pills sit against one another with nothing between.
-   The part cannot be added from a stylesheet and neither pill can hold the glyph
-   — both are filled and rounded, so a `::before` inside one lands under its
-   background. The size opens the gap instead and draws the glyph in it, out of
-   flow so the pill keeps its own box.
-
-   The sidebar is nowhere near the table, so this is the one rule that states
-   the release marker as a condition rather than reaching it through the markup.
-
-   The numbers are the space 5.3.12 leaves: 7px of the host's part spacing on
-   each side of the glyph, and the pill's own 1.4px of top padding, which is the
-   row's centre line. */
-body:has(.stable-head) panel-label[size]::part(size) {
-  position: relative;
-  margin-left: 12.1px;
-}
-
-body:has(.stable-head) panel-label[size]::part(size)::before {
-  position: absolute;
-  top: 1.4px;
-  right: calc(100% + 7px);
-  content: "/";
-  color: var(--dracula-comment);
-}
 
 /* === ruTorrent below 5.1.0 === */
 
