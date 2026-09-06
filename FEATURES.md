@@ -9,21 +9,21 @@ drawn, how it is navigated and what it tells you. Everything below lives in the
 
 The whole interface is reachable without a mouse.
 
-**Five regions — toolbar, sidebar, torrent list, detail tabs, status bar.** Tab
-moves between them, arrows move inside one, Home and End jump to its ends. Each
-region remembers where you were, so Tab returns you to the row you left rather
-than to the top.
+**Regions — toolbar, sidebar, torrent list, detail tabs, status bar, and the
+file list when it is showing.** Tab moves between them, arrows move inside one,
+Home and End jump to its ends. Each region remembers where you were, so Tab
+returns you to the row you left rather than to the top.
 
-| Key                               | Does                             |
-| --------------------------------- | -------------------------------- |
-| `Tab`                             | Move between the five regions    |
-| `← ↑ → ↓`                         | Move inside a region             |
-| `Enter`                           | Open details, a tab, or a filter |
-| `Space`                           | Toggle selection, or activate    |
-| `Ctrl-Enter`, `Menu`, `Shift-F10` | Torrent menu, as a right click   |
-| `Shift-↑ ↓`                       | Extend the selection in the list |
-| `Escape`                          | Close the menu and step back     |
-| `F1`                              | The full list, on screen         |
+| Key                               | Does                           |
+| --------------------------------- | ------------------------------ |
+| `Tab`                             | Move between the regions       |
+| `← ↑ → ↓`                         | Move inside a region           |
+| `Enter`                           | Open or apply the focused item |
+| `Space`                           | Toggle selection, or activate  |
+| `Ctrl-Enter`, `Menu`, `Shift-F10` | Context menu, as a right click |
+| `Shift-↑ ↓`                       | Extend the selection           |
+| `Escape`                          | Close the menu and step back   |
+| `F1`                              | The full list, on screen       |
 
 Five bare letters act on whatever is selected: **S** start, **P** pause,
 **T** stop, **U** reannounce, **R** force recheck. They are plain letters
@@ -38,6 +38,16 @@ itself, next to the commands.
 
 The torrent table is wider than its pane, so Left and Right scroll it by whole
 columns and snap to column edges instead of drifting by pixels.
+
+The Files tab takes the same keys, which is what makes its priority menu usable
+without a mouse: arrows walk the entries, Shift-arrows take a run of them, and
+the menu then sets the priority of the whole run at once. Nothing scrolls
+sideways there, so Left and Right walk the tree instead — Right steps into the
+folder under the cursor, Left steps back out.
+
+Enter opens what there is to open: a folder by entering it, and a file by
+offering its menu. A keypress never starts a download — that stays on the double
+click, where it is asked for deliberately.
 
 ## No image files
 

@@ -20,7 +20,7 @@
 
 /* global plugin, thePlugins, theWebUI, theUILang, theConverter, theContextMenu, theDialogManager, getSelection */
 /* global dStatus, askYesNo, RGBackground, dxSTable, rGraph, ALIGN_LEFT */
-/* global document, setTimeout, clearTimeout, MutationObserver, MouseEvent, Intl, $, window, getComputedStyle, Image, console */
+/* global document, setTimeout, clearTimeout, requestAnimationFrame, MutationObserver, MouseEvent, Intl, $, window, getComputedStyle, Image, console */
 
 // Bump together with the stamps on :root in each sheet: this file compares
 // itself against them at startup.
@@ -1125,20 +1125,21 @@ var draculaArrow = {
 	down:  "\u2B07\uFE0E"
 };
 
-// One line each, measured against the 250px column the dialog's 720px gives:
-// the longest, "Move between the five regions", is 204px. Keep new entries
+// One line each, measured against the 216px column the dialog's 720px gives:
+// the longest, "Open or apply the focused item", is 208px. Keep new entries
 // inside that, or this side of the screen wraps and reads as prose.
 var draculaKeyHelp = [
-	["Tab", "Move between the five regions"],
+	["Tab", "Move between the regions"],
 	[draculaArrow.left + " " + draculaArrow.up + " " + draculaArrow.right + " " + draculaArrow.down,
 		"Move inside the region"],
 	["Home / End", "First or last item in the region"],
-	["Enter", "Open details, a tab or a filter"],
+	["Enter", "Open or apply the focused item"],
 	["Space", "Toggle selection, or activate"],
-	["Ctrl-Enter", "Torrent menu, or add a filter"],
-	["Menu / Shift-F10", "Torrent menu, as a right click"],
-	["Shift-" + draculaArrow.up + " " + draculaArrow.down, "Extend the selection in the list"],
+	["Ctrl-Enter", "Context menu, or add a filter"],
+	["Menu / Shift-F10", "Context menu, as a right click"],
+	["Shift-" + draculaArrow.up + " " + draculaArrow.down, "Extend the selection"],
 	["Shift-Enter", "Select a range of filters"],
+	[draculaArrow.left + " " + draculaArrow.right, "In Files, leave or open a folder"],
 	["Escape", "Close the menu and go back"]
 ];
 
@@ -1861,11 +1862,12 @@ function draculaSyncSidebarRoles()
 		save.setAttribute("aria-label", "Save current filters as a view");
 }
 
-// Region four: the torrent list. Nothing here duplicates upstream —
-// `dxSTable.keyEvents` (stable.js:809) is bound to document keydown but handles
-// exactly three keys: Delete, Ctrl-A and Ctrl-Z, no arrows, Space or Enter.
+// The two row tables the keyboard reaches: the torrent list, and the file list
+// in the detail panel. Nothing here duplicates upstream — `dxSTable.keyEvents`
+// (stable.js:809) is bound to document keydown but handles exactly three keys:
+// Delete, Ctrl-A and Ctrl-Z, no arrows, Space or Enter.
 //
-// The list is virtualised: only the rows on screen exist in the DOM, so a roving
+// Both are virtualised: only the rows on screen exist in the DOM, so a roving
 // tabindex over rows would fight the renderer. The container is the tab stop
 // instead and the current row is named by aria-activedescendant, which is the
 // pattern virtualised lists exist for.
@@ -1873,78 +1875,85 @@ function draculaSyncSidebarRoles()
 // Selection goes through upstream's own `selectRow`, which reads nothing from
 // the row but its id (stable.js:840) — so a row scrolled out of the DOM can
 // still be selected by passing `{ id: … }`. It ends by calling `onselect`, the
-// same callback a mouse click ends with, so the detail panel follows along.
-var draculaListAnchor = null;
-
-function draculaListTable()
+// same callback a mouse click ends with, so the details panel and the file menu
+// follow along. Shift and Ctrl need no arithmetic here either: `selectRow`
+// carries the whole range and toggle model (stable.js:848) and keeps the range
+// anchor at `stSel[0]`.
+//
+// One implementation drives both tables. They differ in what the sideways keys
+// can mean — the torrent list scrolls to a column, the file list walks the tree
+// — and in nothing else.
+function draculaTable(key)
 {
-	return (window.theWebUI && theWebUI.tables && theWebUI.tables.trt)
-		? theWebUI.tables.trt.obj : null;
+	return (window.theWebUI && theWebUI.tables && theWebUI.tables[key])
+		? theWebUI.tables[key].obj : null;
 }
 
-function draculaListScrollTo(index)
-{
-	var scroller = document.querySelector("#List .stable-body");
-	var table = draculaListTable();
-	if(!scroller || !table)
-		return;
-	var height = table.TR_HEIGHT || 30;
-	var top = index * height;
-	if(top < scroller.scrollTop)
-		scroller.scrollTop = top;
-	else if(top + height > scroller.scrollTop + scroller.clientHeight)
-		scroller.scrollTop = top + height - scroller.clientHeight;
-}
-
-function draculaListSelect(id, ev, toggle)
-{
-	var table = draculaListTable();
-	if(!table)
-		return;
-	table.selectRow({
-		which: 1,
-		metaKey: toggle || ev.ctrlKey || ev.metaKey,
-		shiftKey: ev.shiftKey
-	}, { id: id });
-	draculaListAnchor = id;
-	var list = document.getElementById("List");
-	if(list)
-		list.setAttribute("aria-activedescendant", id);
-	draculaListScrollTo(table.rowIDs.indexOf(id));
-	draculaSyncListRoles();
-}
-
-// The torrent menu, which upstream opens on a right click alone.
+// The row menu, which upstream opens on a right click alone. Both tables have
+// one: `trtSelect` builds the torrent menu (`webui.js:1367`) and `flsSelect`
+// the file menu of priorities (`webui.js:1402`), each from its table's own
+// `onselect`.
 //
 // It opens through upstream's own path rather than around it. `which: 3` is
 // exactly what a right click sends, and that matters twice: `selectRow` keeps a
 // multi-row selection intact when the row under the pointer is already in it
-// (`stable.js:847`), and `trtSelect` is what builds the menu and shows it
-// (`webui.js:1367`). Reimplementing either would mean two menus to keep in step.
+// (`stable.js:847`), and the two builders are what show the menu. Reimplementing
+// either would mean two menus to keep in step.
 //
 // The menu is placed at the focused row's bottom-left, where a right click on
 // its name would land. `theContextMenu.show` already pulls a menu back inside
-// the window on both axes (`objects.js:451`), so a row at the bottom of the list
-// needs nothing special here.
-function draculaListMenu(id)
+// the window on both axes (`objects.js:451`), so a row at the bottom of the
+// table needs nothing special here.
+function draculaRowMenu(container, table, id)
 {
-	var table = draculaListTable();
 	if(!table || !id)
 		return;
 	// Rows are virtualised, but every path that moves the focus scrolls the
-	// target into view first, so the element is normally there; the list is the
-	// fallback rather than a guess at coordinates.
-	var anchor = document.getElementById(id) || document.getElementById("List");
-	if(!anchor)
-		return;
+	// target into view first, so the element is normally there; the container is
+	// the fallback rather than a guess at coordinates.
+	var anchor = document.getElementById(id) || container;
 	var rect = anchor.getBoundingClientRect();
-	table.selectRow({
-		which: 3,
-		metaKey: false,
-		shiftKey: false,
-		clientX: Math.round(rect.left + 24),
-		clientY: Math.round(rect.bottom)
-	}, { id: id });
+	var x = Math.round(rect.left + 24);
+	var y = Math.round(rect.bottom);
+
+	// The two tables do not place their menus the same way. `trtSelect` hands the
+	// event's coordinates to `theContextMenu.show` (`webui.js:1559`), so a
+	// synthetic event is enough to place the torrent menu; `flsSelect` calls it
+	// bare (`webui.js:1415`), and a bare call falls back to `theContextMenu.mouse`
+	// (`objects.js:446`) — the last place the pointer moved (`objects.js:307`),
+	// which for a keypress is wherever the pointer happens to be resting.
+	//
+	// Writing that fallback is what puts the file menu on its own row, and it is
+	// put back immediately: `show` applies the position synchronously before it
+	// animates, and that value belongs to the pointer. A right click that follows
+	// without the mouse having moved must still open where the pointer is, which
+	// is the whole point of the fallback existing.
+	var mouse = theContextMenu ? theContextMenu.mouse : null;
+	var was = mouse ? { x: mouse.x, y: mouse.y } : null;
+	if(mouse)
+	{
+		mouse.x = x;
+		mouse.y = y;
+	}
+
+	try
+	{
+		table.selectRow({
+			which: 3,
+			metaKey: false,
+			shiftKey: false,
+			clientX: x,
+			clientY: y
+		}, { id: id });
+	}
+	finally
+	{
+		if(mouse)
+		{
+			mouse.x = was.x;
+			mouse.y = was.y;
+		}
+	}
 }
 
 // Sideways movement lands on column edges rather than on a round number of
@@ -1956,14 +1965,8 @@ function draculaListMenu(id)
 // to rest against whichever edge of the port the step is moving towards, left
 // going left and right going right. That is the edge the eye watches, and a
 // column arriving there half shown reads as a missed step.
-function draculaListScrollColumn(direction)
+function draculaScrollColumn(direction, scroller, table)
 {
-	var list = document.getElementById("List");
-	var table = draculaListTable();
-	var scroller = list ? list.querySelector(".stable-body") : null;
-	if(!scroller || !table)
-		return;
-
 	var edges = [0];
 	var cells = table.tHeadRow[0].getElementsByTagName("td");
 	var x = 0;
@@ -1992,16 +1995,73 @@ function draculaListScrollColumn(direction)
 	scroller.scrollLeft = Math.max(0, Math.min(target, limit));
 }
 
-// Rows are rebuilt as the list scrolls and as the server updates, so the roles
-// are re-applied rather than set once.
-function draculaSyncListRoles()
+// Sideways in the file tree, where nothing scrolls: the table is
+// `table-layout: fixed` and its five columns are asked for 550px inside a panel
+// far wider than that, so it stretches to the port and never overflows. Right
+// steps into the directory under the cursor, Left steps back out.
+//
+// Both go through upstream's own `ondblclick` (`webui.js:52`), the only path
+// that repoints the directory and rebuilds the rows. It reads `link`, which is
+// set on directory rows and absent on files (`common.js:1059`), so a file is
+// declined by upstream rather than tested for here.
+//
+// The way back up is found by its name. Its row id is `_d_` at the top level but
+// `_d_<parent path>` one level down — the same shape a real directory has — so
+// the id is not the marker; `..` in the name column is.
+function draculaFileTreeStep(direction, host, table)
 {
-	var list = document.getElementById("List");
-	var table = draculaListTable();
-	if(!list || !table)
-		return;
+	if(typeof table.ondblclick !== "function")
+		return false;
+
+	var target = null;
+	if(direction < 0)
+	{
+		for(var i = 0; i < table.rowIDs.length; i++)
+			if(table.getValueById(table.rowIDs[i], "name") === "..")
+			{
+				target = table.rowIDs[i];
+				break;
+			}
+	}
+	else
+	{
+		var id = host.getAttribute("aria-activedescendant");
+		// `link` is a string on every directory row and absent on files, so its
+		// type is the test; `getAttr` answers null for a row with no attributes
+		// at all (stable.js:1578).
+		if(id && typeof table.getAttr(id, "link") === "string" &&
+			table.getValueById(id, "name") !== "..")
+			target = id;
+	}
+	if(target === null)
+		return false;
+
+	table.ondblclick({ id: target });
+	return true;
+}
+
+// Enter in the file list opens what there is to open: a directory opens by being
+// stepped into, and a file, having nothing to open, offers its actions instead.
+//
+// A file must not reach `ondblclick`. The `data` plugin takes that over for rows
+// with no `link` and starts a download (`plugins/data/init.js:8`, and its flat
+// view branch downloads whatever the row is), which is not what pressing a key
+// on a row asks for. The pointer keeps the download; only the key is redirected.
+function draculaFileOpen(host, table, id)
+{
+	if(typeof table.getAttr(id, "link") === "string" &&
+		typeof table.ondblclick === "function")
+		table.ondblclick({ id: id });
+	else
+		draculaRowMenu(host, table, id);
+}
+
+// Rows are rebuilt as a table scrolls and as the server updates, so the roles
+// are re-applied rather than set once.
+function draculaSyncRowRoles(host, table)
+{
 	Array.prototype.forEach.call(
-		list.querySelectorAll(".stable-body table tbody:not(.stable-virtpad) tr"),
+		host.querySelectorAll("table tbody:not(.stable-virtpad) tr"),
 		function(row)
 		{
 			if(!row.id)
@@ -2011,57 +2071,210 @@ function draculaSyncListRoles()
 		});
 }
 
-function draculaTorrentListKeys()
-{
-	var list = document.getElementById("List");
-	if(!list || list.getAttribute("data-dracula-keys"))
-		return;
-	list.setAttribute("data-dracula-keys", "1");
-	list.tabIndex = 0;
-	list.setAttribute("role", "listbox");
-	list.setAttribute("aria-multiselectable", "true");
-	list.setAttribute("aria-label", "Torrents");
+// Every region registers its host resolver here, because the host does not
+// exist yet when the region is built and has to be claimed again later.
+var draculaTableHosts = [];
 
-	// The list was costing two tab stops, not one. `#List` is this theme's, but
-	// the scrollport inside it is Chrome's: a scroll container with no focusable
-	// child joins the tab order by itself, so Tab landed on the region twice —
-	// measured `panel-label` then `#List` then `div.stable-body` then the detail
-	// tabs. An explicit tabindex is what takes a scroller back out of the
-	// sequence, and -1 keeps it reachable to script and to the mouse.
+function draculaSyncTableHosts()
+{
+	draculaTableHosts.forEach(function(claim) { claim(); });
+}
+
+// The focusable element of a row table is its scroll body, not the container
+// around it. Two facts point the same way.
+//
+// A scroll container with no focusable child joins the tab order by itself from
+// Chrome 127, so `div.stable-body` is a tab stop whether or not the theme asks
+// for one — measured, Tab off `#List` lands on it. Taking it back out means
+// marking it `tabindex="-1"` before Tab can reach it, and it does not exist when
+// the region is built: `theWebUI` sets its tables up afterwards, and replaces a
+// body again when its columns change. Making it the stop needs no such race, and
+// it is the element the browser had already chosen.
+//
+// It also leaves the container's role alone, which `#FileList` needs: that is a
+// detail panel, and `draculaSyncTabRoles` re-marks it `tabpanel` on every
+// refresh — a `listbox` written on the same element would be overwritten within
+// seconds.
+//
+// The stop is not merely tolerated, it is wanted: the torrent table is 3305px
+// wide inside a 1636px port, so this is the only way to reach the right-hand
+// columns from the keyboard, and Left and Right scroll it by whole columns.
+//
+// Options: `label` names the region to a screen reader; `sideways` is handed
+// (direction, host, table) and answers whether it replaced the rows, which is
+// what makes the remembered row worth forgetting; `open` is what Enter does to a
+// row, defaulting to the table's own `ondblclick`.
+function draculaTableKeys(containerId, key, options)
+{
+	var container = document.getElementById(containerId);
+	if(!container || container.getAttribute("data-dracula-keys"))
+		return;
+	container.setAttribute("data-dracula-keys", "1");
+
+	var label = options.label;
+	var sideways = options.sideways;
+	var open = options.open || function(host, table, id)
+	{
+		if(typeof table.ondblclick === "function")
+			table.ondblclick({ id: id });
+	};
+
+	var host = function()
+	{
+		var body = container.querySelector(".stable-body");
+		if(body && body.getAttribute("role") !== "listbox")
+		{
+			body.tabIndex = 0;
+			body.setAttribute("role", "listbox");
+			body.setAttribute("aria-multiselectable", "true");
+			body.setAttribute("aria-label", label);
+		}
+		return body;
+	};
+	draculaTableHosts.push(host);
+	host();
+
+	// The body is a direct child of the container, so watching one level deep
+	// catches it arriving and catches a replacement, while row redraws — which
+	// happen several levels further down, on every server update — do not wake
+	// this at all.
+	new MutationObserver(host).observe(container, { childList: true });
+
+	// The remembered row, which is not the selection: Ctrl and Shift move it
+	// without it becoming the whole of what is selected.
+	var focused = null;
+
+	// The row is asked where it is rather than told, because no single row height
+	// describes the column. `TR_HEIGHT` is `tr.height()` (stable.js:1623), a
+	// jQuery content height, so padded 30px rows report 28 — and upstream sizes
+	// its virtual padding with that same 28 while laying the rows out at 30. An
+	// index times a height is wrong by two pixels a row either way.
 	//
-	// That stop was not useless, which is why it is replaced rather than only
-	// removed: this table is 3305px wide inside a 1636px port, so the browser's
-	// scroller focus was the only way to reach the right-hand columns from the
-	// keyboard. Left and Right now do it from `#List` itself — they were free
-	// here, since `#List` is `overflow: hidden` and nothing scrolled on them.
-	var scroller = list.querySelector(".stable-body");
-	if(scroller)
-		scroller.tabIndex = -1;
+	// Rows are virtualised, so a distant target is not there to ask. The estimate
+	// is only enough to make the renderer build it; the frame after, the row
+	// itself settles the scroll.
+	var bringIntoView = function(scroller, table, index)
+	{
+		var id = table.rowIDs[index];
+		if(!id)
+			return;
+
+		// Answers whether the row is in view and needed nothing, so the caller
+		// knows when to stop looking.
+		var nudge = function()
+		{
+			var row = document.getElementById(id);
+			if(!row)
+				return false;
+			// The heading floats at the top of the scrollport rather than
+			// scrolling away, so the first place a row can be seen is under it.
+			var head = scroller.querySelector("thead");
+			var box = scroller.getBoundingClientRect();
+			var rect = row.getBoundingClientRect();
+			var ceiling = box.top + (head ? head.getBoundingClientRect().height : 0);
+			if(rect.top < ceiling - 1)
+				scroller.scrollTop -= ceiling - rect.top;
+			else if(rect.bottom > box.bottom + 1)
+				scroller.scrollTop += rect.bottom - box.bottom;
+			else
+				return true;
+			return false;
+		};
+
+		if(nudge())
+			return;
+		var height = table.TR_HEIGHT || 30;
+		if(!document.getElementById(id))
+			scroller.scrollTop = Math.max(0, Math.min(index * height,
+				scroller.scrollHeight - scroller.clientHeight));
+
+		// The renderer rebuilds rows on its own clock and resizes the padding
+		// above and below them as it goes, which moves the row after the scroll
+		// that was meant to reveal it. A few frames catch the ordinary case.
+		var settle = function(left)
+		{
+			requestAnimationFrame(function()
+			{
+				if(!nudge() && left > 1)
+					settle(left - 1);
+			});
+		};
+		settle(4);
+
+		// A jump of more than three rows down a long table is not redrawn for
+		// half a second (`stable.js:614`), which no number of frames will wait
+		// out, so Home and End get one late look after that timer has fired.
+		setTimeout(nudge, 600);
+	};
+
+	var select = function(scroller, table, id, ev, toggle)
+	{
+		table.selectRow({
+			which: 1,
+			metaKey: toggle || ev.ctrlKey || ev.metaKey,
+			shiftKey: ev.shiftKey
+		}, { id: id });
+		focused = id;
+		scroller.setAttribute("aria-activedescendant", id);
+		bringIntoView(scroller, table, table.rowIDs.indexOf(id));
+		draculaSyncRowRoles(scroller, table);
+	};
+
+	var forget = function(scroller)
+	{
+		focused = null;
+		scroller.removeAttribute("aria-activedescendant");
+	};
 
 	// Upstream arms its own Delete and Ctrl-A only after the first mousedown on
 	// the table (stable.js:209), which a keyboard user never sends. Arming on
 	// focus is what the mouse path does one event earlier.
-	list.addEventListener("focus", function()
+	//
+	// `bindKeys` unbinds before it binds and the handler is one shared prototype
+	// method (stable.js:97), so only the table armed last has those three keys.
+	// Focus therefore claims them exactly as a mousedown on the table does.
+	// The pointer moves the cursor as well. Upstream selects on mousedown
+	// (stable.js:235), so the row just clicked is where the arrows have to carry
+	// on from; without this they resume from wherever the keyboard was left,
+	// which is not the row the user is looking at. Only rows carry an id — the
+	// heading row and the virtual padding do not — so the selector is the test.
+	container.addEventListener("mousedown", function(ev)
 	{
-		var table = draculaListTable();
-		if(table && typeof table.bindKeys === "function")
-			table.bindKeys();
-		draculaSyncListRoles();
+		var scroller = host();
+		var row = ev.target && ev.target.closest ? ev.target.closest("tr[id]") : null;
+		if(!scroller || !row)
+			return;
+		focused = row.id;
+		scroller.setAttribute("aria-activedescendant", row.id);
 	});
 
-	list.addEventListener("keydown", function(ev)
+	// `focusin` rather than `focus`, which does not bubble: the element taking
+	// the focus is the body inside, not the container listening.
+	container.addEventListener("focusin", function()
 	{
-		var table = draculaListTable();
-		if(!table || !table.rowIDs.length)
+		var table = draculaTable(key);
+		var scroller = host();
+		if(!table || !scroller)
+			return;
+		if(typeof table.bindKeys === "function")
+			table.bindKeys();
+		draculaSyncRowRoles(scroller, table);
+	});
+
+	container.addEventListener("keydown", function(ev)
+	{
+		var table = draculaTable(key);
+		var scroller = host();
+		if(!table || !scroller || !table.rowIDs.length)
 			return;
 		if(ev.altKey)
 			return;
 
 		var ids = table.rowIDs;
-		var current = draculaListAnchor;
+		var current = focused;
 		if(!current || ids.indexOf(current) < 0)
 			current = (table.stSel && table.stSel.length) ? table.stSel[0] : null;
-		var index = current ? ids.indexOf(current) : -1;
+		var index = (current && ids.indexOf(current) >= 0) ? ids.indexOf(current) : -1;
 		// The linter is right that nothing reads this null: every case below
 		// either assigns a number or returns, so the guard after the switch is
 		// unreachable today. Both stay. They are the net under the next case
@@ -2077,7 +2290,10 @@ function draculaTorrentListKeys()
 			case "ArrowRight":
 			case "ArrowLeft":
 				ev.preventDefault();
-				draculaListScrollColumn(ev.key === "ArrowRight" ? 1 : -1);
+				// A step that rebuilt the table leaves the remembered row naming
+				// something that is gone, and upstream's range anchor with it.
+				if(sideways(ev.key === "ArrowRight" ? 1 : -1, scroller, table))
+					forget(scroller);
 				return;
 			case "Home":      target = 0; break;
 			case "End":       target = ids.length - 1; break;
@@ -2085,20 +2301,23 @@ function draculaTorrentListKeys()
 				if(index >= 0)
 				{
 					ev.preventDefault();
-					draculaListSelect(ids[index], ev, true);
+					select(scroller, table, ids[index], ev, true);
 				}
 				return;
 			case "Enter":
 				if(index < 0)
 					return;
 				ev.preventDefault();
-				// Ctrl-Enter is free here, Enter opening the details with or
-				// without it, so the menu takes it. In the sidebar Ctrl-Enter adds
-				// a filter instead; Enter means a different thing in every region.
+				// Ctrl-Enter is free here, Enter opening the row with or without
+				// it, so the menu takes it. In the sidebar Ctrl-Enter adds a
+				// filter instead; Enter means a different thing in every region.
 				if(ev.ctrlKey || ev.metaKey)
-					draculaListMenu(ids[index]);
-				else if(typeof table.ondblclick === "function")
-					table.ondblclick({ id: ids[index] });
+					draculaRowMenu(scroller, table, ids[index]);
+				else
+					open(scroller, table, ids[index]);
+				// Opening a directory replaces the rows; opening a menu does not.
+				if(table.rowIDs.indexOf(ids[index]) < 0)
+					forget(scroller);
 				return;
 			// Both have to be taken on keydown: upstream cancels the
 			// `contextmenu` event document-wide (`webui.js:244`), so the
@@ -2107,13 +2326,13 @@ function draculaTorrentListKeys()
 				if(index < 0)
 					return;
 				ev.preventDefault();
-				draculaListMenu(ids[index]);
+				draculaRowMenu(scroller, table, ids[index]);
 				return;
 			case "F10":
 				if(index < 0 || !ev.shiftKey)
 					return;
 				ev.preventDefault();
-				draculaListMenu(ids[index]);
+				draculaRowMenu(scroller, table, ids[index]);
 				return;
 			default: return;
 		}
@@ -2121,7 +2340,7 @@ function draculaTorrentListKeys()
 		if(target === null)
 			return;
 		ev.preventDefault();
-		draculaListSelect(ids[target], ev, false);
+		select(scroller, table, ids[target], ev, false);
 	});
 }
 
@@ -2653,11 +2872,23 @@ plugin.allDone = function()
 		});
 	}
 
-	draculaTorrentListKeys();
+	// The file list is a region only while it is on screen: a `tabindex` on a
+	// hidden element is not a tab stop, so it joins the roll when a torrent is
+	// selected and the Files tab is showing, and leaves it again by itself.
+	draculaTableKeys("List", "trt", {
+		label: "Torrents",
+		sideways: draculaScrollColumn
+	});
+	draculaTableKeys("FileList", "fls", {
+		label: "Files",
+		sideways: draculaFileTreeStep,
+		open: draculaFileOpen
+	});
 
 	var refreshRegions = function()
 	{
 		draculaRestoreKeyboardFocus();
+		draculaSyncTableHosts();
 		if(toolbar) draculaRovingSync(toolbar, toolbarItems);
 		if(tabbar)
 		{
@@ -4471,6 +4702,23 @@ function draculaFileIconClass(name, icon)
 			return icon + " Icon_File_" + DRACULA_FILE_KINDS[i][0];
 	return icon;
 }
+
+// `clearRows` empties `rowdata`, `rowSel` and `rowIDs` but leaves `stSel`
+// standing (`stable.js:1034`), and `stSel[0]` is the anchor every Shift range is
+// measured from (`stable.js:847`). A table whose rows are replaced therefore
+// keeps an anchor naming a row that is gone, and the next Shift step selects
+// from its target to the end of the table instead of back to the anchor.
+//
+// The Files tab replaces its rows on every directory change (`webui.js:55`) and
+// on the tree/list switch (`webui.js:1488`), so both the arrows here and a plain
+// Shift-click land on it. Dropping the anchor with the rows it named is what
+// upstream's own `clearSelection` does (`stable.js:1146`).
+plugin.draculaClearRows = dxSTable.prototype.clearRows;
+dxSTable.prototype.clearRows = function()
+{
+	this.stSel = [];
+	return plugin.draculaClearRows.apply(this, arguments);
+};
 
 plugin.draculaSetRowById = dxSTable.prototype.setRowById;
 dxSTable.prototype.setRowById = function(ids, sId, icon, attr)
