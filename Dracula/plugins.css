@@ -678,17 +678,23 @@ ul#rlsul > li input.TextboxFocus,
 /* === Plugin Dialog Geometry === */
 
 /* Both "Rules Manager" windows clip their own `<select>` options at upstream's
-   `min-width: 600px` (`rssurlrewrite.css:50`, `extratio.css:27`). Measured as
-   the intrinsic width of the control's longest option string: `#RLS_src` needs
-   326px and has 276.5, `#RLS_dst` needs 320 and has 276.5, `#ratio_reason`
-   needs 284 and has 275, so the first dropdown reads "If URL of torrent
-   download matches p", cut mid-word.
+   `min-width: 600px` (`rssurlrewrite.css:50`, `extratio.css:27`), so the first
+   dropdown reads "If the torrent description URL matches the patt", cut
+   mid-word.
 
-   718 is `#RLS_src`'s content minimum carried back out through the boxes it
-   sits in: 326 + 2 fieldset border + 16 fieldset padding + 7 column padding,
-   doubled for the two `.col-md-6`, + 12 for `.cont` + 4 for the dialog border.
-   The ratio editor takes the same number though its own minimum is 634: the
-   extra 84px turns it from 1.29 to 1.46, near the settings dialog's 1.47.
+   Each width is its widest control's intrinsic size carried back out through
+   the boxes it sits in: the control, + 2 fieldset border + 16 fieldset padding
+   + 7 column padding, doubled for the two `.col-md-6`, + 12 for `.cont` + 4 for
+   the dialog border. `#RLS_src` measures 359 and gives 784; `#ratio_reason`
+   measures 326 and gives 718.
+
+   Intrinsic means `width: max-content` on the control, not the text: a select
+   reserves room for its own arrow, and a string measured on a canvas is 33px
+   short of what the box needs. `scrollWidth` answers nothing here — it does not
+   grow with an option the control cannot show.
+
+   Read them from the page rather than from this note if the option strings move
+   again: they are upstream's own wording and it changes between releases.
 
    `div#` on the ratio editor is not decoration: `extratio.css:27` is written
    `div#dlgEditRatioRules`, specificity 1,0,1, and a bare id at 1,0,0 loses to
@@ -696,7 +702,10 @@ ul#rlsul > li input.TextboxFocus,
    kind of reason — `style.css` is sheet index 7 against the plugin sheets' 13
    to 27, where `plugins.css` is index 30. */
 @media (min-width: 768px) {
-  #dlgEditRules,
+  #dlgEditRules {
+    min-width: min(784px, 92vw);
+  }
+
   div#dlgEditRatioRules {
     min-width: min(718px, 92vw);
   }
