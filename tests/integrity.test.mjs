@@ -488,7 +488,13 @@ test("the pinned commit is stated in the palette as well as here", () => {
 // A ratchet, not a limit. Lower these when a use is removed; raising one takes
 // an argument in the commit message.
 const IMPORTANT_BUDGET = {
-	"style.css": 35,
+	// Seven of these are the file-type icons, and they lose without it for the
+	// reason the three beside them already do: `.stable-icon` clears the
+	// background-image from a later sheet at the same specificity, so a plain
+	// class never paints. The size travels inside the `background` shorthand
+	// for the same reason — the shorthand resets `background-size`, and an
+	// important reset outranks a separate declaration after it.
+	"style.css": 42,
 	"stable.css": 2,
 	// Two. The second is check_port's hidden segments: the plugin empties one and
 	// calls jQuery's `.hide()`, writing a plain inline `display: none`, while the
@@ -811,6 +817,65 @@ test("no colour is written outside palette.css", () => {
 		[],
 		`written outside palette.css: ${stray.join(", ")}. Define it in ` +
 			`palette.css and read the name, or exempt it here with a reason.`,
+	);
+});
+
+// An SVG fill cannot read a custom property, so every glyph writes its colour
+// out. `%23` is what `#` becomes inside a data URI, which hides all of them from
+// COLOUR_HEX above — the one place most of the theme's colours live is the one
+// place the rule above does not reach. These cannot be names, so this asks the
+// weaker question the shape allows: that each is a value the spec pins.
+const ENCODED_EXEMPT = {
+	"style.css": [
+		// A mask reads alpha and discards hue, so this is the word "opaque"
+		// spelled as a colour, exactly as in mobile.css above.
+		["%23000", "mask stop: a mask reads alpha, so this is opacity"],
+		["%23000", "mask stop: a mask reads alpha, so this is opacity"],
+	],
+};
+
+const ENCODED_HEX =
+	/%23(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{3})\b/g;
+
+const encodedColours = (name) => read(name).match(ENCODED_HEX) || [];
+
+test("every colour inside a data URI is a palette value", () => {
+	const palette = new Set(Object.values(SPEC).map((hex) => hex.toLowerCase()));
+	const stray = [];
+	for (const name of FILES) {
+		const allowed = (ENCODED_EXEMPT[name] || []).map(([literal]) => literal);
+		for (const found of encodedColours(name)) {
+			const at = allowed.indexOf(found);
+			if (at !== -1) {
+				allowed.splice(at, 1);
+				continue;
+			}
+			if (!palette.has("#" + found.slice(3).toLowerCase()))
+				stray.push(`${name}: ${found}`);
+		}
+	}
+	assert.deepEqual(
+		stray,
+		[],
+		`not in the palette: ${stray.join(", ")}. A glyph takes its colour from ` +
+			`the spec like everything else, or is exempted here with a reason.`,
+	);
+});
+
+test("no encoded-colour exemption outlives its literal", () => {
+	const dead = [];
+	for (const [name, entries] of Object.entries(ENCODED_EXEMPT)) {
+		const found = encodedColours(name);
+		for (const [literal, reason] of entries) {
+			const at = found.indexOf(literal);
+			if (at === -1) dead.push(`${name}: ${literal} (${reason})`);
+			else found.splice(at, 1);
+		}
+	}
+	assert.deepEqual(
+		dead,
+		[],
+		`exempted but no longer written: ${dead.join(", ")} — drop the entry`,
 	);
 });
 

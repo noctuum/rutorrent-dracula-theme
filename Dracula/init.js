@@ -4428,11 +4428,68 @@ function draculaTorrentNote(name, msg)
 
    The torrent list only: `createRow` is what every dxSTable builds its rows
    with, and a tracker or peer row has no torrent behind it. */
+// The Files tab labels every entry `Icon_File` or `Icon_Dir` (`common.js:1049`,
+// `:1059`, `:1066`), so the kind of a file reaches the page nowhere: the name is
+// a bare text node beside the icon, which no selector can read. The extension is
+// the only signal there is, and this turns it into a class.
+//
+// Extensions are grouped by what the eye is looking for in a torrent, not by
+// media type: an archive and a disc image are both containers, and telling them
+// apart matters more than telling avi from mkv. Anything unlisted keeps
+// upstream's plain document.
+var DRACULA_FILE_KINDS = [
+	["Archive", /^(zip|rar|7z|tar|gz|bz2|xz|zst|tgz)$/],
+	["Disc", /^(iso|img|cue|bin|mdf|nrg|ccd)$/],
+	["Video", /^(mkv|mp4|avi|webm|mov|wmv|flv|m2ts|mpg|mpeg|m4v)$/],
+	["Audio", /^(flac|mp3|ogg|wav|m4a|aac|opus|wma|ape|shn|alac)$/],
+	["Image", /^(jpg|jpeg|png|gif|webp|bmp|svg|tif|tiff|avif)$/],
+	["Doc", /^(txt|nfo|md|log|ffp|md5|sfv|pdf|epub|srt|ass|sub|xml|json)$/]
+];
+
+// Returns the icon string to pass on: upstream's class, plus one of ours when
+// the name says what the entry is. Both are kept so a kind with no rule still
+// paints — jQuery's `addClass` (`stable.js:942`) takes the pair as written.
+function draculaFileIconClass(name, icon)
+{
+	if(typeof name !== "string" || typeof icon !== "string")
+		return icon;
+
+	// `..` is the way back up, not a directory to open, and reads as navigation.
+	if(icon === "Icon_Dir")
+		return name === ".." ? icon + " Icon_File_Up" : icon;
+
+	if(icon !== "Icon_File")
+		return icon;
+
+	var dot = name.lastIndexOf(".");
+	if(dot <= 0 || dot === name.length - 1)
+		return icon;
+	var ext = name.slice(dot + 1).toLowerCase();
+
+	for(var i = 0; i < DRACULA_FILE_KINDS.length; i++)
+		if(DRACULA_FILE_KINDS[i][1].test(ext))
+			return icon + " Icon_File_" + DRACULA_FILE_KINDS[i][0];
+	return icon;
+}
+
 plugin.draculaSetRowById = dxSTable.prototype.setRowById;
 dxSTable.prototype.setRowById = function(ids, sId, icon, attr)
 {
-	var list = window.theWebUI && typeof theWebUI.getTable === "function"
-		? theWebUI.getTable("trt") : null;
+	var tables = window.theWebUI && typeof theWebUI.getTable === "function"
+		? theWebUI : null;
+
+	// The flat view of the Files tab passes no icon: `webui.js:1352` reads
+	// `file.icon`, and only the tree builder ever writes one (`common.js:1059`).
+	// Upstream's own class is supplied here so the kind has something to sit
+	// beside, and so a file reads the same whichever view is on.
+	if(tables && this === tables.getTable("fls") && !icon &&
+		ids && typeof ids.name === "string")
+		icon = "Icon_File";
+
+	if(ids)
+		icon = draculaFileIconClass(ids.name, icon);
+
+	var list = tables ? tables.getTable("trt") : null;
 	if(this === list && ids && typeof ids.name === "string")
 	{
 		var want = draculaTorrentNote(ids.name, ids.msg);

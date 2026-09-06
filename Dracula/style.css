@@ -1365,10 +1365,31 @@ div#t div#plugins { background: transparent var(--icon-plugins) no-repeat center
 /* These sit on `.stable-icon` too, and stable.css clears that class's
    background-image from a later sheet at the same specificity, so a plain
    `.Icon_File` loses and the Files tab shows no icons. `!important` is how the
-   `.Status_*` rules in stable.css already win the same fight. */
-.Icon_File { background: transparent var(--icon-file) no-repeat left center !important; background-size: 16px; }
-.Icon_Dir { background: transparent var(--icon-dir) no-repeat left center !important; background-size: 16px; }
-.Icon_Share { background: transparent var(--icon-share) no-repeat left center !important; background-size: 16px; }
+   `.Status_*` rules in stable.css already win the same fight.
+
+   The size rides inside the shorthand, after the position: `background` resets
+   `background-size` to `auto`, and `!important` carries that reset, so a
+   separate `background-size` declaration after it never applies. These glyphs
+   carry only a viewBox, and `auto` then stretches them to the whole 22px cell. */
+.Icon_File { background: transparent var(--icon-file) no-repeat left center / 20px !important; }
+.Icon_Dir { background: transparent var(--icon-dir) no-repeat left center / 20px !important; }
+.Icon_Share { background: transparent var(--icon-share) no-repeat left center / 20px !important; }
+
+/* Upstream gives every entry one of three classes, so the kind of a file is
+   nowhere in the markup — `draculaFileIconClass` reads it from the name and
+   appends a second class beside upstream's. These follow `.Icon_File` in source
+   order at the same specificity, which is what settles the tie; `!important` is
+   still needed against `.stable-icon`, exactly as above.
+
+   Left as a pair rather than replacing upstream's class: a row whose extension
+   matches nothing keeps the plain document glyph with no rule of ours involved. */
+.Icon_File_Up { background: transparent var(--icon-file-up) no-repeat left center / 20px !important; }
+.Icon_File_Archive { background: transparent var(--icon-file-archive) no-repeat left center / 20px !important; }
+.Icon_File_Disc { background: transparent var(--icon-file-disc) no-repeat left center / 20px !important; }
+.Icon_File_Video { background: transparent var(--icon-file-video) no-repeat left center / 20px !important; }
+.Icon_File_Audio { background: transparent var(--icon-file-audio) no-repeat left center / 20px !important; }
+.Icon_File_Image { background: transparent var(--icon-file-image) no-repeat left center / 20px !important; }
+.Icon_File_Doc { background: transparent var(--icon-file-doc) no-repeat left center / 20px !important; }
 
 /* === Tabs === */
 
