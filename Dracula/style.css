@@ -2072,14 +2072,28 @@ div#dlgHelp {
   background-size: 16px;
 }
 
-/* Limit — Phosphor speedometer-duotone (Comment) */
+/* Limit — Phosphor speedometer-duotone (Comment)
+
+   Out of the flow, like the sigma below it. An inline-block of 28px is taller
+   than the 23px line the other two values make, so in the flow it grew this
+   cell to 30px; the row centres its cells, and a taller cell puts its text
+   above its neighbours'. Measured with a limit set: 30px against 23px, and the
+   figure standing 3.5px high of the speed beside it. */
+#st_up > .stval:nth-child(5),
+#st_down > .stval:nth-child(5) {
+  position: relative;
+  padding-left: 30px;
+}
 #st_up > .stval:nth-child(5)::before,
 #st_down > .stval:nth-child(5)::before {
   background-image: var(--icon-speedometer);
   width: 28px;
   height: 28px;
   background-size: 28px;
-  margin-right: 4px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* Both speed cells open the throttle menu, and nothing else marks them as
