@@ -1044,6 +1044,377 @@ function draculaWatchContextMenu()
 	};
 }
 
+// Dialogs. `theDialogManager.setModalState` shows a backdrop and raises a
+// z-index (`objects.js:199`) and does nothing whatever about focus: it is never
+// moved into the window, never held there, and never handed back. Measured on
+// `tskConsole`, five presses of Tab from the top walk off the last button and
+// land on `body` — the page behind the backdrop, where every control is
+// reachable from the keyboard, invisible under the dim, and unclickable.
+//
+// Escape already closes a dialog, and that is upstream's, so nothing here binds
+// it.
+//
+// One layer covers all thirty-nine windows because the fault is in the manager
+// rather than in any of them — including the six plugins that share
+// `tskConsole`: create, dump, mediainfo, screenshots, spectrogram and unpack.
+var draculaDialogStack = [];
+
+// `offsetParent` is null for anything positioned fixed, which dialogs are, so
+// visibility is asked of the boxes the element actually paints.
+function draculaDialogFocusables(dlg)
+{
+	var candidates = dlg.querySelectorAll(
+		"a[href], button, input:not([type=hidden]), select, textarea, [tabindex]");
+	return Array.prototype.filter.call(candidates,
+		function(el)
+		{
+			return !el.disabled && el.tabIndex >= 0 && el.getClientRects().length > 0;
+		});
+}
+
+// The close cross is first in every dialog's markup and the last thing anyone
+// opens a window to do, so the focus does not start there. A field beats a
+// button: a window with something to type in is asking to be typed in.
+function draculaFocusFirstInDialog(dlg)
+{
+	var items = draculaDialogFocusables(dlg);
+	var wanted = items.filter(function(el)
+	{
+		return !el.classList.contains("dlg-close");
+	});
+	var field = wanted.filter(function(el)
+	{
+		return el.tagName === "INPUT" || el.tagName === "SELECT" ||
+			el.tagName === "TEXTAREA";
+	})[0];
+	var target = field || wanted[0] || items[0];
+	if(!target)
+	{
+		// A window with nothing to operate still has to take the focus, or Tab
+		// carries on from wherever it was before the window opened.
+		dlg.tabIndex = -1;
+		dlg.focus({ preventScroll: true });
+		return false;
+	}
+	target.focus({ preventScroll: true });
+	return true;
+}
+
+// Only a modal window holds the focus. A modeless one — Settings, Add Torrent,
+// the RSS rules manager — leaves the page usable behind it on purpose, and
+// keeping the focus in would be a different bug from the one being fixed.
+function draculaTopModalDialog()
+{
+	for(var i = draculaDialogStack.length - 1; i >= 0; i--)
+		if(draculaDialogStack[i].modal)
+			return draculaDialogStack[i].dlg;
+	return null;
+}
+
+function draculaTrapDialogTab(ev)
+{
+	var dlg = draculaTopModalDialog();
+	if(!dlg)
+		return;
+	var items = draculaDialogFocusables(dlg);
+	if(!items.length)
+		return;
+
+	var edge = ev.shiftKey ? items[0] : items[items.length - 1];
+	var wrap = ev.shiftKey ? items[items.length - 1] : items[0];
+	// Focus already outside the window — the page behind it, or nothing at all —
+	// comes back to the end the key is travelling towards.
+	if(document.activeElement === edge || !dlg.contains(document.activeElement))
+	{
+		ev.preventDefault();
+		wrap.focus({ preventScroll: true });
+	}
+}
+
+// Where a caret can still go, so a field can tell "move me" from "move the
+// caret". Only the types that have a selection are asked: reading
+// `selectionStart` on a number or an email throws in Chrome.
+var DRACULA_CARET_TYPES = /^(text|search|url|tel|password)$/;
+
+function draculaTextEdge(el, back)
+{
+	var carries = el.tagName === "TEXTAREA" ||
+		(el.tagName === "INPUT" &&
+			DRACULA_CARET_TYPES.test((el.type || "text").toLowerCase()));
+	if(!carries)
+		return true;
+	return back ? el.selectionEnd === 0 : el.selectionStart === el.value.length;
+}
+
+// Which way an arrow moves the focus in a dialog, or zero when the control under
+// it has the better claim on that key.
+//
+// A dialog is a form, and in a form the arrows are how it is walked. Two rules
+// carry the whole of it:
+//
+//   - A field gives an arrow up at the edge of its text and not before. The
+//     caret has first claim; when there is nowhere left to move it, the key
+//     means "leave". Without this the Trackers box in Create Torrent and the URL
+//     box in Add Torrent hold all four arrows and cannot be left at all.
+//   - A list and a spinner do not change value on the way past. A keypress meant
+//     to move should not silently alter a setting, and Piece size sits in the
+//     middle of the tab order of a window whose whole purpose is what it builds.
+//     The value stays theirs to set: Enter or Space opens the list and the
+//     browser's own arrows pick inside it.
+//
+// A radio group and a slider keep all four: for both, the arrows are the only
+// way to operate them from the keyboard, and Tab still leaves.
+function draculaDialogArrowStep(el, key)
+{
+	var back = (key === "ArrowLeft" || key === "ArrowUp");
+	if(!back && key !== "ArrowRight" && key !== "ArrowDown")
+		return 0;
+	var step = back ? -1 : 1;
+
+	var type = (el.type || "").toLowerCase();
+	if(type === "radio" || type === "range")
+		return 0;
+	if(el.tagName === "TEXTAREA" || el.tagName === "INPUT")
+		return draculaTextEdge(el, back) ? step : 0;
+	return step;
+}
+
+// The arrows move inside the window, which is what the rest of the interface
+// does inside a region. They run on the dialog that has the focus rather than on
+// the topmost modal one, so a modeless window — Settings, Add Torrent — is
+// walked the same way while the page behind it stays reachable by Tab.
+function draculaDialogArrows(ev)
+{
+	var entry = draculaDialogStack.filter(function(open)
+	{
+		return open.dlg.contains(document.activeElement);
+	})[0];
+	if(!entry)
+		return;
+
+	var step = draculaDialogArrowStep(document.activeElement, ev.key);
+	if(!step)
+		return;
+
+	var items = draculaInVisualOrder(draculaDialogFocusables(entry.dlg));
+	if(!items.length)
+		return;
+
+	// The window itself holds the focus when it opened with nothing in it worth
+	// focusing — `tskConsole` swaps its buttons as a task runs and can be empty
+	// for a moment. An arrow then enters the window from the end it points at,
+	// rather than doing nothing and leaving the keyboard stuck.
+	var at = items.indexOf(document.activeElement);
+	if(at < 0)
+	{
+		ev.preventDefault();
+		(step > 0 ? items[0] : items[items.length - 1]).focus({ preventScroll: true });
+		return;
+	}
+
+	// Round, because Tab goes round in the same window and a window is a closed
+	// set. Stopping at the ends leaves a dead key at each one, and the last
+	// control is often a field: the URL box in Add Torrent is last, so a stop
+	// there reads as a field that cannot be left.
+	var target = items[(at + step + items.length) % items.length];
+	ev.preventDefault();
+	target.focus({ preventScroll: true });
+}
+
+function draculaDialogKeys(ev)
+{
+	if(ev.altKey || ev.ctrlKey || ev.metaKey)
+		return;
+	if(ev.key === "Tab")
+		draculaTrapDialogTab(ev);
+	else
+		draculaDialogArrows(ev);
+}
+
+// The header carries the window's name, and it changes while the window is up:
+// `tskConsole` reads "Running..." and then "Done.". Pointing at it by id keeps
+// the name current instead of copying a word that goes stale.
+function draculaNameDialog(dlg)
+{
+	dlg.setAttribute("role", "dialog");
+	var header = dlg.querySelector(".dlg-header");
+	if(!header)
+		return;
+	if(!header.id)
+		header.id = dlg.id + "-dracula-title";
+	dlg.setAttribute("aria-labelledby", header.id);
+}
+
+function draculaWatchDialogs()
+{
+	if(!window.theDialogManager || typeof theDialogManager.show !== "function")
+		return;
+
+	var show = theDialogManager.show;
+	theDialogManager.show = function(id)
+	{
+		var opener = document.activeElement;
+		var result = show.apply(this, arguments);
+		var dlg = document.getElementById(id);
+		if(!dlg)
+			return result;
+
+		// Upstream's own test for whether a window dims the page (`objects.js:220`),
+		// read from the window rather than from the manager: `isModalState` answers
+		// for any window that is up, not for this one.
+		var modal = !!$(dlg).data("modal");
+		// Two things in a window refuse the focus in the instant they take it,
+		// which is what leaves the arrows dead: upstream blurs every `.Button` in
+		// a window it builds (`objects.js:141`), and the path picker blurs itself
+		// (`plugins/_getdir/init.js:22`). Measured, a `focus()` on one fires focus
+		// and blur back to back and the page is left on `body`, from where no
+		// further key reaches the window at all.
+		//
+		// Both are jQuery focus handlers and the blur is the only one either
+		// carries. The field beside the picker is deliberately not touched: its
+		// own focus handler closes the directory list.
+		draculaUnblur($(dlg).find(".Button, .browseButton"));
+		draculaNameDialog(dlg);
+		if(modal)
+			dlg.setAttribute("aria-modal", "true");
+		draculaDialogStack.push({
+			id: id,
+			dlg: dlg,
+			modal: modal,
+			opener: (opener && opener !== document.body) ? opener : null,
+		});
+
+		// A window is filled as it opens, and its controls can be swapped a moment
+		// later: `tskConsole` shows one set of buttons while a task runs and
+		// another when it finishes, so the first look can find nothing with a box
+		// to focus. The look is repeated for a few frames rather than guessed at
+		// with a longer timer.
+		var settle = function(left)
+		{
+			if(draculaFocusFirstInDialog(dlg) || left <= 0)
+				return;
+			requestAnimationFrame(function() { settle(left - 1); });
+		};
+		setTimeout(function() { settle(5); }, 0);
+		return result;
+	};
+
+	var hide = theDialogManager.hide;
+	theDialogManager.hide = function(id)
+	{
+		var result = hide.apply(this, arguments);
+		for(var i = draculaDialogStack.length - 1; i >= 0; i--)
+		{
+			if(draculaDialogStack[i].id !== id)
+				continue;
+			var entry = draculaDialogStack.splice(i, 1)[0];
+			// Only when the focus is still inside the window that is closing, or
+			// nowhere: a dialog closed from elsewhere has not taken it, and pulling
+			// it back would be the theft this is meant to prevent.
+			if(entry.opener && document.contains(entry.opener) &&
+				(entry.dlg.contains(document.activeElement) ||
+					document.activeElement === document.body))
+				entry.opener.focus({ preventScroll: true });
+			break;
+		}
+		return result;
+	};
+
+	// Captured, so the window has the keys before a region's own keydown sees
+	// them: a dialog opened over the torrent list sits inside no region, but the
+	// list's handler is bound to a container the focus can still be within.
+	document.addEventListener("keydown", draculaDialogKeys, true);
+
+	// Upstream turns Enter anywhere in a window into a click on its OK button,
+	// excluding a textarea and nothing else (`objects.js:158`). On a list or a
+	// button that is wrong twice over: the key belongs to the control under it,
+	// and the window is submitted by a press meant to open a dropdown. Measured
+	// on Create Torrent, where Enter on Piece size opened the list and raised
+	// "You must fill in all required fields" in the same breath.
+	//
+	// Caught on the way down so upstream's handler on the window never sees it.
+	// The default action is untouched — the list still opens, the button is still
+	// pressed — and Enter in a field still submits, which is what it is for.
+	document.addEventListener("keypress", function(ev)
+	{
+		if(ev.key !== "Enter" || !draculaDialogStack.length)
+			return;
+		var el = ev.target;
+		if(!el || !/^(SELECT|BUTTON|A)$/.test(el.tagName))
+			return;
+		var inside = draculaDialogStack.filter(function(open)
+		{
+			return open.dlg.contains(el);
+		})[0];
+		if(inside)
+			ev.stopPropagation();
+	}, true);
+
+	// A control that hides itself takes the focus down with it. Add Torrent's
+	// label list does exactly that: choosing its second option swaps the list for
+	// a text field (`content.js:174`), and an arrow that reaches that option
+	// leaves the page on `body` with the window still open and nothing focused.
+	//
+	// The place is kept rather than the element, and the focus lands on whatever
+	// now stands there — which is the field that replaced it. Only a fall to
+	// `body` is caught: a click on the page behind a modeless window is a move
+	// somewhere, and moving it back would be the theft this guards against.
+	// Measured on the way in, where the control is certainly still on screen. By
+	// the time it loses the focus it can already be hidden, and a hidden element
+	// measures as a zero box at the origin — nowhere near where it stood, and
+	// nearest to whatever sits highest and leftmost in the window.
+	var lastBox = null;
+	document.addEventListener("focusin", function(ev)
+	{
+		if(!draculaDialogStack.length)
+			return;
+		var entry = draculaDialogStack[draculaDialogStack.length - 1];
+		if(!entry.dlg.contains(ev.target))
+			return;
+		var r = ev.target.getBoundingClientRect();
+		lastBox = { el: ev.target, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+	});
+
+	document.addEventListener("focusout", function(ev)
+	{
+		if(!draculaDialogStack.length)
+			return;
+		var entry = draculaDialogStack[draculaDialogStack.length - 1];
+		if(!entry.dlg.contains(ev.target))
+			return;
+		var box = ev.target.getBoundingClientRect();
+		var was = (lastBox && lastBox.el === ev.target && !box.width)
+			? lastBox
+			: { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+
+		setTimeout(function()
+		{
+			if(document.activeElement !== document.body)
+				return;
+			if(!document.contains(entry.dlg) || entry.dlg.offsetParent === null)
+				return;
+			var items = draculaDialogFocusables(entry.dlg);
+			if(!items.length)
+				return;
+			var nearest = items[0];
+			var best = Infinity;
+			items.forEach(function(el)
+			{
+				var r = el.getBoundingClientRect();
+				var dx = r.left + r.width / 2 - was.x;
+				var dy = r.top + r.height / 2 - was.y;
+				var distance = dx * dx + dy * dy;
+				if(distance < best)
+				{
+					best = distance;
+					nearest = el;
+				}
+			});
+			nearest.focus({ preventScroll: true });
+		}, 0);
+	});
+}
+
 // Which toolbar button the open menu belongs to, so a second click on that
 // button closes it and a click on another one still opens its own.
 var draculaOpenMenuButton = null;
@@ -1567,15 +1938,20 @@ function draculaStatusBarKeys()
 // rebuilt on each open, so they are handled by draculaPrepareMenuLevel.
 var draculaFocusThieves = "#t a.nav-link, #tabbar li.nav-item a";
 
-function draculaRestoreKeyboardFocus()
+function draculaUnblur(nodes)
 {
-	$(draculaFocusThieves).off("focus").each(function()
+	nodes.off("focus").each(function()
 	{
 		// Both spellings: the attribute is what the parser read, the property is
 		// what it compiled into. Clearing one alone leaves the other in place.
 		this.removeAttribute("onfocus");
 		this.onfocus = null;
 	});
+}
+
+function draculaRestoreKeyboardFocus()
+{
+	draculaUnblur($(draculaFocusThieves));
 }
 
 // The keyboard model: five regions — toolbar, sidebar, torrent list, detail
@@ -1606,15 +1982,8 @@ function draculaRestoreKeyboardFocus()
 // to right within a row, which reads correctly for a horizontal bar, for the
 // vertical sidebar, and for a toolbar wrapped onto two lines. Bucketing rather
 // than comparing centres pairwise keeps the comparator transitive.
-function draculaRovingItems(container, itemSelector)
+function draculaInVisualOrder(items)
 {
-	var items = Array.prototype.filter.call(container.querySelectorAll(itemSelector),
-		function(el)
-		{
-			var rect = el.getBoundingClientRect();
-			return rect.width > 0 && rect.height > 0 && !el.disabled;
-		});
-
 	return items.map(function(el)
 	{
 		var rect = el.getBoundingClientRect();
@@ -1623,6 +1992,17 @@ function draculaRovingItems(container, itemSelector)
 	{
 		return (a.row - b.row) || (a.left - b.left);
 	}).map(function(entry){ return entry.el; });
+}
+
+function draculaRovingItems(container, itemSelector)
+{
+	return draculaInVisualOrder(
+		Array.prototype.filter.call(container.querySelectorAll(itemSelector),
+			function(el)
+			{
+				var rect = el.getBoundingClientRect();
+				return rect.width > 0 && rect.height > 0 && !el.disabled;
+			}));
 }
 
 // Which control holds the region's single tab stop. Keep whatever already has
@@ -2978,6 +3358,7 @@ plugin.allDone = function()
 	draculaTabScrollIndicator();
 	draculaStatusBarKeys();
 	draculaWatchContextMenu();
+	draculaWatchDialogs();
 	draculaToolbarMenusToggle();
 	draculaFillKeyHelp();
 	draculaFixToolbarSeparators();

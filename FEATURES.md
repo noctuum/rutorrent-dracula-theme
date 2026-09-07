@@ -49,6 +49,14 @@ Enter opens what there is to open: a folder by entering it, and a file by
 offering its menu. A keypress never starts a download — that stays on the double
 click, where it is asked for deliberately.
 
+Dialogs take the keyboard as well, which is what carries the plugins with them:
+Media Info, Spectrogram, Screenshots, Unpack and the torrent builder all report
+through one shared window. Arrows walk the controls, Tab circles inside a modal
+window rather than falling through to the page behind it, and closing one hands
+the focus back to whatever opened it. Two rules keep the arrows out of the way
+of the controls: a field gives an arrow up only when the caret reaches the end
+of its text, and a dropdown does not change its value as you pass it.
+
 ## No image files
 
 **The theme ships no images at all.** Every glyph is an inline SVG in the
