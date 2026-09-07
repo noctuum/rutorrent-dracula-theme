@@ -25,6 +25,9 @@ returns you to the row you left rather than to the top.
 | `Escape`                          | Close the menu and step back   |
 | `F1`                              | The full list, on screen       |
 
+![The F1 help screen, listing the commands on the left and the navigation keys
+on the right](./screenshots/keyboard-help.png)
+
 Five bare letters act on whatever is selected: **S** start, **P** pause,
 **T** stop, **U** reannounce, **R** force recheck. They are plain letters
 because the mnemonic combinations are taken — Ctrl-P is Settings, Ctrl-O is Add
@@ -35,6 +38,9 @@ more than one torrent asks first.
 Context menus work the same way as under the pointer: arrows walk the items,
 Right opens a submenu, Left closes it. Their shortcuts are printed in the menu
 itself, next to the commands.
+
+![The torrent context menu, each command carrying its shortcut on the
+right](./screenshots/context-menu.png)
 
 The torrent table is wider than its pane, so Left and Right scroll it by whole
 columns and snap to column edges instead of drifting by pixels.
@@ -70,6 +76,12 @@ status, file and directory rows, dialog headers, close buttons, the status bar,
 the mobile navbar. Sharp at any zoom, and every glyph takes its colour from the
 palette instead of carrying its own.
 
+![The toolbar: actions on the left, search in the middle, the rest on the
+right](./screenshots/toolbar.png)
+
+![The sidebar: views, states, labels, feeds and trackers, each row with its own
+icon and counts](./screenshots/sidebar.png)
+
 Both loading indicators are drawn too. The startup cover spins three dots in
 CSS, and the toolbar's activity indicator is a web that stands still while the
 UI is idle and turns while it waits on the server — the motion is the signal,
@@ -90,6 +102,30 @@ of event as a torrent that cannot write to disk.
 Status icons keep their contrast wherever the row goes. The quiet ones are
 painted through a mask in the row's own colour, so a selected row does not
 swallow them.
+
+![Five rows, one per state: seeding, downloading, stopped, an rTorrent error in
+red and announce noise in orange](./screenshots/torrent-states.png)
+
+![The torrent list, with progress bars, ratios and every
+column](./screenshots/torrent-list.png)
+
+## Files, coloured by what they are
+
+The Files tab paints each entry by what it is, so the eye finds a folder, an
+archive or the way back up without reading a word: a directory in Orange, the
+parent in Comment, and seven kinds taken from the extension — archive yellow,
+disc cyan, video purple, audio green, image pink, document Comment. An extension
+the theme has no answer for keeps the plain document, and nothing rests on
+colour alone: each kind has its own glyph as well.
+
+The flat view has icons at all for the first time — upstream draws them only in
+the tree — so a file reads the same whichever view is on.
+
+![The Files tab as a tree: the way up, a nested folder and files coloured by
+kind](./screenshots/files-tree.png)
+
+![The same files as a flat list, full paths, one colour per
+kind](./screenshots/files-list.png)
 
 ## One row height
 
@@ -112,6 +148,51 @@ Inter for the interface and JetBrains Mono for hashes and paths, both bundled as
 `woff2` in 13 subsets with their OFL licences. Nothing is fetched from a CDN and
 nothing depends on what the machine has installed.
 
+## Notifications that say which kind they are
+
+The four kinds ruTorrent raises — error, warning, success, information — are
+tinted apart and each carries the Phosphor circle for its own state, so a
+glance at the corner is enough. They stack in the bottom right, clear of the
+status bar.
+
+![Four notifications stacked: error, warning, success and
+information](./screenshots/notifications.png)
+
+## On a phone
+
+**ruTorrent's mobile plugin, and therefore this half of the theme, needs
+ruTorrent 5.3.10 or newer** — the plugin does not exist below it. The desktop
+floor stays 5.0.0.
+
+The plugin brings its own interface and the theme follows it there: the list,
+the filters, the torrent screen, the settings, and the bar along the bottom. The
+file list is coloured by kind exactly as the desktop's is.
+
+Both palettes are carried. Dracula is the default, and Alucard — the light
+palette from the same specification — is what the plugin's Light setting gets,
+rather than an inversion of the dark one.
+
+![The torrent list on a phone in Dracula](./screenshots/mobile-dracula.png)
+
+![The same list in Alucard, the light palette](./screenshots/mobile-alucard.png)
+
+![A torrent on a phone: progress, fields, and the bar switched to
+actions](./screenshots/mobile-torrent.png)
+
+![The file list on a phone, coloured by kind like the
+desktop's](./screenshots/mobile-files.png)
+
+![The filter panel: states, labels and trackers with
+counts](./screenshots/mobile-filters.png)
+
+![The phone's settings: rate limits, theme, accent and the server
+block](./screenshots/mobile-settings.png)
+
+![Adding a torrent from a phone, by file or by
+URL](./screenshots/mobile-add.png)
+
+![Quick search on a phone](./screenshots/mobile-search.png)
+
 ## Details
 
 - **Status bar sections explain themselves on hover** — disk space, CPU, open
@@ -123,6 +204,17 @@ nothing depends on what the machine has installed.
 - **The theme checks itself on load.** Its stylesheets carry a version stamp
   that the script compares against its own, so a browser serving a cached
   stylesheet from an older release says so instead of rendering half-broken.
+
+![The status bar: disk, CPU, counts, rates with their limits, connections and
+the listening port](./screenshots/status-bar.png)
+
+![The Settings dialog, General](./screenshots/settings.png)
+
+![The Add Torrent dialog](./screenshots/add-torrent.png)
+
+![The detail panel, General](./screenshots/detail-panel.png)
+
+![The Trackers tab](./screenshots/trackers.png)
 
 ## What it needs
 
