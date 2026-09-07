@@ -218,28 +218,15 @@ the listening port](./screenshots/status-bar.png)
 
 ## What it needs
 
-**ruTorrent 5.0.0 or newer**, which is every 5.x release there is. Each one from
-5.0.0 to 5.1.12 was raised and measured against 5.3.12, along with 5.2.0, 5.2.10,
-5.3.0, 5.3.1 and 5.3.12 above them.
+**ruTorrent 5.0.0 or newer.** The phone interface needs **5.3.10**, where
+ruTorrent's mobile plugin first appears.
 
-Two releases changed enough to need the theme's own answer, and both are covered:
-5.2.0 rebuilt the torrent table, and 5.1.0 moved the interface colours into
-custom properties a theme can set.
-
-Which rTorrent you run is ruTorrent's business rather than the theme's — the
-theme never speaks to the daemon. It is worth knowing all the same, because it
-narrows the choice: **ruTorrent below 5.3.2 does not understand rTorrent 0.16 at
-all, and below 5.3.9 it does not understand 0.16.18 and newer.** On a current
-daemon, ruTorrent 5.3.9+ is the only pairing that works, whatever theme is on
-top.
+No dependencies, no configuration.
 
 ## Under the hood
 
-Plain CSS and one script — no build step, no preprocessor, no framework. Copy
-the folder into ruTorrent and pick it in Settings.
+Plain CSS and one script. No build step, no preprocessor, no framework. Copy the
+folder into ruTorrent and pick it in Settings.
 
-Colours are never written as literals: the Dracula palette is declared once as
-custom properties and everything else refers to them, which a lint rule
-enforces. The repository carries a test suite over the shipped files — version
-stamps agreeing across sheets, every custom property resolving, no rule
-duplicated between stylesheets, every inline SVG well-formed.
+Every colour comes from the Dracula palette, declared once as custom properties.
+No literal is written anywhere else.
