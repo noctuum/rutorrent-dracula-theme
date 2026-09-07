@@ -372,12 +372,15 @@ function draculaPaletteColor(name, fallback)
    The read cannot happen when the table is built: palette.css arrives through
    an @import, which is a fetch of its own, and `dxSTable.prototype.create` runs
    before it lands — measured at 1656ms with three sheets on the page and the
-   palette not among them, where the name resolves to nothing. Deferring to the
-   first paint costs nothing and the sheet is always there by then.
+   palette not among them, where the name resolves to nothing. On a cold cache
+   that window reaches past the first paint, so deferring is not enough on its
+   own; `draculaRepaintProgress` covers the bars drawn inside it.
 
-   `fallback` is upstream's own value, kept for a page carrying no palette at
-   all. The answer is held after the first read: the gradient is recomputed for
-   every row on every pass, and a probe element per channel per row is not. */
+   Only a resolved answer is held. `fallback` is upstream's own pair, for a page
+   carrying no palette at all, and caching it would hold the page on `#FFFF00`
+   to `#99D699` (`css/stable.css:179`) for good. Holding a resolved answer does
+   matter: the gradient is recomputed for every row on every pass, and a probe
+   element per channel per row is not. */
 function draculaPaletteBackground(name, fallback)
 {
 	var colour = new RGBackground();
@@ -386,12 +389,52 @@ function draculaPaletteBackground(name, fallback)
 		get: function()
 		{
 			if(!resolved)
-				resolved = draculaPaletteChannels(name) || fallback;
-			return resolved;
+				resolved = draculaPaletteChannels(name);
+			return resolved || fallback;
 		},
 		set: function() {}
 	});
 	return colour;
+}
+
+/* Put the palette on the bars that were already drawn without it.
+
+   A progress cell is rewritten only when its value changed (`stable.js:1298`),
+   and the colour goes in as an inline style from `progressStyle`
+   (`stable.js:1285`). So a bar drawn while palette.css was still in flight holds
+   upstream's pair until its torrent moves, which for a finished one is never.
+
+   The width on screen carries the percentage, so a bar recolours from what it
+   already shows, through the table's own colours so the result matches what the
+   next update produces. One pass is enough: it runs only once the palette
+   answers, and a row painted after that reads the resolved colour itself.
+
+   The container is the element `create` was handed (`webui.js:467`) rather than
+   `table.dCont`, which is a jQuery object from 5.2.0 and a DOM element before
+   it. */
+function draculaRepaintProgress(ele, table, attempt)
+{
+	if(!draculaPaletteChannels("--dracula-progress-start"))
+	{
+		attempt = (attempt || 0) + 1;
+		if(attempt < 8)
+			setTimeout(function()
+			{
+				draculaRepaintProgress(ele, table, attempt);
+			}, 250 * attempt);
+		return;
+	}
+
+	$(ele).find(".meter-value").each(function()
+	{
+		var percent = parseFloat(this.style.width);
+		if(isNaN(percent))
+			return;
+
+		this.style.backgroundColor = new RGBackground()
+			.setGradient(table.prgStartColor, table.prgEndColor, percent)
+			.getColor();
+	});
 }
 
 /* === Status bar meters === */
@@ -5083,6 +5126,8 @@ dxSTable.prototype.create = function(ele, styles, aName)
 		"--dracula-progress-end",
 		this.prgEndColor.channels
 	);
+
+	draculaRepaintProgress(ele, this);
 }
 
 /* What a torrent row's tooltip says. The name alone unless the daemon has
