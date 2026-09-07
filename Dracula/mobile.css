@@ -1146,6 +1146,70 @@
 #mainContainer .bi-file-earmark { --dracula-glyph: var(--icon-file); }
 #mainContainer .bi-list-ul { --dracula-glyph: var(--icon-list); }
 
+/* The file list, coloured by what each entry is, as the desktop's is.
+
+   The glyphs are the desktop's own, reused rather than duplicated: a mask reads
+   only alpha, so the palette baked into each one never arrives and the colour
+   comes from `currentColor` instead. Phosphor's `opacity="0.2"` backdrop
+   survives as 20% alpha, so a single tone still reads as duotone.
+
+   Each colour is the one that glyph already carries on the desktop — yellow for
+   an archive, cyan for a disc, purple for video, green for audio, pink for an
+   image, Comment for a document and for the way up, Orange for a directory.
+
+   Scoped to the list. `bi-folder2-open` is also the directory cell of the file
+   browser (`plugins/mobile/init.js:1627`), which is a different thing wearing
+   the same class, and colouring by class alone would reach it too.
+
+   The kind class is put on by `draculaMarkMobileFileIcons`: the plugin gives
+   every entry one of two glyphs, and the name it would have to be read from is a
+   bare text node no selector reaches. */
+#mainContainer #detailsFilesPage .bi-folder2-open {
+  color: var(--variant-orange);
+}
+
+#mainContainer #detailsFilesPage .bi-folder2-open.dracula-file-up {
+  --dracula-glyph: var(--icon-file-up);
+
+  color: var(--variant-comment);
+}
+
+#mainContainer #detailsFilesPage .bi-file-earmark.dracula-file-archive {
+  --dracula-glyph: var(--icon-file-archive);
+
+  color: var(--variant-yellow);
+}
+
+#mainContainer #detailsFilesPage .bi-file-earmark.dracula-file-disc {
+  --dracula-glyph: var(--icon-file-disc);
+
+  color: var(--variant-cyan);
+}
+
+#mainContainer #detailsFilesPage .bi-file-earmark.dracula-file-video {
+  --dracula-glyph: var(--icon-file-video);
+
+  color: var(--variant-purple);
+}
+
+#mainContainer #detailsFilesPage .bi-file-earmark.dracula-file-audio {
+  --dracula-glyph: var(--icon-file-audio);
+
+  color: var(--variant-green);
+}
+
+#mainContainer #detailsFilesPage .bi-file-earmark.dracula-file-image {
+  --dracula-glyph: var(--icon-file-image);
+
+  color: var(--variant-pink);
+}
+
+#mainContainer #detailsFilesPage .bi-file-earmark.dracula-file-doc {
+  --dracula-glyph: var(--icon-file-doc);
+
+  color: var(--variant-comment);
+}
+
 /* The stencils take `currentColor`, and the plugin gives every icon in the bar
    the same white (`.icon-white`, `plugins/mobile/mobile.css:186`). The colours
    below are not new: each is the one the desktop already paints into the icon
