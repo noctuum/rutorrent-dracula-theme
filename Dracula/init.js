@@ -4082,6 +4082,75 @@ function draculaDarkByDefaultOnMobile()
 		mobile.theme = "dark";
 }
 
+/* The phone's file list, coloured by kind like the desktop's.
+
+   The plugin gives every entry one of two glyphs and no more: `bi-folder2-open`
+   for a directory and for the way back up, `bi-file-earmark` for everything else
+   (`plugins/mobile/init.js:1392`, `:1407`, `:1420`). The name is a bare text
+   node beside the `<i>`, so no selector can read it and no rule can tell a
+   folder from `..`, or a zip from a log. A class has to be put on.
+
+   Read from the anchor rather than the icon: the name is the anchor's only text,
+   and `&nbsp;` between them is what the trim leaves behind. `..` is the plugin's
+   own spelling of the way up (`:1392`), matched as text because there is nothing
+   else to match on.
+
+   Marked, not rebuilt. Each `<i>` keeps its `bi-*` class, so an entry this
+   theme has no answer for keeps the plugin's own glyph rather than turning
+   into a blank square. */
+function draculaMarkMobileFileIcons()
+{
+	var page = document.getElementById("detailsFilesPage");
+	if(!page)
+		return;
+
+	Array.prototype.forEach.call(
+		page.querySelectorAll("i.bi-folder2-open, i.bi-file-earmark"),
+		function(icon)
+		{
+			var link = icon.parentElement;
+			if(!link)
+				return;
+			// A non-breaking space is what the plugin writes between the icon and
+			// the name, spelled as an escape so no editor can lose it.
+			var name = link.textContent.replace(/\u00a0/g, " ").trim();
+
+			if(icon.classList.contains("bi-folder2-open"))
+			{
+				if(name === "..")
+					icon.classList.add("dracula-file-up");
+				return;
+			}
+			var kind = draculaFileKind(name);
+			if(kind)
+				icon.classList.add("dracula-file-" + kind.toLowerCase());
+		});
+}
+
+/* The list is emptied and rebuilt on every step into a directory
+   (`plugins/mobile/init.js:1383`), so the marking follows the rebuild rather
+   than running once.
+
+   The plugin's own method is what carries it. Watching the container instead
+   would mean waiting for markup that `plugin.init()` has not built yet, while
+   the plugin object is already there to wrap — the same moment
+   `draculaDarkByDefaultOnMobile` uses, and for the same reason. */
+function draculaWatchMobileFiles()
+{
+	var mobile = window.thePlugins && typeof thePlugins.get === "function"
+		? thePlugins.get("mobile") : null;
+	if(!mobile || typeof mobile.drawFiles !== "function" || mobile.draculaDrawFiles)
+		return;
+
+	mobile.draculaDrawFiles = mobile.drawFiles;
+	mobile.drawFiles = function()
+	{
+		var result = mobile.draculaDrawFiles.apply(this, arguments);
+		draculaMarkMobileFileIcons();
+		return result;
+	};
+}
+
 /* Where the ratio's value sits inside a mobile status line, or null when the
    line carries none. The plugin builds the whole line as one string and the
    number is plain text inside it (`plugins/mobile/init.js:1907`), so nothing
@@ -4926,6 +4995,7 @@ if(typeof theWebUI !== "undefined" && typeof theWebUI.config === "function")
 	theWebUI.config = function()
 	{
 		draculaDarkByDefaultOnMobile();
+		draculaWatchMobileFiles();
 		draculaMarkMobileLines();
 		draculaKeepPanelsOpen();
 		var tables = this.tables || {};
@@ -5058,6 +5128,23 @@ var DRACULA_FILE_KINDS = [
 	["Doc", /^(txt|nfo|md|log|ffp|md5|sfv|pdf|epub|srt|ass|sub|xml|json)$/]
 ];
 
+// Which kind a name belongs to, or null for one the table has no answer for.
+// A name with no extension, or ending in a dot, is not a kind — it is a name.
+function draculaFileKind(name)
+{
+	if(typeof name !== "string")
+		return null;
+	var dot = name.lastIndexOf(".");
+	if(dot <= 0 || dot === name.length - 1)
+		return null;
+	var ext = name.slice(dot + 1).toLowerCase();
+
+	for(var i = 0; i < DRACULA_FILE_KINDS.length; i++)
+		if(DRACULA_FILE_KINDS[i][1].test(ext))
+			return DRACULA_FILE_KINDS[i][0];
+	return null;
+}
+
 // Returns the icon string to pass on: upstream's class, plus one of ours when
 // the name says what the entry is. Both are kept so a kind with no rule still
 // paints — jQuery's `addClass` (`stable.js:942`) takes the pair as written.
@@ -5073,15 +5160,8 @@ function draculaFileIconClass(name, icon)
 	if(icon !== "Icon_File")
 		return icon;
 
-	var dot = name.lastIndexOf(".");
-	if(dot <= 0 || dot === name.length - 1)
-		return icon;
-	var ext = name.slice(dot + 1).toLowerCase();
-
-	for(var i = 0; i < DRACULA_FILE_KINDS.length; i++)
-		if(DRACULA_FILE_KINDS[i][1].test(ext))
-			return icon + " Icon_File_" + DRACULA_FILE_KINDS[i][0];
-	return icon;
+	var kind = draculaFileKind(name);
+	return kind ? icon + " Icon_File_" + kind : icon;
 }
 
 // `clearRows` empties `rowdata`, `rowSel` and `rowIDs` but leaves `stSel`
