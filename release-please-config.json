@@ -13,6 +13,7 @@
         { "type": "generic", "path": "Dracula/fonts.css" },
         { "type": "generic", "path": "Dracula/icons.css" },
         { "type": "generic", "path": "Dracula/mobile.css" },
+        { "type": "generic", "path": "Dracula/legacy.css" },
         { "type": "generic", "path": ".github/ISSUE_TEMPLATE/bug_report.yml" }
       ]
     }
