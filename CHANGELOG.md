@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/noctuum/rutorrent-dracula-theme/compare/v0.3.0...v0.3.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* stamp the version into legacy.css with every other shipped file ([#58](https://github.com/noctuum/rutorrent-dracula-theme/issues/58)) ([75235b2](https://github.com/noctuum/rutorrent-dracula-theme/commit/75235b22f18fd58f1ad9cca06ba93c2af5b3e083))
+
 ## [0.3.0](https://github.com/noctuum/rutorrent-dracula-theme/compare/v0.2.1...v0.3.0) (2026-09-07)
 
 
