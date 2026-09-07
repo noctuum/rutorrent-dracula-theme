@@ -1,16 +1,17 @@
-// One version, written in nineteen places.
+// One version, written in twenty-one places.
 //
-// Each of the eight files carries a human-readable "Version X.Y.Z" line in its
+// Each of the nine files carries a human-readable "Version X.Y.Z" line in its
 // header, the three sheets ruTorrent loads each stamp a machine-readable custom
 // property, init.js carries the constant it compares them against at runtime,
-// and the seven @import URLs carry it as their cache-buster. All of them have to
+// and the eight @import URLs carry it as their cache-buster. All of them have to
 // agree, or the startup check cries wolf at the user and an edited sheet is
 // served from cache.
 //
-// The four imported sheets — palette.css, fonts.css, icons.css and mobile.css —
-// stamp no custom property: they are fetched under the version in the URL that
-// imports them, so they cannot go stale on their own — see the header of
-// palette.css.
+// The five imported sheets — palette.css, fonts.css, icons.css, mobile.css and
+// legacy.css — stamp no custom property: they are fetched under the version in
+// the URL that imports them, so they cannot go stale on their own — see the
+// header of palette.css. A wrong version in one of those headers is therefore
+// invisible at runtime, and these tests are the only thing that reads it.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {

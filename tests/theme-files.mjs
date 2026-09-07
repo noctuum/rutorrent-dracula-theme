@@ -8,21 +8,21 @@
 // pattern beginning with `--` is read as an option and reports a confident zero;
 // and upstream splits one var() across four lines, which no single-line pattern
 // sees.
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const THEME = join(ROOT, "Dracula");
-export const SHEETS = [
-	"style.css",
-	"stable.css",
-	"plugins.css",
-	"palette.css",
-	"fonts.css",
-	"icons.css",
-	"mobile.css",
-];
+
+// Read from the directory rather than listed by hand: a sheet named in no list
+// is checked by nothing. It also guards the one list that cannot be read this
+// way — `extra-files` in release-please-config.json. A sheet missing from that
+// keeps the version it was added under, and the header comparison in
+// version.test.mjs fails at the next release rather than shipping.
+export const SHEETS = readdirSync(THEME)
+	.filter((name) => name.endsWith(".css"))
+	.sort();
 export const FILES = [...SHEETS, "init.js"];
 
 export const read = (name) => readFileSync(join(THEME, name), "utf8");
