@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repository is archived. The theme moved to the Dracula organization: [dracula/rutorrent](https://github.com/dracula/rutorrent). New releases, issues and pull requests are there.
+
 # Dracula for [ruTorrent](https://github.com/Novik/ruTorrent)
 
 > A dark theme for [ruTorrent](https://github.com/Novik/ruTorrent).
